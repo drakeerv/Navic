@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -39,7 +40,7 @@ import paige.navic.ui.util.EmphasizedDecelerateEasing
 fun CollectionDetailScreenHeadingRow(
 	collection: DomainSongCollection,
 	tab: String,
-	titleAlpha: Float
+	titleAlpha: () -> Float
 ) {
 	val backStack = LocalNavStack.current
 	val sharedTransitionKey = "${tab}-${collection.id}-cover"
@@ -61,7 +62,7 @@ fun CollectionDetailScreenHeadingRow(
 					},
 					animatedVisibilityScope = LocalNavAnimatedContentScope.current
 				)
-				.alpha(titleAlpha),
+				.graphicsLayer { alpha = titleAlpha() },
 			crossfadeMs = 0,
 			onClick = collection.coverArtId?.let { coverArtId ->
 				dropUnlessResumed {
@@ -77,7 +78,7 @@ fun CollectionDetailScreenHeadingRow(
 			modifier = Modifier
 				.padding(horizontal = 31.dp)
 				.padding(top = 10.dp, bottom = 8.dp)
-				.alpha(titleAlpha),
+				.graphicsLayer { alpha = titleAlpha() },
 			horizontalAlignment = Alignment.CenterHorizontally
 		) {
 			Text(

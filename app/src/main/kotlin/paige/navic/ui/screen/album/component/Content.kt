@@ -73,8 +73,8 @@ fun LazyGridScope.albumListScreenContent(
 						AlbumListScreenGridItem(
 							modifier = Modifier.animateItem(),
 							tab = "albums",
-							album = album,
-							selected = album == selectedAlbum,
+							album = if (album.id == selectedAlbum?.id) selectedAlbum!! else album,
+							selected = album.id == selectedAlbum?.id,
 							starred = starred,
 							onSelect = { onUpdateSelection(album) },
 							onDeselect = { onClearSelection() },
@@ -88,8 +88,8 @@ fun LazyGridScope.albumListScreenContent(
 					} else {
 						AlbumListScreenListItem(
 							modifier = Modifier.animateItem(),
-							album = album,
-							selected = album == selectedAlbum,
+							album = if (album.id == selectedAlbum?.id) selectedAlbum!! else album,
+							selected = album.id == selectedAlbum?.id,
 							starred = starred,
 							onSelect = { onUpdateSelection(album) },
 							onDeselect = { onClearSelection() },
@@ -109,8 +109,8 @@ fun LazyGridScope.albumListScreenContent(
 					AlbumListScreenGridItem(
 						modifier = Modifier.animateItem(),
 						tab = "albums",
-						album = album,
-						selected = album == selectedAlbum,
+						album = if (album.id == selectedAlbum?.id) selectedAlbum!! else album,
+						selected = album.id == selectedAlbum?.id,
 						starred = starred,
 						onSelect = { onUpdateSelection(album) },
 						onDeselect = { onClearSelection() },
@@ -124,8 +124,8 @@ fun LazyGridScope.albumListScreenContent(
 				} else {
 					AlbumListScreenListItem(
 						modifier = Modifier.animateItem(),
-						album = album,
-						selected = album == selectedAlbum,
+						album = if (album.id == selectedAlbum?.id) selectedAlbum!! else album,
+						selected = album.id == selectedAlbum?.id,
 						starred = starred,
 						onSelect = { onUpdateSelection(album) },
 						onDeselect = { onClearSelection() },

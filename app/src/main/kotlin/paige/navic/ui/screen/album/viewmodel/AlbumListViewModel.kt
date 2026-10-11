@@ -80,6 +80,7 @@ class AlbumListViewModel(
 			selectedAlbum.value = album
 			starred.value = repository.isAlbumStarred(album)
 			rating.value = repository.getAlbumRating(album)
+			repository.getAlbumById(album.id)?.let { selectedAlbum.value = it }
 		}
 	}
 

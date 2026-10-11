@@ -15,6 +15,7 @@ import coil3.memory.MemoryCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.crossfade
 import coil3.serviceLoaderEnabled
+import kotlinx.coroutines.Dispatchers
 import paige.navic.domain.manager.PreferenceManager
 import paige.navic.util.createHttpClientWithPreferences
 
@@ -37,7 +38,7 @@ class CoilSingleton(
 
 	private fun getMemoryCache(): MemoryCache {
 		return sharedMemoryCache ?: MemoryCache.Builder()
-			.maxSizePercent(context, 0.15)
+			.maxSizePercent(context, 0.10)
 			.build().also { sharedMemoryCache = it }
 	}
 
@@ -53,6 +54,7 @@ class CoilSingleton(
 			}
 			.diskCache { getDiskCache() }
 			.memoryCache { getMemoryCache() }
+			.decoderCoroutineContext(Dispatchers.Default.limitedParallelism(3))
 			.crossfade(true)
 			.build()
 	}
@@ -75,6 +77,7 @@ class CoilSingleton(
 			}
 			.diskCache { getDiskCache() }
 			.memoryCache { getMemoryCache() }
+			.decoderCoroutineContext(Dispatchers.Default.limitedParallelism(3))
 			.crossfade(true)
 			.build()
 	}

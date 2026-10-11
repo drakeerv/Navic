@@ -96,7 +96,8 @@ fun ShareListScreenItem(
 				CoverArt(
 					coverArtId = share.items.firstOrNull()?.coverArtId,
 					modifier = Modifier.size(60.dp),
-					shape = preferenceManager.coverArtShape.decreasedShape
+					shape = preferenceManager.coverArtShape.decreasedShape,
+					useTileShape = true
 				)
 			},
 			content = { share.description?.let { Text(it) } },

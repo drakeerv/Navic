@@ -108,7 +108,7 @@ fun CollectionDetailScreen(
 
 	val rating by viewModel.rating.collectAsStateWithLifecycle()
 
-	val titleAlpha by remember {
+	val titleAlpha = remember {
 		derivedStateOf {
 			if (viewModel.listState.firstVisibleItemIndex >= 1) return@derivedStateOf 1f
 			val height =
@@ -140,7 +140,7 @@ fun CollectionDetailScreen(
 				CollectionDetailScreenTopBar(
 					albumInfoState = albumInfoState,
 					collection = collection,
-					titleAlpha = titleAlpha,
+					titleAlpha = { titleAlpha.value },
 					onSetShareId = { shareId = it },
 					onDownloadAll = { viewModel.downloadAll() },
 					onCancelDownloadAll = { viewModel.cancelDownloadAll() },
@@ -190,7 +190,7 @@ fun CollectionDetailScreen(
 						CollectionDetailScreenHeadingRow(
 							collection = collection,
 							tab = tab,
-							titleAlpha = 1f - titleAlpha
+							titleAlpha = { 1f - titleAlpha.value }
 						)
 					}
 

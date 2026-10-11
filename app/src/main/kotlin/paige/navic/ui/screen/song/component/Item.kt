@@ -159,7 +159,8 @@ fun SongListScreenItem(
 					CoverArt(
 						coverArtId = song.coverArtId,
 						modifier = Modifier.size(50.dp),
-						shape = preferenceManager.coverArtShape.decreasedShape
+						shape = preferenceManager.coverArtShape.decreasedShape,
+						useTileShape = true
 					)
 				},
 				trailingContent = {

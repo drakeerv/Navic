@@ -45,6 +45,7 @@ import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.domain.manager.PreferenceManager
 import paige.navic.domain.manager.SessionManager
+import paige.navic.domain.model.settings.tileVariant
 import paige.navic.ui.icons.Icons
 import paige.navic.ui.icons.outlined.Error
 import paige.navic.ui.theme.defaultFont
@@ -63,7 +64,8 @@ fun CoverArt(
 	crossfadeMs: Int = 500,
 	shadowElevation: Dp = 0.dp,
 	interactionSource: MutableInteractionSource? = null,
-	shape: Shape? = null
+	shape: Shape? = null,
+	useTileShape: Boolean = false
 ) {
 	val coilPlatformContext = LocalCoilPlatformContext.current
 
@@ -71,11 +73,13 @@ fun CoverArt(
 	val sessionManager = koinInject<SessionManager>()
 	val preferenceManager = koinInject<PreferenceManager>()
 
-	val shape = shape ?: if (!coverArtId.orEmpty().startsWith("ar-")) {
-		preferenceManager.coverArtShape.shape
+	val preferredShape = if (!coverArtId.orEmpty().startsWith("ar-")) {
+		preferenceManager.coverArtShape
 	} else {
-		preferenceManager.artistImageShape.shape
+		preferenceManager.artistImageShape
 	}
+	val resolvedShape = shape ?: if (useTileShape) preferredShape.tileShape else preferredShape.shape
+	val shape = if (useTileShape) resolvedShape.tileVariant() else resolvedShape
 
 	val model = remember(coverArtId, preferenceManager.customHeaders) {
 		val networkHeaders = NetworkHeaders.Builder().apply {

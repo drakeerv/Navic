@@ -12,7 +12,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
-import paige.navic.data.database.dao.AlbumDao
 import paige.navic.data.database.dao.DownloadDao
 import paige.navic.data.database.dao.SongDao
 import paige.navic.data.database.entity.DownloadStatus
@@ -24,12 +23,11 @@ import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongListType
 import paige.navic.ui.core.UiState
-import paige.navic.util.sortedByListType
+import paige.navic.util.toSqlQuery
 import kotlin.time.Clock
 
 class SongRepository(
 	private val songDao: SongDao,
-	private val albumDao: AlbumDao,
 	private val downloadDao: DownloadDao,
 	private val dbRepository: DbRepository,
 	private val syncManager: SyncManager
@@ -50,37 +48,25 @@ class SongRepository(
 		filters: Set<DomainFilter> = emptySet()
 	): ImmutableList<DomainSong> {
 		val songs = songDao
-			.getAllSongs()
+			.getSongsByQuery(
+				listType.toSqlQuery(
+					reversed = reversed,
+					starredOnly = DomainFilter.Starred in filters
+				)
+			)
 			.map { it.toDomainModel() }
 
-		val downloadedIds = if (filters.contains(DomainFilter.Downloaded)) {
-			downloadDao.getAllDownloadsList()
+		val filtered = if (DomainFilter.Downloaded in filters) {
+			val downloadedIds = downloadDao.getAllDownloadsList()
 				.filter { it.status == DownloadStatus.DOWNLOADED }
 				.map { it.songId }
 				.toSet()
-		} else emptySet()
-
-		val filteredByFilters = songs.filter { song ->
-			filters.all { filter ->
-				when (filter) {
-					DomainFilter.Starred -> song.starredAt != null
-					DomainFilter.Downloaded -> downloadedIds.contains(song.id)
-				}
-			}
-		}
-
-		val sorted = filteredByFilters
-			.toImmutableList()
-			.sortedByListType(
-				listType,
-				albums = albumDao.getAllAlbumsList().map { it.toDomainModel() }
-			)
-
-		return if (reversed) {
-			sorted.reversed().toImmutableList()
+			songs.filter { it.id in downloadedIds }
 		} else {
-			sorted
+			songs
 		}
+
+		return filtered.toImmutableList()
 	}
 
 	private suspend fun refreshLocalData(

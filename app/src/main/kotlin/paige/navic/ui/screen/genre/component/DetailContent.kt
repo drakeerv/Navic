@@ -141,8 +141,8 @@ fun GenreDetailScreenContent(
 			AlbumListScreenGridItem(
 				modifier = Modifier.animateItem().width(150.dp),
 				tab = "genre",
-				album = album,
-				selected = album == selectedAlbum,
+				album = if (album.id == selectedAlbum?.id) selectedAlbum!! else album,
+				selected = album.id == selectedAlbum?.id,
 				starred = selectedAlbumIsStarred,
 				onSelect = { onSelectAlbum(album) },
 				onDeselect = onClearAlbumSelection,

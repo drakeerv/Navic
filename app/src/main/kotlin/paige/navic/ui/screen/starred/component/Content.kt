@@ -239,9 +239,9 @@ fun StarredScreenContent(
 				albums.toImmutableList(),
 				Screen.AlbumList(true, DomainAlbumListType.AlphabeticalByArtist)
 			) { album ->
-				val albumDownloadStatus by downloadManager
-					.getCollectionDownloadStatus(album.songs.map { it.id })
-					.collectAsState(initial = DownloadStatus.NOT_DOWNLOADED)
+				val albumDownloadStatus by remember(album.id) {
+					downloadManager.getAlbumDownloadStatus(album.id)
+				}.collectAsState(initial = DownloadStatus.NOT_DOWNLOADED)
 				ArtCarouselItem(
 					coverArtId = album.coverArtId,
 					title = album.name ?: "[unknown album]",
@@ -252,32 +252,33 @@ fun StarredScreenContent(
 						backStack.add(Screen.CollectionDetail(album.id, "artist"))
 					}
 				)
-				if (selectedAlbum == album) {
+				if (selectedAlbum?.id == album.id) {
+					val fullAlbum = selectedAlbum
 					CollectionSheet(
 						onDismissRequest = { onClearAlbumSelection() },
-						collection = album,
+						collection = fullAlbum,
 						starred = selectedAlbumIsStarred,
 						onShare = { onSetShareId(album.id) },
 						onPlayNext = onPlayAlbumNext,
 						onAddToQueue = onAddAlbumToQueue,
 						onSetStarred = { onStarSelectedAlbum(!selectedAlbumIsStarred) },
 						onAddAllToPlaylist = {
-							songsToAddToPlaylist = selectedAlbum.songs.toImmutableList()
+							songsToAddToPlaylist = fullAlbum.songs.toImmutableList()
 						},
 						downloadStatus = albumDownloadStatus,
 						onDownloadAll = {
 							scope.launch {
-								downloadManager.downloadCollection(album)
+								downloadManager.downloadCollection(fullAlbum)
 							}
 						},
 						onCancelDownloadAll = {
 							scope.launch {
-								album.songs.forEach { downloadManager.cancelDownload(it.id) }
+								fullAlbum.songs.forEach { downloadManager.cancelDownload(it.id) }
 							}
 						},
 						onDeleteDownloadAll = {
 							scope.launch {
-								downloadManager.deleteDownloadedCollection(album)
+								downloadManager.deleteDownloadedCollection(fullAlbum)
 							}
 						},
 						rating = selectedAlbumRating,

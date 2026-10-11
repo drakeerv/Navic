@@ -130,6 +130,7 @@ fun ArtGridItem(
 			CoverArt(
 				coverArtId = coverArtId,
 				contentDescription = title,
+				crossfadeMs = 0,
 				modifier = Modifier
 					.fillMaxWidth()
 					.sharedElement(
@@ -142,7 +143,8 @@ fun ArtGridItem(
 						},
 						animatedVisibilityScope = LocalNavAnimatedContentScope.current
 					),
-				interactionSource = interactionSource
+				interactionSource = interactionSource,
+				useTileShape = true
 			)
 			Text(
 				text = title,

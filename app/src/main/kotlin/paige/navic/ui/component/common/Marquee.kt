@@ -111,7 +111,11 @@ private fun Marquee(
 
 	Box(
 		modifier = modifier
-			.graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+			.graphicsLayer {
+				compositingStrategy =
+					if (scrollState.maxValue > 0) CompositingStrategy.Offscreen
+					else CompositingStrategy.Auto
+			}
 			.drawWithContent {
 				drawContent()
 

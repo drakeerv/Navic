@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -92,6 +93,9 @@ fun SideBar() {
 	val railState = rememberWideNavigationRailState()
 
 	WideNavigationRail(
+		// Keep the expanded rail at its minimum width (220dp, the Material expanded-rail minimum)
+		// so the items, which now stretch to fill it, don't push it out to the maximum.
+		modifier = Modifier.widthIn(max = 220.dp),
 		state = railState,
 		header = {
 			Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -115,7 +119,8 @@ fun SideBar() {
 					}
 				},
 				label = { Text(stringResource(tab.label)) },
-				railExpanded = railState.targetValue == WideNavigationRailValue.Expanded
+				railExpanded = railState.targetValue == WideNavigationRailValue.Expanded,
+				fillExpandedWidth = true
 			)
 		}
 	}
@@ -141,7 +146,10 @@ private fun SideBarMiniPlayer(
 	)
 
 	Surface(
-		modifier = Modifier.padding(start = 24.dp),
+		// The trailing padding matches the rail item's expanded indicator inset (the rail's 220dp
+		// width minus the 20dp item padding group), so the mini player and the selected tab line up
+		// on both edges. Collapsed, the surface is only as wide as the artwork, so this is inert.
+		modifier = Modifier.padding(start = 24.dp, end = 20.dp),
 		color = MaterialTheme.colorScheme.surfaceContainerHigh,
 		shape = ContinuousRoundedRectangle(containerRadius),
 		onClick = dropUnlessResumed {

@@ -38,6 +38,28 @@ fun ApiAlbum.toEntity(
 	isExternal = this.isExternal
 )
 
+fun AlbumEntity.toDomainModel() = DomainAlbum(
+	id = albumId,
+	name = name,
+	artistId = artistId,
+	artistName = artistName,
+	coverArtId = coverArtId,
+	songCount = songCount,
+	duration = duration,
+	year = year,
+	genre = genre,
+	starredAt = starredAt,
+	userRating = userRating,
+	musicBrainzId = musicBrainzId,
+	createdAt = createdAt,
+	lastPlayedAt = lastPlayedAt,
+	playCount = playCount,
+	genres = genres,
+	version = version,
+	songs = emptyList(),
+	isExternal = isExternal
+)
+
 fun AlbumWithSongs.toDomainModel() = DomainAlbum(
 	id = album.albumId,
 	name = album.name,

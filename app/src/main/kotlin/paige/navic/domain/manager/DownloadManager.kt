@@ -31,9 +31,12 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -45,6 +48,7 @@ import paige.navic.R
 import paige.navic.data.database.dao.AlbumDao
 import paige.navic.data.database.dao.DownloadDao
 import paige.navic.data.database.dao.LyricDao
+import paige.navic.data.database.dao.SongDao
 import paige.navic.data.database.entity.DownloadEntity
 import paige.navic.data.database.entity.DownloadStatus
 import paige.navic.data.database.entity.LyricEntity
@@ -63,6 +67,7 @@ class DownloadManager(
 	private val storageManager: StorageManager,
 	private val lyricsRepository: LyricsRepository,
 	private val lyricDao: LyricDao,
+	private val songDao: SongDao,
 	private val sessionManager: SessionManager,
 	private val preferenceManager: PreferenceManager,
 	private val connectivityManager: ConnectivityManager,
@@ -144,6 +149,13 @@ class DownloadManager(
 
 	val allDownloads = downloadDao.getAllDownloads().map { it.toImmutableList() }
 	val downloadCount = downloadDao.getDownloadsCount()
+
+	private val albumSongIds = songDao.getAlbumSongIdsFlow()
+		.map { rows -> rows.groupBy({ it.albumId }, { it.songId }) }
+		.stateIn(scope, SharingStarted.WhileSubscribed(5_000), emptyMap())
+
+	private val downloadsState: StateFlow<List<DownloadEntity>> =
+		downloadDao.getAllDownloads().stateIn(scope, SharingStarted.Eagerly, emptyList())
 	val downloadSize = allDownloads.map { downloads ->
 		downloads
 			.filter { it.status == DownloadStatus.DOWNLOADED && it.filePath != null }
@@ -350,18 +362,30 @@ class DownloadManager(
 	}
 
 	fun getCollectionDownloadStatus(songIds: List<String>): Flow<DownloadStatus> {
-		return allDownloads.map { downloads ->
-			val collectionDownloads = downloads.filter { it.songId in songIds }
-			when {
-				collectionDownloads.isEmpty() -> DownloadStatus.NOT_DOWNLOADED
-				collectionDownloads.any { it.status == DownloadStatus.DOWNLOADING } -> DownloadStatus.DOWNLOADING
-				collectionDownloads.any { it.status == DownloadStatus.FAILED } -> DownloadStatus.FAILED
-				(collectionDownloads.size == songIds.size &&
-					collectionDownloads.all { it.status == DownloadStatus.DOWNLOADED })
-					-> DownloadStatus.DOWNLOADED
+		return downloadsState.map { downloads -> computeDownloadStatus(songIds, downloads) }
+	}
 
-				else -> DownloadStatus.NOT_DOWNLOADED
-			}
+	fun getAlbumDownloadStatus(albumId: String): Flow<DownloadStatus> {
+		return combine(albumSongIds, downloadsState) { songIdsByAlbum, downloads ->
+			computeDownloadStatus(songIdsByAlbum[albumId].orEmpty(), downloads)
+		}
+	}
+
+	private fun computeDownloadStatus(
+		songIds: List<String>,
+		downloads: List<DownloadEntity>
+	): DownloadStatus {
+		if (songIds.isEmpty()) return DownloadStatus.NOT_DOWNLOADED
+
+		val collectionDownloads = downloads.filter { it.songId in songIds }
+		return when {
+			collectionDownloads.isEmpty() -> DownloadStatus.NOT_DOWNLOADED
+			collectionDownloads.any { it.status == DownloadStatus.DOWNLOADING } -> DownloadStatus.DOWNLOADING
+			collectionDownloads.any { it.status == DownloadStatus.FAILED } -> DownloadStatus.FAILED
+			collectionDownloads.size == songIds.size &&
+				collectionDownloads.all { it.status == DownloadStatus.DOWNLOADED } -> DownloadStatus.DOWNLOADED
+
+			else -> DownloadStatus.NOT_DOWNLOADED
 		}
 	}
 
@@ -403,7 +427,7 @@ class DownloadManager(
 
 		val imageRequest = ImageRequest.Builder(coilPlatformContext)
 			.data(coverArtUrl)
-			.size(Size.ORIGINAL)
+			.size(Size(1024, 1024))
 			.memoryCacheKey(coverId)
 			.diskCacheKey(coverId)
 			.diskCachePolicy(CachePolicy.ENABLED)

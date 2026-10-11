@@ -39,7 +39,11 @@ fun SwipeToDismissBox(
 
 	androidx.compose.material3.SwipeToDismissBox(
 		state = state,
-		backgroundContent = backgroundContent,
+		backgroundContent = {
+			if (state.dismissDirection != SwipeToDismissBoxValue.Settled) {
+				backgroundContent(this)
+			}
+		},
 		modifier = modifier,
 		enableDismissFromStartToEnd = enableDismissFromStartToEnd,
 		enableDismissFromEndToStart = enableDismissFromEndToStart,

@@ -9,7 +9,6 @@ package paige.navic.ui.component.common
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -23,9 +22,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -33,6 +33,15 @@ fun Waveform(
 	modifier: Modifier = Modifier,
 	isPlaying: Boolean
 ) {
+	if (isPlaying) {
+		AnimatedWaveform(modifier)
+	} else {
+		StaticWaveform(modifier)
+	}
+}
+
+@Composable
+private fun AnimatedWaveform(modifier: Modifier = Modifier) {
 	val transition = rememberInfiniteTransition()
 	Row(
 		modifier = modifier.height(18.dp),
@@ -40,7 +49,7 @@ fun Waveform(
 		verticalAlignment = Alignment.CenterVertically
 	) {
 		repeat(5) { index ->
-			val fraction by transition.animateFloat(
+			val fraction = transition.animateFloat(
 				initialValue = 0.2f,
 				targetValue = 1f,
 				animationSpec = infiniteRepeatable(
@@ -51,13 +60,32 @@ fun Waveform(
 					repeatMode = RepeatMode.Reverse
 				)
 			)
-			val limit by animateFloatAsState(
-				if (isPlaying) 1f else .2f
-			)
 			Box(
 				modifier = Modifier
 					.width(3.dp)
-					.fillMaxHeight(fraction.coerceAtMost(limit))
+					.fillMaxHeight()
+					.graphicsLayer {
+						scaleY = fraction.value
+						transformOrigin = TransformOrigin(0.5f, 0.5f)
+					}
+					.background(MaterialTheme.colorScheme.onSurface, shape = CircleShape)
+			)
+		}
+	}
+}
+
+@Composable
+private fun StaticWaveform(modifier: Modifier = Modifier) {
+	Row(
+		modifier = modifier.height(18.dp),
+		horizontalArrangement = Arrangement.spacedBy(2.dp),
+		verticalAlignment = Alignment.CenterVertically
+	) {
+		repeat(5) {
+			Box(
+				modifier = Modifier
+					.width(3.dp)
+					.fillMaxHeight(0.2f)
 					.background(MaterialTheme.colorScheme.onSurface, shape = CircleShape)
 			)
 		}

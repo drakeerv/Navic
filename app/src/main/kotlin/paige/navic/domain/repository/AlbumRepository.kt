@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import paige.navic.data.database.dao.AlbumDao
 import paige.navic.data.database.dao.DownloadDao
+import paige.navic.data.database.dao.SongDao
 import paige.navic.data.database.entity.DownloadStatus
 import paige.navic.data.database.entity.SyncActionType
 import paige.navic.data.database.mapper.toDomainModel
@@ -28,6 +29,7 @@ import kotlin.time.Clock
 
 class AlbumRepository(
 	private val albumDao: AlbumDao,
+	private val songDao: SongDao,
 	private val downloadDao: DownloadDao,
 	private val syncManager: SyncManager,
 	private val dbRepository: DbRepository
@@ -46,14 +48,22 @@ class AlbumRepository(
 				.toSet()
 		} else null
 
+		val albumSongIds = if (downloadedSongIds != null) {
+			songDao.getAlbumSongIds().groupBy({ it.albumId }, { it.songId })
+		} else {
+			emptyMap()
+		}
+
 		return albumDao
-			.getAlbumsByQuery(listType.toSqlQuery())
+			.getAlbumSummariesByQuery(listType.toSqlQuery())
 			.map { it.toDomainModel() }
 			.filter { album ->
 				filters.all { filter ->
 					when (filter) {
 						DomainFilter.Starred -> album.starredAt != null
-						DomainFilter.Downloaded -> downloadedSongIds != null && downloadedSongIds.containsAll(album.songs.map { it.id })
+						DomainFilter.Downloaded -> downloadedSongIds != null &&
+							albumSongIds[album.id].orEmpty()
+								.let { it.isNotEmpty() && downloadedSongIds.containsAll(it) }
 					}
 				}
 			}

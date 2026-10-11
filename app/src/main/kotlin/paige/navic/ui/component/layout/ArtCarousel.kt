@@ -130,7 +130,8 @@ fun ArtCarouselItem(
 			coverArtId = coverArtId,
 			contentDescription = contentDescription,
 			interactionSource = interactionSource,
-			modifier = Modifier.fillMaxWidth()
+			modifier = Modifier.fillMaxWidth(),
+			useTileShape = true
 		)
 
 		Text(

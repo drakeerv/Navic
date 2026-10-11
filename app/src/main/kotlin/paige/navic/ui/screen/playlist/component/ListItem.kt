@@ -67,7 +67,8 @@ fun PlaylistListScreenListItem(
 				CoverArt(
 					coverArtId = playlist.coverArtId,
 					modifier = Modifier.size(50.dp),
-					shape = preferenceManager.coverArtShape.decreasedShape
+					shape = preferenceManager.coverArtShape.decreasedShape,
+					useTileShape = true
 				)
 			},
 			content = { MarqueeText(playlist.name ?: "[unknown playlist]") },

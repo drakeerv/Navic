@@ -7,40 +7,65 @@
 package paige.navic.util
 
 import androidx.room3.RoomRawQuery
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
-import paige.navic.domain.model.DomainAlbum
+import androidx.sqlite.SQLiteStatement
 import paige.navic.domain.model.DomainAlbumListType
-import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongListType
 
-// TODO: sort with sql instead
-fun ImmutableList<DomainSong>.sortedByListType(
-	listType: DomainSongListType,
-	albums: List<DomainAlbum>
-): ImmutableList<DomainSong> {
-	return when (listType) {
-		DomainSongListType.FrequentlyPlayed -> sortedByDescending { it.playCount }
-		DomainSongListType.Newest -> sortedByDescending {
-			albums
-				.firstOrNull { album -> album.id == it.albumId }
-				?.createdAt
+private fun bindArgument(statement: SQLiteStatement, bindIndex: Int, arg: Any) {
+	when (arg) {
+		is String -> statement.bindText(bindIndex, arg)
+		is Int -> statement.bindInt(bindIndex, arg)
+		is Long -> statement.bindLong(bindIndex, arg)
+		is Float -> statement.bindFloat(bindIndex, arg)
+		is Double -> statement.bindDouble(bindIndex, arg)
+		is Boolean -> statement.bindInt(bindIndex, if (arg) 1 else 0)
+	}
+}
+
+fun DomainSongListType.toSqlQuery(
+	reversed: Boolean,
+	starredOnly: Boolean
+): RoomRawQuery {
+	val conditions = mutableListOf<String>()
+	val args = mutableListOf<Any>()
+
+	if (starredOnly) conditions += "starredAt IS NOT NULL"
+
+	val dir = if (reversed) "ASC" else "DESC"
+	val tieDir = if (reversed) "DESC" else "ASC"
+
+	val orderBy = when (this) {
+		DomainSongListType.FrequentlyPlayed -> "playCount $dir, songId $tieDir"
+		DomainSongListType.Rating -> "COALESCE(userRating, 0) $dir, songId $tieDir"
+		DomainSongListType.Year -> "year $dir, songId $tieDir"
+		DomainSongListType.Newest ->
+			"(SELECT a.createdAt FROM AlbumEntity a WHERE a.albumId = SongEntity.belongsToAlbumId) $dir, songId $tieDir"
+
+		DomainSongListType.Random -> "RANDOM()"
+
+		is DomainSongListType.ByArtist -> {
+			conditions += "artistId = ?"
+			args += artistId
+			"playCount $dir, songId $tieDir"
 		}
 
-		DomainSongListType.Random -> shuffled()
+		is DomainSongListType.ByGenre -> {
+			conditions += "(genre = ? OR genres = ? OR genres LIKE ? OR genres LIKE ? OR genres LIKE ?)"
+			args += genre
+			args += genre
+			args += "$genre||%"
+			args += "%||$genre"
+			args += "%||$genre||%"
+			"playCount $dir, songId $tieDir"
+		}
+	}
 
-		DomainSongListType.Rating -> sortedByDescending { it.userRating ?: 0 }
-		DomainSongListType.Year -> sortedByDescending { it.year }
+	val whereClause = if (conditions.isEmpty()) "" else " WHERE " + conditions.joinToString(" AND ")
+	val sql = "SELECT SongEntity.* FROM SongEntity$whereClause ORDER BY $orderBy"
 
-		is DomainSongListType.ByArtist -> filter {
-			it.artistId == listType.artistId
-		}.sortedByDescending { it.playCount }
-
-		is DomainSongListType.ByGenre -> filter {
-			it.genre == listType.genre
-				|| listType.genre in it.genres
-		}.sortedByDescending { it.playCount }
-	}.toImmutableList()
+	return RoomRawQuery(sql) { statement ->
+		args.forEachIndexed { index, arg -> bindArgument(statement, index + 1, arg) }
+	}
 }
 
 fun DomainAlbumListType.toSqlQuery(): RoomRawQuery {
@@ -83,16 +108,6 @@ fun DomainAlbumListType.toSqlQuery(): RoomRawQuery {
 	val sql = "SELECT * FROM AlbumEntity$whereClause ORDER BY $orderBy"
 
 	return RoomRawQuery(sql) { statement ->
-		args.forEachIndexed { index, arg ->
-			val bindIndex = index + 1
-			when (arg) {
-				is String -> statement.bindText(bindIndex, arg)
-				is Int -> statement.bindInt(bindIndex, arg)
-				is Long -> statement.bindLong(bindIndex, arg)
-				is Float -> statement.bindFloat(bindIndex, arg)
-				is Double -> statement.bindDouble(bindIndex, arg)
-				is Boolean -> statement.bindInt(bindIndex, if (arg) 1 else 0)
-			}
-		}
+		args.forEachIndexed { index, arg -> bindArgument(statement, index + 1, arg) }
 	}
 }

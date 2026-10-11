@@ -52,7 +52,8 @@ fun TopArtistItem(
 			CoverArt(
 				coverArtId = artist.coverArtId,
 				modifier = Modifier.size(56.dp),
-				shape = preferenceManager.artistImageShape.decreasedShape
+				shape = preferenceManager.artistImageShape.decreasedShape,
+				useTileShape = true
 			)
 		},
 		overlineContent = {

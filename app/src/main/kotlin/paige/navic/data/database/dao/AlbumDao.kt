@@ -20,20 +20,8 @@ import paige.navic.util.Logger
 
 @Dao
 interface AlbumDao {
-	@Transaction
-	@Query(" SELECT * FROM AlbumEntity WHERE genre = :genreName OR genres LIKE '%' || :genreName || '%' ORDER BY year DESC, name COLLATE NOCASE ASC")
-	fun getAlbumsByGenre(genreName: String): Flow<List<AlbumWithSongs>>
-
-	@Transaction
-	@Query("SELECT * FROM AlbumEntity ORDER BY name ASC")
-	fun getAllAlbums(): Flow<List<AlbumWithSongs>>
-
-	@Transaction
-	@Query("SELECT * FROM AlbumEntity ORDER BY name ASC")
-	suspend fun getAllAlbumsList(): List<AlbumWithSongs>
-
 	@RawQuery
-	suspend fun getAlbumsByQuery(query: RoomRawQuery): List<AlbumWithSongs>
+	suspend fun getAlbumSummariesByQuery(query: RoomRawQuery): List<AlbumEntity>
 
 	@Transaction
 	@Query("SELECT COUNT(albumId) FROM AlbumEntity")

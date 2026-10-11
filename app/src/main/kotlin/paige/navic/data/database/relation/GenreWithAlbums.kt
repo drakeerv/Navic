@@ -18,5 +18,5 @@ data class GenreWithAlbums(
 		parentColumns = ["genreName"],
 		entityColumns = ["genre"]
 	)
-	val albums: List<AlbumWithSongs>
+	val albums: List<AlbumEntity>
 )

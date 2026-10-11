@@ -33,6 +33,7 @@ import coil3.ImageLoader
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.size.Size
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 import paige.navic.domain.manager.SessionManager
@@ -64,6 +65,7 @@ fun BlendBackground(
 		ImageRequest.Builder(coilPlatformContext)
 			.disableHardwareIfCucked()
 			.data(coverArtId?.let { sessionManager.getCoverArtUrl(it) })
+			.size(Size(512, 512))
 			.memoryCacheKey(coverArtId?.let { "${it}_static" })
 			.diskCacheKey(coverArtId)
 			.diskCachePolicy(CachePolicy.ENABLED)

@@ -26,7 +26,9 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -90,10 +92,15 @@ fun CollectionDetailScreenSongRow(
 	val preferenceManager = koinInject<PreferenceManager>()
 
 	val player = koinInject<MediaPlayerViewModel>()
-	val playerState by player.uiState.collectAsStateWithLifecycle()
+	val playerState = player.uiState.collectAsStateWithLifecycle()
+	val isCurrentTrack by remember(song.id) {
+		derivedStateOf { playerState.value.currentSong?.id == song.id }
+	}
+	val isPaused by remember {
+		derivedStateOf { playerState.value.isPaused }
+	}
 
 	val isDownloaded = download?.status == DownloadStatus.DOWNLOADED
-	val isCurrentTrack = playerState.currentSong?.id == song.id
 	val isExplicit = song.explicitStatus == DomainExplicitStatus.Explicit
 		&& preferenceManager.explicitContentPlayback != ExplicitContentPlayback.Allowed
 	val maybeUnavailable = isOffline && !isDownloaded
@@ -111,14 +118,14 @@ fun CollectionDetailScreenSongRow(
 		gesturesEnabled = !isExplicit,
 		onDismiss = {
 			if (it == SwipeToDismissBoxValue.StartToEnd) {
-				if (playerState.queue.any { item -> item.id == song.id } && !preferenceManager.shushQueueDuplicateDialog) {
+				if (playerState.value.queue.any { item -> item.id == song.id } && !preferenceManager.shushQueueDuplicateDialog) {
 					isPlayNextPending = false
 				} else {
 					onAddToQueue()
 				}
 			}
 			if (it == SwipeToDismissBoxValue.EndToStart) {
-				if (playerState.queue.any { item -> item.id == song.id } && !preferenceManager.shushQueueDuplicateDialog) {
+				if (playerState.value.queue.any { item -> item.id == song.id } && !preferenceManager.shushQueueDuplicateDialog) {
 					isPlayNextPending = true
 				} else {
 					onPlayNext()
@@ -174,7 +181,8 @@ fun CollectionDetailScreenSongRow(
 					CoverArt(
 						modifier = Modifier.size(48.dp),
 						coverArtId = song.coverArtId,
-						shape = MaterialTheme.shapes.small
+						shape = MaterialTheme.shapes.small,
+						useTileShape = true
 					)
 				else
 					Text(
@@ -276,7 +284,7 @@ fun CollectionDetailScreenSongRow(
 					if (isCurrentTrack) {
 						Waveform(
 							modifier = Modifier.padding(end = 12.dp),
-							isPlaying = !playerState.isPaused
+							isPlaying = !isPaused
 						)
 					}
 					song.duration.toHoursMinutesSeconds().let {

@@ -152,7 +152,8 @@ fun QueueScreenItem(
 						CoverArt(
 							modifier = Modifier.size(48.dp),
 							coverArtId = song.coverArtId,
-							shape = ContinuousRoundedRectangle(10.dp)
+							shape = ContinuousRoundedRectangle(10.dp),
+							useTileShape = true
 						)
 					},
 					trailingContent = {

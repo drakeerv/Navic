@@ -329,7 +329,8 @@ fun SearchScreen(
 												CoverArt(
 													coverArtId = song.coverArtId,
 													modifier = Modifier.size(50.dp),
-													shape = preferenceManager.coverArtShape.decreasedShape
+													shape = preferenceManager.coverArtShape.decreasedShape,
+													useTileShape = true
 												)
 											},
 											trailingContent = {
@@ -405,8 +406,8 @@ fun SearchScreen(
 									modifier = Modifier.animateItem(fadeInSpec = null)
 										.width(150.dp),
 									tab = "search",
-									album = album,
-									selected = album == albumListSelection,
+									album = if (album.id == albumListSelection?.id) albumListSelection!! else album,
+									selected = album.id == albumListSelection?.id,
 									starred = albumListStarred,
 									onSelect = { albumListViewModel.selectAlbum(album) },
 									onDeselect = { albumListViewModel.clearSelection() },

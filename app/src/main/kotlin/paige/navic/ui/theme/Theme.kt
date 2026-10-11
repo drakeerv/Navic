@@ -6,6 +6,7 @@
 
 package paige.navic.ui.theme
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
@@ -37,16 +38,18 @@ fun NavicTheme(
 			?: chosenScheme,
 		motionScheme = motionScheme,
 		typography = typography(),
-		shapes = Shapes(
-			extraSmall = ContinuousRoundedRectangle(ShapeDefaults.ExtraSmall.topStart),
-			small = ContinuousRoundedRectangle(ShapeDefaults.Small.topStart),
-			medium = ContinuousRoundedRectangle(ShapeDefaults.Medium.topStart),
-			large = ContinuousRoundedRectangle(ShapeDefaults.Large.topStart),
-			extraLarge = ContinuousRoundedRectangle(ShapeDefaults.ExtraLarge.topStart),
-			largeIncreased = ContinuousRoundedRectangle(ShapeDefaults.LargeIncreased.topStart),
-			extraLargeIncreased = ContinuousRoundedRectangle(ShapeDefaults.ExtraLargeIncreased.topStart),
-			extraExtraLarge = ContinuousRoundedRectangle(ShapeDefaults.ExtraExtraLarge.topStart)
-		),
+		shapes = remember {
+			Shapes(
+				extraSmall = RoundedCornerShape(ShapeDefaults.ExtraSmall.topStart),
+				small = RoundedCornerShape(ShapeDefaults.Small.topStart),
+				medium = RoundedCornerShape(ShapeDefaults.Medium.topStart),
+				large = ContinuousRoundedRectangle(ShapeDefaults.Large.topStart),
+				extraLarge = ContinuousRoundedRectangle(ShapeDefaults.ExtraLarge.topStart),
+				largeIncreased = ContinuousRoundedRectangle(ShapeDefaults.LargeIncreased.topStart),
+				extraLargeIncreased = ContinuousRoundedRectangle(ShapeDefaults.ExtraLargeIncreased.topStart),
+				extraExtraLarge = ContinuousRoundedRectangle(ShapeDefaults.ExtraExtraLarge.topStart)
+			)
+		},
 		content = content
 	)
 }

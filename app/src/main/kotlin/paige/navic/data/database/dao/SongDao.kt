@@ -10,11 +10,18 @@ import androidx.room3.Dao
 import androidx.room3.Insert
 import androidx.room3.OnConflictStrategy
 import androidx.room3.Query
+import androidx.room3.RawQuery
+import androidx.room3.RoomRawQuery
 import androidx.room3.Transaction
 import androidx.room3.Upsert
 import kotlinx.coroutines.flow.Flow
 import paige.navic.data.database.entity.SongEntity
 import paige.navic.util.Logger
+
+data class AlbumSongId(
+	val albumId: String,
+	val songId: String
+)
 
 @Dao
 interface SongDao {
@@ -62,6 +69,15 @@ interface SongDao {
 
 	@Query("SELECT * FROM SongEntity WHERE belongsToAlbumId = :albumId")
 	suspend fun getSongsByAlbumId(albumId: String): List<SongEntity>
+
+	@RawQuery
+	suspend fun getSongsByQuery(query: RoomRawQuery): List<SongEntity>
+
+	@Query("SELECT belongsToAlbumId AS albumId, songId FROM SongEntity WHERE belongsToAlbumId IS NOT NULL")
+	suspend fun getAlbumSongIds(): List<AlbumSongId>
+
+	@Query("SELECT belongsToAlbumId AS albumId, songId FROM SongEntity WHERE belongsToAlbumId IS NOT NULL")
+	fun getAlbumSongIdsFlow(): Flow<List<AlbumSongId>>
 
 	@Query("DELETE FROM SongEntity WHERE songId = :songId")
 	suspend fun deleteSong(songId: String)

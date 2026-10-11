@@ -13,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -60,8 +61,7 @@ fun AlbumListScreenListItem(
 	var playlistDialogShown by rememberSaveable { mutableStateOf(false) }
 
 	val downloadManager = koinInject<DownloadManager>()
-	val downloadStatus by downloadManager
-		.getCollectionDownloadStatus(album.songs.map { it.id })
+	val downloadStatus by remember(album.id) { downloadManager.getAlbumDownloadStatus(album.id) }
 		.collectAsState(initial = DownloadStatus.NOT_DOWNLOADED)
 
 	Box(modifier) {
@@ -70,7 +70,8 @@ fun AlbumListScreenListItem(
 				CoverArt(
 					coverArtId = album.coverArtId,
 					modifier = Modifier.size(50.dp),
-					shape = preferenceManager.coverArtShape.decreasedShape
+					shape = preferenceManager.coverArtShape.decreasedShape,
+					useTileShape = true
 				)
 			},
 			content = { MarqueeText(album.name ?: "[unknown album]") },
