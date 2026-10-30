@@ -532,4 +532,6 @@
     <string name="info_incorrect_credentials">Credenziali errate. Per favore ricontrolla e riprova.</string>
     <string name="title_integrations">Integrazioni</string>
     <string name="action_edit_api_key">Modifica la chiave API: %1$s</string>
+    <string name="subtitle_swipe_to_dismiss">\"Nascondi se idle\" deve essere attivo</string>
+    <string name="option_swipe_to_dismiss">Trascina per ignorare</string>
 </resources>
