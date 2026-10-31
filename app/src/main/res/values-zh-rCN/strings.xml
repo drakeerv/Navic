@@ -382,7 +382,6 @@
     <string name="title_delete_radio">是否删除广播？</string>
     <string name="title_update_radio">更新广播</string>
     <string name="title_discord_server">Discord 服务器</string>
-    <string name="title_github">GitHub</string>
     <string name="title_codeberg">Codeberg</string>
     <string name="option_cover_art_action">封面点击行为</string>
     <string name="option_equalizer">均衡器</string>

@@ -57,7 +57,6 @@
     <string name="title_account">Обліковий запис</string>
     <string name="title_track_info">Відомості про композицію</string>
     <string name="title_lyric_providers">Джерела текстів пісень</string>
-    <string name="title_github">GitHub</string>
     <string name="title_codeberg">Codeberg</string>
     <string name="title_link_confirmation">Перехід на зовнішній сайт</string>
     <string name="subtitle_appearance">Теми, кольори, компонування та значок додатку</string>

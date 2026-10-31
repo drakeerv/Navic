@@ -53,7 +53,6 @@
 	<string name="title_download_quality">Качество на изтегляне</string>
 	<string name="title_wifi">Wi-Fi</string>
 	<string name="title_streaming_quality">Качество на слушане</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="subtitle_appearance">Теми, цветове, подредба, икона на приложението</string>
 	<string name="subtitle_trigger_sync">Веднага кара пълно дърпане на библиотеката</string>

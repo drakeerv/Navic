@@ -362,7 +362,6 @@
     <string name="option_cover_art_action_show_lyrics">Liedtext anzeigen</string>
     <string name="title_discord_server">Discord Server</string>
     <string name="title_lyric_providers">Lyrics Quelle</string>
-    <string name="title_github">GitHub</string>
     <string name="title_link_confirmation">Navic verlassen</string>
     <string name="subtitle_configure_lyric_providers">Wähle die Liedtext-Quelle</string>
     <string name="option_auto_fill_queue">Wiedergabeliste automatisch füllen</string>

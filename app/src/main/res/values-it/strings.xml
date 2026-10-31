@@ -379,7 +379,6 @@
     <string name="info_download_quality">I preset di qualità superiore utilizzeranno più spazio di archiviazione e più dati. La transcodifica può aumentare i tempi di download. Se riscontri problemi, seleziona Lossless.</string>
     <string name="title_discord_server">Server discord</string>
     <string name="title_lyric_providers">Provider dei testi</string>
-    <string name="title_github">GitHub</string>
     <string name="title_codeberg">Codeberg</string>
     <string name="title_link_confirmation">Uscita da Navic</string>
     <string name="subtitle_configure_lyric_providers">Scegli dove prendere i testi</string>

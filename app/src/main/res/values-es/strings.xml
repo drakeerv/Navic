@@ -370,7 +370,6 @@
     <string name="option_cover_art_action_disabled">Deshabilitada</string>
     <string name="title_discord_server">Servidor de Discord</string>
     <string name="title_lyric_providers">Proveedores de letras</string>
-    <string name="title_github">GitHub</string>
     <string name="title_codeberg">Codeberg</string>
     <string name="title_link_confirmation">Saliendo de Navic</string>
     <string name="subtitle_configure_lyric_providers">Cambie el origen de las letras</string>

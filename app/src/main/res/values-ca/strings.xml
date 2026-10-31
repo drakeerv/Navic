@@ -378,7 +378,6 @@
 	<string name="action_reset">Reset</string>
 	<string name="title_discord_server">Servidor de Discord</string>
 	<string name="title_lyric_providers">Proveïdors de lletres</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="title_link_confirmation">Esteu sortint de Navic</string>
 	<string name="subtitle_configure_lyric_providers">Canvieu la font des d\'on s\'obtenen les lletres</string>

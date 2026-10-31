@@ -379,7 +379,6 @@
 	<string name="action_reset">Réinitialiser</string>
 	<string name="title_discord_server">Serveur Discord</string>
 	<string name="title_lyric_providers">Fournisseur de paroles</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="subtitle_configure_lyric_providers">Choisir d\'où les paroles sont récupérées</string>
 	<string name="title_link_confirmation">Sortir de Navic</string>

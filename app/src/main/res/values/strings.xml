@@ -38,6 +38,7 @@
 	<string name="title_all">All</string>
 	<string name="title_similar_artists">Similar artists</string>
 	<string name="title_discord_server">Discord server</string>
+	<string name="title_matrix_space">Matrix space</string>
 	<string name="title_shares">Shares</string>
 	<string name="title_choose_font">Application font</string>
 	<string name="title_fonts_inbuilt">Built-in</string>

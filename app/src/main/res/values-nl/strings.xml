@@ -248,7 +248,6 @@
 	<string name="title_account">Account</string>
 	<string name="title_track_info">Track Informatie</string>
 	<string name="title_lyric_providers">Bron voor Songtext</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="title_link_confirmation">Navic Verlaten</string>
 	<string name="subtitle_offline_mode">Legt vast, wanneer de App in de offline-modus gaat. Vereist het herstarten van de App</string>

@@ -336,7 +336,6 @@
     <string name="info_click_to_retry">Trykk her for å prøve på nytt</string>
     <string name="title_discord_server">Discord tjener</string>
     <string name="title_codeberg">Codeberg</string>
-    <string name="title_github">Github</string>
     <string name="subtitle_auto_fill_queue">Legg til en tilfeldig sang når det kun er en sang igjen i avspillingskøen</string>
     <string name="title_link_confirmation">Du forlater nå Navic</string>
     <string name="option_auto_fill_queue">Fyll avspillingskøen automatisk</string>

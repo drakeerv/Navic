@@ -375,7 +375,6 @@
 	<string name="option_cover_art_action_show_lyrics">Pokaż tekst</string>
 	<string name="option_cover_art_action_disabled">Wyłączone</string>
 	<string name="title_discord_server">Serwer Discord</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="title_link_confirmation">Wyjście z Navic</string>
 	<string name="action_visit_site">Odwiedź stronę</string>

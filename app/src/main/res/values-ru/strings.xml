@@ -384,7 +384,6 @@
     <string name="action_reset">Сбросить</string>
     <string name="info_external_song">Внешний</string>
     <string name="info_external_song_description">Ваш сервер пометил этот трек как внешний, поэтому вы, возможно, не сможете его прослушать.</string>
-    <string name="title_github">GitHub</string>
     <string name="title_codeberg">Codeberg</string>
     <string name="action_configure_lyric_providers">Настроить источник текстов песен</string>
     <string name="subtitle_configure_lyric_providers">Измените источник получения текстов песен</string>

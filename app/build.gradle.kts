@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
-import com.android.build.gradle.internal.api.BaseVariantOutputImpl
-
 plugins {
 	alias(libs.plugins.android.application)
 	alias(libs.plugins.compose.compiler)
@@ -164,12 +162,10 @@ android {
 androidComponents {
 	onVariants { variant ->
 		variant.outputs.forEach { output ->
-			if (output is BaseVariantOutputImpl) {
-				output.outputFileName = if (variant.flavorName == "foss") {
-					"Navic.foss.apk"
-				} else {
-					"Navic.apk"
-				}
+			output.outputFileName = if (variant.flavorName == "foss") {
+				"Navic.foss.apk"
+			} else {
+				"Navic.apk"
 			}
 		}
 	}

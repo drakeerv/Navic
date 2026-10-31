@@ -41,7 +41,7 @@ import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
 import paige.navic.ui.screen.settings.component.SettingsNavItem
 import paige.navic.ui.screen.settings.component.SettingsToggleItem
 
-const val GITHUB_BASE_URL = "https://github.com/ssalggnikool/Navic/"
+const val CODEBERG_BASE_URL = "https://codeberg.org/paige/Navic/"
 
 @Composable
 fun SettingsAboutScreen() {
@@ -96,7 +96,7 @@ fun SettingsAboutScreen() {
 
 			// TODO: make this less ass
 			if (BuildConfig.GIT_COMMIT_HASH.isNotBlank()) {
-				val commitLink = "${GITHUB_BASE_URL}commit/${BuildConfig.GIT_COMMIT_HASH}"
+				val commitLink = "${CODEBERG_BASE_URL}commit/${BuildConfig.GIT_COMMIT_HASH}"
 				val branchName = BuildConfig.GIT_BRANCH_NAME
 				val commitAuthor = BuildConfig.GIT_COMMIT_AUTHOR
 
@@ -113,13 +113,13 @@ fun SettingsAboutScreen() {
 						content = { Text(stringResource(R.string.title_commit_message)) },
 						supportingContent = {
 							Text(
-								BuildConfig.GIT_COMMIT_MESSAGE?.split("\n")?.firstOrNull()
+								text = BuildConfig.GIT_COMMIT_MESSAGE.split("\n").firstOrNull()
 									?: "unknown"
 							)
 						}
 					)
 					SettingsNavItem(
-						onClick = { linkToOpen = "${GITHUB_BASE_URL}tree/${branchName}" },
+						onClick = { linkToOpen = "${CODEBERG_BASE_URL}src/branch/${branchName}" },
 						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 4),
 						content = { Text(stringResource(R.string.title_branch_name)) },
 						supportingContent = { Text(BuildConfig.GIT_BRANCH_NAME) }
@@ -127,7 +127,7 @@ fun SettingsAboutScreen() {
 					SettingsNavItem(
 						onClick = {
 							linkToOpen =
-								"${GITHUB_BASE_URL}commits/${branchName}/?author=${commitAuthor}"
+								"${CODEBERG_BASE_URL}commits/${branchName}/?author=${commitAuthor}"
 						},
 						shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = 4),
 						content = { Text(stringResource(R.string.title_commit_author)) },
@@ -138,18 +138,18 @@ fun SettingsAboutScreen() {
 
 			SettingsGroup {
 				SettingsNavItem(
-					onClick = { linkToOpen = GITHUB_BASE_URL },
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 4),
-					content = { Text(stringResource(R.string.title_github)) }
-				)
-				SettingsNavItem(
 					onClick = { linkToOpen = "https://codeberg.org/paige/Navic" },
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 4),
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 3),
 					content = { Text(stringResource(R.string.title_codeberg)) }
 				)
 				SettingsNavItem(
+					onClick = { linkToOpen = "https://matrix.to/#/#navic:suicide.diy" },
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 3),
+					content = { Text(stringResource(R.string.title_matrix_space)) }
+				)
+				SettingsNavItem(
 					onClick = { linkToOpen = "https://discord.gg/TBcnNX66PH" },
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 3),
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 2),
 					content = { Text(stringResource(R.string.title_discord_server)) }
 				)
 			}

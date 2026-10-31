@@ -56,7 +56,6 @@
 	<string name="title_account">Konto</string>
 	<string name="title_track_info">Spårinformation</string>
 	<string name="title_lyric_providers">Text leverantör</string>
-	<string name="title_github">GitHub</string>
 	<string name="title_codeberg">Codeberg</string>
 	<string name="title_link_confirmation">Lämna Navic</string>
 	<string name="subtitle_appearance">Teman, färger, layout, app ikon</string>
