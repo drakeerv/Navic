@@ -49,4 +49,4 @@ A more in depth example of building can be seen in the [CI build workflow][Build
 
 [AndroidStudio]: https://developer.android.com/studio
 
-[BuildWorkflow]: https://codeberg.org/paige/Navic/src/branch/master/.github/workflows/build.yml
+[BuildWorkflow]: https://codeberg.org/paige/Navic/src/branch/master/.forgejo/workflows/build.yml
