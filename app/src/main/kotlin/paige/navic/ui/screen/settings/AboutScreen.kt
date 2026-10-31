@@ -25,6 +25,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import paige.navic.BuildConfig
@@ -95,7 +96,7 @@ fun SettingsAboutScreen() {
 			}
 
 			// TODO: make this less ass
-			if (BuildConfig.GIT_COMMIT_HASH.isNotBlank()) {
+			if (BuildConfig.GIT_COMMIT_HASH != "unknown") {
 				val commitLink = "${CODEBERG_BASE_URL}commit/${BuildConfig.GIT_COMMIT_HASH}"
 				val branchName = BuildConfig.GIT_BRANCH_NAME
 				val commitAuthor = BuildConfig.GIT_COMMIT_AUTHOR
@@ -114,7 +115,9 @@ fun SettingsAboutScreen() {
 						supportingContent = {
 							Text(
 								text = BuildConfig.GIT_COMMIT_MESSAGE.split("\n").firstOrNull()
-									?: "unknown"
+									?: "unknown",
+								maxLines = 1,
+								overflow = TextOverflow.Ellipsis
 							)
 						}
 					)
