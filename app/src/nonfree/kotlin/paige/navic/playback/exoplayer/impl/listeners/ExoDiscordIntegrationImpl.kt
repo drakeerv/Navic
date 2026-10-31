@@ -24,11 +24,13 @@ import night.milkyway.antisocialcord.model.Activity
 import night.milkyway.antisocialcord.model.ActivityAssets
 import night.milkyway.antisocialcord.model.ActivityTimestamps
 import night.milkyway.antisocialcord.model.ActivityType
+import night.milkyway.antisocialcord.model.StatusDisplayType
 import org.koin.core.component.inject
 import paige.navic.discord.CoverArtUploadManager
 import paige.navic.domain.manager.runtime.PreferenceManager
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainSong
+import paige.navic.domain.model.settings.DiscordStatusType
 import paige.navic.domain.repository.AlbumRepository
 import paige.navic.domain.repository.SongRepository
 
@@ -178,7 +180,7 @@ class ExoDiscordIntegrationImpl(val player: Player) : ExoDiscordIntegration {
 			activityType = ActivityType.LISTENING,
 			state = song.artistName?.padEnd(2, INVISIBLE_CHARACTER),
 			details = song.title.padEnd(2, INVISIBLE_CHARACTER),
-			statusDisplayType = preferenceManager.discordStatusType.wrappedType,
+			statusDisplayType = preferenceManager.discordStatusType.wrappedType(),
 			assets = ActivityAssets(
 				largeUrl = null,
 				largeImage = largeImage,
@@ -189,5 +191,11 @@ class ExoDiscordIntegrationImpl(val player: Player) : ExoDiscordIntegration {
 			),
 			timestamps = endSec?.let { ActivityTimestamps(startSec, endSec) }
 		)
+	}
+
+	fun DiscordStatusType.wrappedType() = when (this) {
+		DiscordStatusType.ArtistName -> StatusDisplayType.STATE
+		DiscordStatusType.SongName -> StatusDisplayType.DETAILS
+		DiscordStatusType.AppName -> StatusDisplayType.NAME
 	}
 }
