@@ -108,10 +108,10 @@ android {
 		val commitAuthor = executeCommand("git", "log", "-1", "--pretty=%an")
 		val commitBranchName = executeCommand("git", "branch", "--show-current")
 
-		buildConfigField("String", "GIT_COMMIT_HASH", commitHash?.wrapString() ?: "unknown")
-		buildConfigField("String", "GIT_COMMIT_MESSAGE", commitMessage?.wrapString() ?: "unknown")
-		buildConfigField("String", "GIT_COMMIT_AUTHOR", commitAuthor?.wrapString() ?: "unknown")
-		buildConfigField("String", "GIT_BRANCH_NAME", commitBranchName?.wrapString() ?: "unknown")
+		buildConfigField("String", "GIT_COMMIT_HASH", commitHash?.wrapString() ?: "\"unknown\"")
+		buildConfigField("String", "GIT_COMMIT_MESSAGE", commitMessage?.wrapString() ?: "\"unknown\"")
+		buildConfigField("String", "GIT_COMMIT_AUTHOR", commitAuthor?.wrapString() ?: "\"unknown\"")
+		buildConfigField("String", "GIT_BRANCH_NAME", commitBranchName?.wrapString() ?: "\"unknown\"")
 	}
 
 	flavorDimensions += "version"
