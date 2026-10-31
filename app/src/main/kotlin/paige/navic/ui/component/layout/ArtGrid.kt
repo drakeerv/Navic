@@ -130,6 +130,7 @@ fun ArtGridItem(
 			CoverArt(
 				coverArtId = coverArtId,
 				contentDescription = title,
+				crossfadeMs = 0,
 				modifier = Modifier
 					.fillMaxWidth()
 					.sharedElement(

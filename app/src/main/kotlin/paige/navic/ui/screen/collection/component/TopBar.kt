@@ -15,7 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.compose.dropUnlessResumed
@@ -37,7 +37,7 @@ import paige.navic.ui.screen.playlist.dialog.PlaylistUpdateDialog
 fun CollectionDetailScreenTopBar(
 	collection: DomainSongCollection?,
 	albumInfo: DomainAlbumInfo?,
-	titleAlpha: Float,
+	titleAlpha: () -> Float,
 	onSetShareId: (shareId: String?) -> Unit,
 	onPlayNext: () -> Unit,
 	onAddToQueue: () -> Unit,
@@ -56,7 +56,7 @@ fun CollectionDetailScreenTopBar(
 				text = collection?.name.orEmpty(),
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
-				modifier = Modifier.alpha(titleAlpha)
+				modifier = Modifier.graphicsLayer { alpha = titleAlpha() }
 			)
 		},
 		actions = {

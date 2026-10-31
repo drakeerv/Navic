@@ -146,7 +146,7 @@ fun GenreDetailScreenContent(
 					.width(150.dp),
 				tab = "genre",
 				album = album,
-				selected = album == selectedAlbum,
+				selected = album.id == selectedAlbum?.id,
 				starred = selectedAlbumIsStarred,
 				onSelect = { onSelectAlbum(album) },
 				onDeselect = onClearAlbumSelection,

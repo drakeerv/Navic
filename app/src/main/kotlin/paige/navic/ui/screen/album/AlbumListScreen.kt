@@ -212,7 +212,7 @@ fun AlbumListScreen(
 											modifier = Modifier.animateItem(),
 											tab = "albums",
 											album = album,
-											selected = album == selectedAlbum,
+											selected = album.id == selectedAlbum?.id,
 											starred = selectedAlbum?.starredAt != null,
 											onSelect = {
 												viewModel.selected = album
@@ -245,7 +245,7 @@ fun AlbumListScreen(
 										AlbumListScreenListItem(
 											modifier = Modifier.animateItem(),
 											album = album,
-											selected = album == selectedAlbum,
+											selected = album.id == selectedAlbum?.id,
 											starred = selectedAlbum?.starredAt != null,
 											onSelect = {
 												viewModel.selected = album
@@ -289,7 +289,7 @@ fun AlbumListScreen(
 										modifier = Modifier.animateItem(),
 										tab = "albums",
 										album = album,
-										selected = album == selectedAlbum,
+										selected = album.id == selectedAlbum?.id,
 										starred = selectedAlbum?.starredAt != null,
 										onSelect = {
 											viewModel.selected = album
@@ -322,7 +322,7 @@ fun AlbumListScreen(
 									AlbumListScreenListItem(
 										modifier = Modifier.animateItem(),
 										album = album,
-										selected = album == selectedAlbum,
+										selected = album.id == selectedAlbum?.id,
 										starred = selectedAlbum?.starredAt != null,
 										onSelect = {
 											viewModel.selected = album

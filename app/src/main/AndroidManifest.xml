@@ -29,6 +29,14 @@
 	<!-- needed for notifications for downloads and syncing db -->
 	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+	<!-- Android TV support -->
+	<uses-feature
+		android:name="android.software.leanback"
+		android:required="false" />
+	<uses-feature
+		android:name="android.hardware.touchscreen"
+		android:required="false" />
+
 	<permission
 		android:name="${applicationId}.permission.PLAYBACK_SERVICE"
 		android:protectionLevel="signature" />
@@ -48,12 +56,14 @@
 		tools:targetApi="33">
 		<activity
 			android:name=".MainActivity"
+			android:banner="@drawable/tv_banner"
 			android:exported="true"
 			android:theme="@style/Theme.Navic" />
 
 		<!-- app icon activities -->
 		<activity-alias
 			android:name="${applicationId}.MainActivityDefault"
+			android:banner="@drawable/tv_banner"
 			android:enabled="true"
 			android:exported="true"
 			android:icon="@mipmap/ic_launcher"
@@ -63,11 +73,13 @@
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.LEANBACK_LAUNCHER" />
 			</intent-filter>
 		</activity-alias>
 
 		<activity-alias
 			android:name="${applicationId}.MainActivityInverted"
+			android:banner="@drawable/tv_banner"
 			android:enabled="false"
 			android:exported="true"
 			android:icon="@mipmap/ic_launcher_inverted"
@@ -77,6 +89,7 @@
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
+				<category android:name="android.intent.category.LEANBACK_LAUNCHER" />
 			</intent-filter>
 		</activity-alias>
 

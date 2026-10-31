@@ -46,6 +46,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import coil3.ImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.size.Size
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import paige.navic.di.LocalNavStack
@@ -86,7 +87,8 @@ fun ImageViewScreen(
 	val model = remember(coverArtUri) {
 		ImageRequest.Builder(coilPlatformContext)
 			.data(coverArtUri)
-			.memoryCacheKey(coverArtId)
+			.size(Size(1024, 1024))
+			.memoryCacheKey(coverArtId?.let { "$it@viewer" })
 			.diskCacheKey(coverArtId)
 			.diskCachePolicy(CachePolicy.ENABLED)
 			.memoryCachePolicy(CachePolicy.ENABLED)

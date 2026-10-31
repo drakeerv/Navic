@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
+import coil3.size.Size
 import com.kmpalette.rememberDominantColorState
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamiccolor.ColorSpec
@@ -45,7 +46,8 @@ fun rememberColorSchemeFromCoverArt(
 	val model = remember(coverArtUri) {
 		ImageRequest.Builder(coilPlatformContext)
 			.data(coverArtUri)
-			.memoryCacheKey(coverArtId)
+			.size(Size(256, 256))
+			.memoryCacheKey(coverArtId?.let { "$it@palette" })
 			.diskCacheKey(coverArtId)
 			.diskCachePolicy(CachePolicy.ENABLED)
 			.memoryCachePolicy(CachePolicy.ENABLED)

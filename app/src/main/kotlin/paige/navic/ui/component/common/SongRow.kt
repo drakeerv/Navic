@@ -21,7 +21,9 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -81,7 +83,13 @@ fun SongRow(
 ) {
 	val preferenceManager = koinInject<PreferenceManager>()
 	val player = koinInject<MediaPlayer>()
-	val playerState by player.uiState.collectAsStateWithLifecycle()
+	val playerState = player.uiState.collectAsStateWithLifecycle()
+	val isCurrentTrack by remember(song.id) {
+		derivedStateOf { playerState.value.currentSong?.id == song.id }
+	}
+	val isPaused by remember {
+		derivedStateOf { playerState.value.isPaused }
+	}
 
 	val backStack = LocalNavStack.current
 	var playlistDialogShown by rememberSaveable { mutableStateOf(false) }
@@ -89,7 +97,6 @@ fun SongRow(
 	var duplicateQueueDialogShownPlayNext by rememberSaveable { mutableStateOf(false) }
 
 	val isDownloaded = download?.status == DownloadStatus.DOWNLOADED
-	val isCurrentTrack = playerState.currentSong?.id == song.id
 	val isExplicit = song.explicitStatus == DomainExplicitStatus.Explicit
 		&& preferenceManager.explicitContentPlayback != ExplicitContentPlayback.Allowed
 	val maybeUnavailable = !isOnline && !isDownloaded
@@ -201,7 +208,7 @@ fun SongRow(
 				if (isCurrentTrack) {
 					Waveform(
 						modifier = Modifier.padding(end = 12.dp),
-						isPlaying = !playerState.isPaused
+						isPlaying = !isPaused
 					)
 				}
 			}

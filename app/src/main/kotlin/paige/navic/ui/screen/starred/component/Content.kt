@@ -257,7 +257,7 @@ fun StarredScreenContent(
 						onClick = dropUnlessResumed {
 							backStack.add(Screen.CollectionDetail(album.id, "artist"))
 						})
-					if (selectedAlbum == album) {
+					if (selectedAlbum?.id == album.id) {
 						CollectionSheet(
 							onDismissRequest = { onClearAlbumSelection() },
 							collection = album,

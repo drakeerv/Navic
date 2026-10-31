@@ -280,7 +280,7 @@ fun SearchScreen(
 										.width(150.dp),
 									tab = "search",
 									album = album,
-									selected = album == albumListSelection.data?.selected,
+									selected = album.id == albumListSelection.data?.selected?.id,
 									starred = albumListSelection.data?.selected?.starredAt != null,
 									onSelect = {
 										albumListViewModel.selected = album
