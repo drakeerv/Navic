@@ -19,13 +19,15 @@ A modern (Open)Subsonic music streaming app for Android.
 * **Modern**: actually decent UI (unlike a lot of players) with Material 3 Expressive design
 * **Highly customisable**: almost everything is a setting!
 * **Works everywhere**: access library offline & scrobble offline
+* **Downloads**: download your music, supports download transcoding\* and saving to SD card
 * **Powerful playback**: equaliser, ReplayGain\*, transcoding\* & more
+* **Discord RPC**: show off what you're listening to on Discord, no configuration required
 * **Lyrics support**: multiple lyric providers & word-by-word lyrics\*
 * **Radio stations**: stream & add internet radio stations
 * **Home widgets**: a couple of home screen widgets are inbuilt
-* **Share music**: share links to music to your friends
+* **Share music**: share links to music to your friends\*
 * **Android Auto**: control music playback through Android Auto
-* **Pretty lightweight**: Navic is fast and small (~10MB)
+* **Lightweight**: Navic is fast, small (~15MB), and uses minimal resources (~150-300MB RAM)
 * **Compatible**: supports older devices and most Subsonic
   servers ([LMS](https://github.com/epoupon/lms), [gonic](https://github.com/sentriz/gonic), [Navidrome](https://navidrome.org),
   etc.)
