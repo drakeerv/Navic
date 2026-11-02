@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -25,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.WideNavigationRail
-import androidx.compose.material3.WideNavigationRailItem
 import androidx.compose.material3.WideNavigationRailState
 import androidx.compose.material3.WideNavigationRailValue
 import androidx.compose.material3.rememberWideNavigationRailState
@@ -50,6 +50,7 @@ import paige.navic.domain.model.settings.NavbarConfig
 import paige.navic.domain.model.settings.NavbarTab
 import paige.navic.playback.MediaPlayer
 import paige.navic.ui.component.common.CoverArt
+import paige.navic.ui.component.common.WideNavigationRailItem
 import paige.navic.ui.icons.Icons
 import paige.navic.ui.icons.filled.Note
 import paige.navic.ui.icons.outlined.Menu
@@ -94,6 +95,7 @@ fun SideBar() {
 	val railState = rememberWideNavigationRailState()
 
 	WideNavigationRail(
+		modifier = Modifier.widthIn(max = 220.dp),
 		state = railState,
 		header = {
 			Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -117,7 +119,8 @@ fun SideBar() {
 					}
 				},
 				label = { Text(stringResource(tab.label)) },
-				railExpanded = railState.targetValue == WideNavigationRailValue.Expanded
+				railExpanded = railState.targetValue == WideNavigationRailValue.Expanded,
+				fillExpandedWidth = true
 			)
 		}
 	}
@@ -143,7 +146,7 @@ private fun SideBarMiniPlayer(
 	)
 
 	Surface(
-		modifier = Modifier.padding(start = 24.dp),
+		modifier = Modifier.padding(start = 24.dp, end = 20.dp),
 		color = MaterialTheme.colorScheme.surfaceContainerHigh,
 		shape = RoundedCornerShape(containerRadius),
 		onClick = dropUnlessResumed {
