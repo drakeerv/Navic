@@ -55,6 +55,7 @@ import paige.navic.domain.server.jellyfin.mapper.toDomainArtist
 import paige.navic.domain.server.jellyfin.mapper.toDomainPlaylist
 import paige.navic.domain.server.jellyfin.mapper.toDomainSong
 import java.util.UUID
+import kotlin.io.encoding.Base64
 import kotlin.time.Instant
 
 class JellyfinMusicServer(
@@ -559,7 +560,7 @@ class JellyfinMusicServer(
 		imageApi.setItemImage(
 			itemId = id.toUuid(),
 			imageType = ImageType.PRIMARY,
-			data = FileInfo(bytes, contentType)
+			data = FileInfo(Base64.encodeToByteArray(bytes), contentType)
 		)
 	}
 
