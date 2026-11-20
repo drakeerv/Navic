@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -148,7 +148,7 @@ interface RadioServer {
 interface PlaylistCoverServer {
 	suspend fun isImageAbsent(playlistId: String): Boolean
 
-	suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String?)
+	suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String)
 
 	suspend fun removePlaylistCover(id: String)
 }

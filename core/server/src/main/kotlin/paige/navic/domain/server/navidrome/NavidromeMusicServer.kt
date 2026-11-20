@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -92,7 +92,7 @@ class NavidromeMusicServer(
 		return client.getPlaylistInfo(playlistId).imageAbsent
 	}
 
-	override suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String?) {
+	override suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String) {
 		val client = navidromeOrNull()
 			?: throw ServerException(
 				"Playlist cover upload only works for Navidrome servers for now. Sorry."

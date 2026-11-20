@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -549,17 +549,17 @@ class JellyfinMusicServer(
 	override suspend fun isImageAbsent(playlistId: String): Boolean {
 		try {
 			imageApi.getItemImage(playlistId.toUuid(), ImageType.PRIMARY)
-			return true
-		} catch (_: Exception) {
 			return false
+		} catch (_: Exception) {
+			return true
 		}
 	}
 
-	override suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String?) {
+	override suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String) {
 		imageApi.setItemImage(
 			itemId = id.toUuid(),
 			imageType = ImageType.PRIMARY,
-			data = FileInfo(bytes, contentType ?: "image/jpeg")
+			data = FileInfo(bytes, contentType)
 		)
 	}
 

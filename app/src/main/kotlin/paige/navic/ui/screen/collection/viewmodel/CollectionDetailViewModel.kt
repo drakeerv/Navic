@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -125,7 +125,7 @@ class CollectionDetailViewModel(
 		it.copy(selectedSong = null, selectedAlbum = null)
 	}
 
-	fun uploadPlaylistCover(bytes: ByteArray, contentType: String?) {
+	fun uploadPlaylistCover(bytes: ByteArray, contentType: String) {
 		val playlist = data?.collection as? DomainPlaylist ?: return
 		launch {
 			runCatching {

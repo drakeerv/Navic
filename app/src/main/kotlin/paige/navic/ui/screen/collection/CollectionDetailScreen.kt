@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -126,7 +126,7 @@ fun CollectionDetailScreen(
 					context.contentResolver.openInputStream(uri)?.use { it.readBytes() }
 				}
 			}.getOrNull() ?: return@launch
-			val contentType = context.contentResolver.getType(uri)
+			val contentType = context.contentResolver.getType(uri) ?: return@launch
 			viewModel.uploadPlaylistCover(bytes, contentType)
 		}
 	}
