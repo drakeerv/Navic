@@ -668,14 +668,10 @@ class JellyfinMusicServer(
 		return null
 	}
 
-	override suspend fun isImageAbsent(playlistId: String): Boolean {
-		try {
-			api.imageApi.getItemImage(playlistId.toUuid(), ImageType.PRIMARY)
-			return false
-		} catch (_: Exception) {
-			return true
-		}
-	}
+	override suspend fun isImageAbsent(playlistId: String): Boolean = runCatching {
+		api.imageApi.getItemImageInfos(playlistId.toUuid()).content
+			.none { it.imageType == ImageType.PRIMARY }
+	}.getOrDefault(true)
 
 	override suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String) {
 		api.imageApi.setItemImage(

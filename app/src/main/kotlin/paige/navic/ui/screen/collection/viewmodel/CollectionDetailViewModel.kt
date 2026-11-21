@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.withContext
 import paige.navic.R
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SessionState
@@ -89,21 +91,26 @@ class CollectionDetailViewModel(
 	}
 
 	fun refreshCollection(fullRefresh: Boolean) = launch {
-		val collection = repository.getCollection(fullRefresh, collectionId)
-		val isCoverAbsent = runCatching {
-			sessionManager.playlistCovers?.isImageAbsent(playlistId = collectionId)
-		}.getOrNull() ?: false
+		val state = withContext(Dispatchers.IO) {
+			val collection = repository.getCollection(fullRefresh, collectionId)
+			val isCoverAbsent = runCatching {
+				sessionManager.playlistCovers?.isImageAbsent(playlistId = collectionId)
+			}.getOrNull() ?: false
 
-		val state = if (collection is DomainAlbum) {
-			CollectionViewState(
-				collection = collection,
-				isCoverAbsent,
-				starred = albumRepository.isAlbumStarred(collection.id),
-				rating = albumRepository.getAlbumRating(collection.id),
-				albumInfo = repository.getAlbumInfo(collectionId)
-			)
-		} else {
-			CollectionViewState(collection = collection)
+			if (collection is DomainAlbum) {
+				CollectionViewState(
+					collection = collection,
+					isCoverAbsent = isCoverAbsent,
+					starred = albumRepository.isAlbumStarred(collection.id),
+					rating = albumRepository.getAlbumRating(collection.id),
+					albumInfo = repository.getAlbumInfo(collectionId)
+				)
+			} else {
+				CollectionViewState(
+					collection = collection,
+					isCoverAbsent = isCoverAbsent
+				)
+			}
 		}
 		setSuccess(state)
 	}
