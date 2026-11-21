@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -65,6 +65,9 @@ import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.domain.model.settings.Theme
 import paige.navic.domain.model.settings.ThemeMode
+import paige.navic.domain.model.settings.ThemeStyle
+import paige.navic.icons.Icons
+import paige.navic.icons.outlined.Picker
 import paige.navic.preferences.PreferenceManager
 import paige.navic.preferences.colorScheme
 import paige.navic.ui.component.common.SegmentedListItem
@@ -72,8 +75,6 @@ import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.common.TooltipBox
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.sheet.ColorPickerSheet
-import paige.navic.icons.Icons
-import paige.navic.icons.outlined.Picker
 import paige.navic.ui.screen.settings.component.SettingsChoiceItem
 import paige.navic.ui.screen.settings.component.SettingsGroup
 import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
@@ -112,7 +113,7 @@ fun SettingsThemesScreen() {
 
 				SettingsGroup(title = { Text(stringResource(R.string.title_palette)) }) {
 					val isSeeded = preferenceManager.theme == Theme.Seeded
-					val count = if (isSeeded) 5 else 2
+					val count = if (isSeeded) 6 else 3
 
 					SegmentedListItem(
 						content = {
@@ -148,13 +149,25 @@ fun SettingsThemesScreen() {
 						)
 					)
 
+					SettingsChoiceItem(
+						choices = ThemeStyle.entries.toImmutableList(),
+						selectedChoice = preferenceManager.themeStyle,
+						onChoiceSelected = { preferenceManager.themeStyle = it },
+						content = { Text(stringResource(R.string.option_theme_style)) },
+						label = { it.label() },
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = 2,
+							count = count
+						)
+					)
+
 					AnimatedVisibility(
 						modifier = Modifier.fillMaxWidth(),
 						visible = isSeeded
 					) {
 						ThemeAccentPicker(
 							shapes = SegmentedListItemDefaults.segmentedShapes(
-								index = 2,
+								index = 3,
 								count = count
 							)
 						)
@@ -171,7 +184,7 @@ fun SettingsThemesScreen() {
 							content = { Text(stringResource(R.string.option_palette_style)) },
 							label = { it.label() },
 							shapes = SegmentedListItemDefaults.segmentedShapes(
-								index = 3,
+								index = 4,
 								count = count
 							)
 						)
@@ -188,7 +201,7 @@ fun SettingsThemesScreen() {
 							label = { it.label() },
 							content = { Text(stringResource(R.string.option_palette_specification)) },
 							shapes = SegmentedListItemDefaults.segmentedShapes(
-								index = 4,
+								index = 5,
 								count = count
 							)
 						)

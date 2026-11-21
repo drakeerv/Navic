@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -17,6 +17,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.ListItemShapes
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,7 +30,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import org.koin.compose.koinInject
 import paige.navic.R
+import paige.navic.domain.model.settings.ThemeStyle
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.dialog.AlertDialog
@@ -45,6 +50,7 @@ fun <Choice> SettingsChoiceItem(
 	shapes: ListItemShapes = SegmentedListItemDefaults.segmentedShapes(),
 	content: @Composable () -> Unit
 ) {
+	val preferenceManager = koinInject<PreferenceManager>()
 	var choiceDialogOpen by rememberSaveable { mutableStateOf(false) }
 
 	SegmentedListItem(
@@ -52,12 +58,18 @@ fun <Choice> SettingsChoiceItem(
 		onClick = { choiceDialogOpen = true },
 		content = content,
 		supportingContent = {
-			Text(buildString {
-				append(label(selectedChoice))
-				description?.let { description ->
-					append(" // $description")
+			Text(
+				text = buildString {
+					append(label(selectedChoice))
+					description?.let { description ->
+						append(" // $description")
+					}
+				},
+				color = when (preferenceManager.themeStyle) {
+					ThemeStyle.OneUI -> MaterialTheme.colorScheme.primary
+					else -> LocalTextStyle.current.color
 				}
-			})
+			)
 		}
 	)
 

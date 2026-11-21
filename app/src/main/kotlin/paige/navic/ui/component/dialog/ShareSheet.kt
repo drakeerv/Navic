@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -22,10 +22,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -49,15 +46,16 @@ import paige.navic.R
 import paige.navic.di.LocalSnackBarState
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.isNavidrome
+import paige.navic.icons.Icons
+import paige.navic.icons.outlined.Share
 import paige.navic.ui.component.common.DurationPicker
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.common.SegmentedListButtonDefaults
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
+import paige.navic.ui.component.common.Switch
 import paige.navic.ui.component.sheet.ModalBottomSheet
 import paige.navic.ui.core.UiState
-import paige.navic.icons.Icons
-import paige.navic.icons.outlined.Share
 import paige.navic.ui.screen.share.viewmodel.ShareDialogViewModel
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.hours
@@ -168,7 +166,7 @@ private fun ShareOptions(
 		Column(
 			modifier = Modifier.fillMaxWidth(),
 			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 		) {
 			val checked = expiry != null
 			val count by remember {

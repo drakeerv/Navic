@@ -1,6 +1,6 @@
 <!--
-  ~ Navic, a Subsonic music streaming app for Android
-  ~ Copyright (c) 2026 paige
+  ~ Navic - https://codeberg.org/paige/Navic
+  ~ Copyright (c) 2026 paige & contributors
   ~ SPDX-License-Identifier: GPL-3.0-only
   -->
 
@@ -256,6 +256,7 @@
 	<string name="option_cover_art_quality">Cover art quality</string>
 	<string name="option_palette_style">Palette style</string>
 	<string name="option_palette_specification">Palette specification</string>
+	<string name="option_theme_style">Theme style</string>
 	<string name="option_use_amoled_theme">Use AMOLED theme</string>
 	<string name="option_explicit_playback">Explicit content playback</string>
 	<string name="option_explicit_playback_allowed">Allowed</string>

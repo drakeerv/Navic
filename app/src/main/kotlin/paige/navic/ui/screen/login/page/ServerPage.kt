@@ -1,3 +1,9 @@
+/*
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
 package paige.navic.ui.screen.login.page
 
 import androidx.compose.animation.core.Animatable
@@ -69,7 +75,7 @@ fun ServerPage(
 				.consumeWindowInsets(innerPadding)
 				.verticalScroll(rememberScrollState()),
 			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 		) {
 			Header(
 				modifier = Modifier.weight(1.5f)
@@ -123,7 +129,7 @@ private fun SavedServers(
 		modifier = Modifier
 			.fillMaxWidth()
 			.padding(horizontal = 16.dp),
-		verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+		verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 	) {
 		Text(
 			text = stringResource(R.string.title_saved_accounts),
@@ -219,7 +225,7 @@ private fun ServerChoices(
 	Column(
 		modifier = modifier.padding(horizontal = 16.dp),
 		horizontalAlignment = Alignment.CenterHorizontally,
-		verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+		verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 	) {
 		Spacer(Modifier.weight(1f))
 		serverTypes.forEachIndexed { index, type ->

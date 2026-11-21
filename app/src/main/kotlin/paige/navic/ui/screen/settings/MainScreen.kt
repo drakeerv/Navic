@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -34,6 +34,7 @@ import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.designsystem.theme.defaultFont
 import paige.navic.di.LocalNavStack
+import paige.navic.domain.model.settings.ThemeStyle
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.BottomNavigation
 import paige.navic.icons.filled.Info
@@ -159,13 +160,15 @@ private fun PageRow(
 				}
 			}
 		},
-		contentPadding = PaddingValues(if (preferenceManager.theme.isMaterialLike()) 16.dp else 12.dp)
+		contentPadding = PaddingValues(
+			if (preferenceManager.themeStyle == ThemeStyle.Material) 16.dp else 12.dp
+		)
 	) {
 		Row(
 			horizontalArrangement = Arrangement.spacedBy(12.dp),
 			verticalAlignment = Alignment.CenterVertically
 		) {
-			if (preferenceManager.theme.isMaterialLike()) {
+			if (preferenceManager.themeStyle == ThemeStyle.Material) {
 				Column(
 					modifier = Modifier
 						.size(40.dp)
@@ -211,7 +214,7 @@ private fun PageRow(
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
-			if (!preferenceManager.theme.isMaterialLike()) {
+			if (preferenceManager.themeStyle != ThemeStyle.Material) {
 				Icon(
 					Icons.Outlined.ChevronForward,
 					null,

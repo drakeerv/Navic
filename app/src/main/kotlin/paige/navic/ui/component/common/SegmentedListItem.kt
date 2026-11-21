@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -23,7 +23,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import org.koin.compose.koinInject
+import paige.navic.domain.model.settings.ThemeStyle
+import paige.navic.preferences.PreferenceManager
 
 @Composable
 fun SegmentedListItem(
@@ -37,7 +41,7 @@ fun SegmentedListItem(
 	verticalAlignment: Alignment.Vertical = SegmentedListItemDefaults.verticalAlignment(),
 	colors: ListItemColors = SegmentedListItemDefaults.segmentedColors(),
 	elevation: ListItemElevation = ListItemDefaults.elevation(),
-	contentPadding: PaddingValues = SegmentedListItemDefaults.ContentPadding,
+	contentPadding: PaddingValues = SegmentedListItemDefaults.contentPadding(),
 	content: @Composable () -> Unit,
 ) {
 	androidx.compose.material3.SegmentedListItem(
@@ -71,7 +75,7 @@ fun SegmentedListItem(
 	onLongClickLabel: String? = null,
 	colors: ListItemColors = SegmentedListItemDefaults.segmentedColors(),
 	elevation: ListItemElevation = ListItemDefaults.elevation(),
-	contentPadding: PaddingValues = SegmentedListItemDefaults.ContentPadding,
+	contentPadding: PaddingValues = SegmentedListItemDefaults.contentPadding(),
 	interactionSource: MutableInteractionSource? = null,
 	content: @Composable () -> Unit,
 ) {
@@ -111,7 +115,7 @@ fun SegmentedListItem(
 	onLongClickLabel: String? = null,
 	colors: ListItemColors = SegmentedListItemDefaults.segmentedColors(),
 	elevation: ListItemElevation = ListItemDefaults.elevation(),
-	contentPadding: PaddingValues = SegmentedListItemDefaults.ContentPadding,
+	contentPadding: PaddingValues = SegmentedListItemDefaults.contentPadding(),
 	interactionSource: MutableInteractionSource? = null,
 	content: @Composable () -> Unit,
 ) {
@@ -152,9 +156,38 @@ fun SegmentedListItem(
 }
 
 object SegmentedListItemDefaults {
-	val SegmentedGap = 3.dp
-	val ContentPadding = PaddingValues(horizontal = 14.dp, vertical = 14.dp)
-	val OverrideShape = RoundedCornerShape(18.dp)
+	@Composable
+	fun segmentedGap(): Dp {
+		val preferenceManager = koinInject<PreferenceManager>()
+		return remember(preferenceManager.themeStyle) {
+			when (preferenceManager.themeStyle) {
+				ThemeStyle.Material -> 3.dp
+				else -> 0.dp
+			}
+		}
+	}
+
+	@Composable
+	fun contentPadding(): PaddingValues {
+		val preferenceManager = koinInject<PreferenceManager>()
+		return remember(preferenceManager.themeStyle) {
+			when (preferenceManager.themeStyle) {
+				ThemeStyle.OneUI -> PaddingValues(horizontal = 18.dp, vertical = 14.dp)
+				else -> PaddingValues(horizontal = 14.dp, vertical = 14.dp)
+			}
+		}
+	}
+
+	@Composable
+	private fun overrideShape(): RoundedCornerShape {
+		val preferenceManager = koinInject<PreferenceManager>()
+		return remember(preferenceManager.themeStyle) {
+			when (preferenceManager.themeStyle) {
+				ThemeStyle.OneUI -> RoundedCornerShape(32.dp)
+				else -> RoundedCornerShape(18.dp)
+			}
+		}
+	}
 
 	@Composable
 	fun verticalAlignment() = Alignment.CenterVertically
@@ -242,11 +275,12 @@ object SegmentedListItemDefaults {
 		defaultShapes: ListItemShapes = ListItemDefaults.shapes(),
 		dismissDirection: SwipeToDismissBoxValue? = null
 	): ListItemShapes {
-		return remember(index, count, defaultShapes, dismissDirection) {
+		val overrideShape = overrideShape()
+		return remember(index, count, defaultShapes, overrideShape, dismissDirection) {
 			when {
 				count == 1 || (dismissDirection != SwipeToDismissBoxValue.Settled && dismissDirection != null) -> {
 					defaultShapes.copy(
-						shape = OverrideShape
+						shape = overrideShape
 					)
 				}
 
@@ -256,8 +290,8 @@ object SegmentedListItemDefaults {
 						defaultShapes.copy(
 							shape =
 								defaultBaseShape.copy(
-									topStart = OverrideShape.topStart,
-									topEnd = OverrideShape.topEnd,
+									topStart = overrideShape.topStart,
+									topEnd = overrideShape.topEnd,
 								)
 						)
 					} else {
@@ -271,8 +305,8 @@ object SegmentedListItemDefaults {
 						defaultShapes.copy(
 							shape =
 								defaultBaseShape.copy(
-									bottomStart = OverrideShape.bottomStart,
-									bottomEnd = OverrideShape.bottomEnd,
+									bottomStart = overrideShape.bottomStart,
+									bottomEnd = overrideShape.bottomEnd,
 								)
 						)
 					} else {

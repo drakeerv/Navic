@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -39,6 +39,7 @@ import paige.navic.domain.model.settings.ReplayGainMode
 import paige.navic.domain.model.settings.StreamingQuality
 import paige.navic.domain.model.settings.Theme
 import paige.navic.domain.model.settings.ThemeMode
+import paige.navic.domain.model.settings.ThemeStyle
 import paige.navic.domain.model.settings.ToolbarPosition
 import paige.navic.preferences.base.BasePreferenceManager
 import com.russhwolf.settings.Settings as KmpSettings
@@ -130,6 +131,7 @@ public class PreferenceManager(
 
 	// theme related settings
 	var theme by preference(Theme.getDefaultTheme())
+	var themeStyle by preference(ThemeStyle.Default)
 	var themeMode by preference(ThemeMode.getDefaultMode())
 	var amoled by preference(false)
 	var dynamicTheming by preference(false)

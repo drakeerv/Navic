@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -21,6 +21,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarColors
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -30,11 +31,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
+import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.di.LocalNavStack
+import paige.navic.domain.model.settings.ThemeStyle
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.ArrowBack
-
+import paige.navic.icons.outlined.ArrowBackIOS
+import paige.navic.preferences.PreferenceManager
 
 object NestedTopBarDefaults {
 	@Composable
@@ -42,8 +46,14 @@ object NestedTopBarDefaults {
 		colors: NestedTopBarButtonColors = NestedTopBarButtonDefaults.colors()
 	) {
 		val backStack = LocalNavStack.current
+		val preferenceManager = koinInject<PreferenceManager>()
 		TopBarButton(
-			modifier = Modifier.padding(start = 20.dp, end = 13.dp),
+			modifier = remember(preferenceManager.themeStyle) {
+				when (preferenceManager.themeStyle) {
+					ThemeStyle.Material -> Modifier.padding(start = 20.dp, end = 13.dp)
+					else -> Modifier.padding(horizontal = 12.dp)
+				}
+			},
 			onClick = dropUnlessResumed {
 				if (backStack.size > 1) {
 					backStack.removeLastOrNull()
@@ -52,7 +62,12 @@ object NestedTopBarDefaults {
 			colors = colors
 		) {
 			Icon(
-				imageVector = Icons.Outlined.ArrowBack,
+				imageVector = remember(preferenceManager.themeStyle) {
+					when (preferenceManager.themeStyle) {
+						ThemeStyle.OneUI -> Icons.Outlined.ArrowBackIOS
+						else -> Icons.Outlined.ArrowBack
+					}
+				},
 				contentDescription = stringResource(R.string.action_navigate_back)
 			)
 		}
@@ -95,13 +110,23 @@ object NestedTopBarButtonDefaults {
 		contentColor: Color = Color.Unspecified,
 		disabledContainerColor: Color = Color.Unspecified,
 		disabledContentColor: Color = Color.Unspecified
-	) = NestedTopBarButtonColors(
-		containerColor = containerColor.takeOrElse { MaterialTheme.colorScheme.surfaceContainer },
-		contentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant },
-		disabledContainerColor = disabledContainerColor.takeOrElse { MaterialTheme.colorScheme.surfaceContainerLow },
-		disabledContentColor = disabledContentColor
-			.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .5f) }
-	)
+	): NestedTopBarButtonColors {
+		val preferenceManager = koinInject<PreferenceManager>()
+		val surfaceContainer = MaterialTheme.colorScheme.surfaceContainer
+		val defaultContainerColor = remember(preferenceManager.themeStyle) {
+			when (preferenceManager.themeStyle) {
+				ThemeStyle.Material -> surfaceContainer
+				else -> Color.Transparent
+			}
+		}
+		return NestedTopBarButtonColors(
+			containerColor = containerColor.takeOrElse { defaultContainerColor },
+			contentColor = contentColor.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant },
+			disabledContainerColor = disabledContainerColor.takeOrElse { MaterialTheme.colorScheme.surfaceContainerLow },
+			disabledContentColor = disabledContentColor
+				.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = .5f) }
+		)
+	}
 }
 
 @Composable
@@ -114,8 +139,15 @@ fun TopBarButton(
 	shadowElevation: Dp = 0.dp,
 	content: @Composable BoxScope.() -> Unit
 ) {
+	val preferenceManager = koinInject<PreferenceManager>()
+	val size = remember(preferenceManager.themeStyle) {
+		when (preferenceManager.themeStyle) {
+			ThemeStyle.OneUI -> 50.dp
+			else -> 40.dp
+		}
+	}
 	Surface(
-		modifier = modifier.size(40.dp),
+		modifier = modifier.size(size),
 		onClick = onClick,
 		enabled = enabled,
 		shape = shape,

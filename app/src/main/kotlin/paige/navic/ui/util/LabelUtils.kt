@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -36,6 +36,7 @@ import paige.navic.domain.model.settings.ReplayGainMode
 import paige.navic.domain.model.settings.StreamingQuality
 import paige.navic.domain.model.settings.Theme
 import paige.navic.domain.model.settings.ThemeMode
+import paige.navic.domain.model.settings.ThemeStyle
 import paige.navic.domain.model.settings.ToolbarPosition
 import kotlin.math.max
 import kotlin.time.Duration
@@ -246,6 +247,12 @@ fun Theme.label() = when (this) {
 	Theme.Seeded -> stringResource(R.string.theme_seeded)
 	Theme.Dynamic -> stringResource(R.string.theme_dynamic)
 	Theme.Spotify -> stringResource(R.string.theme_spotify)
+}
+
+fun ThemeStyle.label() = when (this) {
+	ThemeStyle.Material -> "Material"
+	ThemeStyle.iOS -> "iOS from temu"
+	ThemeStyle.OneUI -> "One UI from temu"
 }
 
 @Composable

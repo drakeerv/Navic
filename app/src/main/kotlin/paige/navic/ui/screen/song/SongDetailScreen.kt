@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -28,11 +28,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
+import paige.navic.designsystem.theme.NavicTheme
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.screen.song.component.SongDetailScreenInfoRow
 import paige.navic.ui.screen.song.viewmodel.SongDetailViewModel
-import paige.navic.designsystem.theme.NavicTheme
 import paige.navic.ui.util.rememberColorSchemeFromCoverArt
 
 @Composable
@@ -67,7 +67,7 @@ fun SongDetailScreen(
 			) {
 				Column(
 					modifier = Modifier.fillMaxWidth(),
-					verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+					verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 				) {
 					info.forEachIndexed { index, (key, value) ->
 						SongDetailScreenInfoRow(

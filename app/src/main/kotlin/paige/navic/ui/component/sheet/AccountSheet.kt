@@ -290,7 +290,7 @@ fun AccountSheet(
 	) {
 		Column(
 			modifier = Modifier.verticalScroll(rememberScrollState()),
-			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 		) {
 			accounts.firstOrNull { it.id == sessionManager.activeAccountId }?.let { activeAccount ->
 				AccountRow(
@@ -309,7 +309,7 @@ fun AccountSheet(
 			Spacer(Modifier.height(8.dp))
 
 			Column(
-				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
 				val alternateAccounts = accounts.filterNot { it.id == sessionManager.activeAccountId }
 
@@ -346,7 +346,7 @@ fun AccountSheet(
 			Spacer(Modifier.height(4.dp))
 
 			Column(
-				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
 				val isSharingAllowed = sessionManager.getUser()?.canShare() == true
 				val supportsChat = sessionManager.supportsExtension(ServerExtension.SUBSONIC_CHAT)
@@ -436,7 +436,7 @@ fun AccountSheet(
 			Spacer(Modifier.height(4.dp))
 
 			Column(
-				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.SegmentedGap)
+				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
 				SegmentedListItem(
 					shapes = SegmentedListItemDefaults.segmentedShapes(
