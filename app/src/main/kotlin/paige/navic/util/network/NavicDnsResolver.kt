@@ -34,7 +34,6 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration.Companion.seconds
 
 class NavicDnsResolver(
 	val accountSettings: AccountSettings,
