@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -10,6 +10,7 @@ import android.content.Context
 import org.jellyfin.sdk.api.client.exception.ApiClientException
 import org.jellyfin.sdk.api.client.exception.InvalidContentException
 import org.jellyfin.sdk.api.client.exception.InvalidStatusException
+import org.jellyfin.sdk.api.okhttp.OkHttpFactory
 import org.jellyfin.sdk.api.operations.AuthenticationApi
 import org.jellyfin.sdk.createJellyfin
 import org.jellyfin.sdk.model.ClientInfo
@@ -18,18 +19,34 @@ import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.MusicServerFactory
-import paige.navic.domain.server.UserCredentials
 import paige.navic.domain.server.ServerException
+import paige.navic.domain.server.UserCredentials
+import paige.navic.preferences.AccountSettings
+import paige.navic.preferences.PreferenceManager
+import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.createOkHttpClient
+import paige.navic.util.network.getProxyUrlOrNull
 import java.util.UUID
 
 class JellyfinMusicServerFactory(
-	private val context: Context
+	private val context: Context,
+	private val preferenceManager: PreferenceManager,
+	private val accountSettings: AccountSettings,
+	private val dnsResolver: NavicDnsResolver
 ) : MusicServerFactory {
 
 	private val jellyfin by lazy {
 		createJellyfin {
 			context = this@JellyfinMusicServerFactory.context
 			clientInfo = ClientInfo(name = "Navic", version = BuildConfig.VERSION_NAME)
+			apiClientFactory = OkHttpFactory(
+				createOkHttpClient(
+					proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
+					trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
+					dnsResolver = dnsResolver,
+					customHeaders = accountSettings.customHeadersMap()
+				)
+			)
 		}
 	}
 
