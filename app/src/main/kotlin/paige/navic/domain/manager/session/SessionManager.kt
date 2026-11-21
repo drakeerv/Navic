@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -19,16 +19,17 @@ import paige.navic.domain.model.DomainUser
 import paige.navic.domain.server.AuthMethod
 import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.ChatServer
+import paige.navic.domain.server.CommandFlowServer
 import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.RadioServer
-import paige.navic.domain.server.ServerType
-import paige.navic.domain.server.UserCredentials
 import paige.navic.domain.server.ServerExtension
 import paige.navic.domain.server.ServerInfo
+import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.ShareServer
+import paige.navic.domain.server.UserCredentials
 import paige.navic.preferences.PreferenceManager
 import paige.navic.util.Logger
 import paige.navic.util.TTLLruCache
@@ -102,6 +103,9 @@ class SessionManager(
 
 	val playlistCovers: PlaylistCoverServer?
 		get() = api as? PlaylistCoverServer
+
+	val commandFlow: CommandFlowServer?
+		get() = api as? CommandFlowServer
 
 	init {
 		val account = accountStore.activeAccount

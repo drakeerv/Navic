@@ -7,6 +7,7 @@
 package paige.navic.domain.server
 
 import androidx.media3.common.Player
+import kotlinx.coroutines.flow.SharedFlow
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumInfo
 import paige.navic.domain.model.DomainAlbumListType
@@ -156,4 +157,8 @@ interface PlaylistCoverServer {
 	suspend fun uploadPlaylistCover(id: String, bytes: ByteArray, contentType: String)
 
 	suspend fun removePlaylistCover(id: String)
+}
+
+interface CommandFlowServer {
+	val commands: SharedFlow<ServerCommand>
 }

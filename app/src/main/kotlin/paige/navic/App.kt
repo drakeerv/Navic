@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -86,6 +86,7 @@ import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.manager.ui.BottomBarScrollManager
 import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.model.settings.ExplicitContentPlayback
+import paige.navic.domain.server.ServerCommand
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.layout.SideBar
@@ -223,6 +224,14 @@ fun App() {
 			appStarted = true
 			if (preferenceManager.explicitContentPlayback == ExplicitContentPlayback.SkipForThisSession) {
 				preferenceManager.explicitContentPlayback = ExplicitContentPlayback.Allowed
+			}
+		}
+	}
+
+	LaunchedEffect(sessionManager.commandFlow) {
+		sessionManager.commandFlow?.commands?.collectLatest { command ->
+			when (command) {
+				is ServerCommand.DisplayMessage -> snackBarState.showSnackbar(command.message)
 			}
 		}
 	}
