@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -44,6 +44,7 @@ import paige.navic.domain.model.settings.description
 import paige.navic.domain.server.ServerExtension
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Info
+import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.layout.NestedTopBar
@@ -57,11 +58,14 @@ import paige.navic.ui.util.label
 fun SettingsStreamingQualityScreen() {
 	val preferenceManager = koinInject<PreferenceManager>()
 	val sessionManager = koinInject<SessionManager>()
+	val streamCacheManager = koinInject<StreamCacheManager>()
 	val reachability = koinInject<ReachabilityFlow>()
 	val isReachable by reachability.isReachable.collectAsStateWithLifecycle()
 	val isMetered by reachability.isMetered.collectAsStateWithLifecycle()
-	val supportsTranscodeOffset = sessionManager.isJellyfin()
-		|| sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET)
+	val supportsTranscodeOffset = remember {
+		sessionManager.isJellyfin()
+			|| sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET)
+	}
 
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.title_streaming_quality)) }) }
@@ -81,12 +85,12 @@ fun SettingsStreamingQualityScreen() {
 						horizontalArrangement = Arrangement.spacedBy(16.dp)
 					) {
 						Icon(
-							Icons.Outlined.Info,
+							imageVector = Icons.Outlined.Info,
 							contentDescription = null,
 							tint = MaterialTheme.colorScheme.onSurfaceVariant
 						)
 						Text(
-							stringResource(R.string.info_transcode_streaming_unsupported),
+							text = stringResource(R.string.info_transcode_streaming_unsupported),
 							color = MaterialTheme.colorScheme.onSurfaceVariant,
 							style = MaterialTheme.typography.bodyMedium
 						)
@@ -109,7 +113,10 @@ fun SettingsStreamingQualityScreen() {
 					) {
 						RadioButtons(
 							value = preferenceManager.streamingQualityWifi,
-							onChangeValue = { preferenceManager.streamingQualityWifi = it },
+							onChangeValue = {
+								preferenceManager.streamingQualityWifi = it
+								streamCacheManager.clear()
+							},
 							enabled = supportsTranscodeOffset
 						)
 					}
@@ -131,7 +138,10 @@ fun SettingsStreamingQualityScreen() {
 					) {
 						RadioButtons(
 							value = preferenceManager.streamingQualityCellular,
-							onChangeValue = { preferenceManager.streamingQualityCellular = it },
+							onChangeValue = {
+								preferenceManager.streamingQualityCellular = it
+								streamCacheManager.clear()
+							},
 							enabled = supportsTranscodeOffset
 						)
 					}
@@ -144,13 +154,26 @@ fun SettingsStreamingQualityScreen() {
 					SettingsToggleItem(
 						checked = preferenceManager.isAdvancedTranscodingActive,
 						enabled = supportsTranscodeOffset,
-						onCheckedChange = { preferenceManager.isAdvancedTranscodingActive = it },
+						onCheckedChange = {
+							preferenceManager.isAdvancedTranscodingActive = it
+							streamCacheManager.clear()
+						},
 						content = { Text(stringResource(R.string.option_stream_custom_quality)) }
 					)
 				}
 
 				AnimatedVisibility(visible = preferenceManager.isAdvancedTranscodingActive) {
-					CustomOptions(enabled = supportsTranscodeOffset)
+					CustomOptions(
+						enabled = supportsTranscodeOffset,
+						onCustomFormatChanged = { customFormat ->
+							preferenceManager.customFormat = customFormat
+							streamCacheManager.clear()
+						},
+						onCustomMaxBitrateChanged = { customMaxBitrate ->
+							preferenceManager.customMaxBitrate = customMaxBitrate
+							streamCacheManager.clear()
+						}
+					)
 				}
 
 				Row(
@@ -158,12 +181,12 @@ fun SettingsStreamingQualityScreen() {
 					horizontalArrangement = Arrangement.spacedBy(16.dp)
 				) {
 					Icon(
-						Icons.Outlined.Info,
+						imageVector = Icons.Outlined.Info,
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 					Text(
-						stringResource(R.string.info_streaming_quality),
+						text = stringResource(R.string.info_streaming_quality),
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						style = MaterialTheme.typography.bodyMedium
 					)
@@ -203,7 +226,11 @@ private fun RadioButtons(
 }
 
 @Composable
-private fun CustomOptions(enabled: Boolean) {
+private fun CustomOptions(
+	enabled: Boolean,
+	onCustomFormatChanged: (String) -> Unit,
+	onCustomMaxBitrateChanged: (Int) -> Unit
+) {
 	val preferenceManager = koinInject<PreferenceManager>()
 	var bitrateInput by remember {
 		val current = preferenceManager.customMaxBitrate
@@ -219,8 +246,7 @@ private fun CustomOptions(enabled: Boolean) {
 			onValueChange = { newValue ->
 				if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
 					bitrateInput = newValue
-					preferenceManager.customMaxBitrate =
-						newValue.toIntOrNull() ?: 0
+					onCustomMaxBitrateChanged(newValue.toIntOrNull() ?: 0)
 				}
 			},
 			label = { Text(stringResource(R.string.option_max_bitrate)) },
@@ -233,7 +259,7 @@ private fun CustomOptions(enabled: Boolean) {
 
 		OutlinedTextField(
 			value = preferenceManager.customFormat,
-			onValueChange = { preferenceManager.customFormat = it },
+			onValueChange = onCustomFormatChanged,
 			label = { Text(stringResource(R.string.option_stream_format)) },
 			supportingText = { Text(stringResource(R.string.info_transcoding_defaults)) },
 			modifier = Modifier.fillMaxWidth(),

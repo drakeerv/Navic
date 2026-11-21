@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -38,6 +38,7 @@ import paige.navic.domain.model.settings.StreamingQuality
 import paige.navic.domain.model.settings.description
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Info
+import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.layout.NestedTopBar
@@ -50,6 +51,7 @@ import paige.navic.ui.util.label
 @Composable
 fun SettingsDownloadQualityScreen() {
 	val preferenceManager = koinInject<PreferenceManager>()
+	val streamCacheManager = koinInject<StreamCacheManager>()
 
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.title_download_quality)) }) }
@@ -71,7 +73,10 @@ fun SettingsDownloadQualityScreen() {
 					) {
 						RadioButtons(
 							value = preferenceManager.downloadQuality,
-							onChangeValue = { preferenceManager.downloadQuality = it }
+							onChangeValue = {
+								preferenceManager.downloadQuality = it
+								streamCacheManager.clear()
+							}
 						)
 					}
 				}
@@ -84,13 +89,23 @@ fun SettingsDownloadQualityScreen() {
 						checked = preferenceManager.isAdvancedDownloadTranscodingActive,
 						onCheckedChange = {
 							preferenceManager.isAdvancedDownloadTranscodingActive = it
+							streamCacheManager.clear()
 						},
 						content = { Text(stringResource(R.string.option_download_custom_quality)) }
 					)
 				}
 
 				AnimatedVisibility(visible = preferenceManager.isAdvancedDownloadTranscodingActive) {
-					CustomOptions()
+					CustomOptions(
+						onCustomDownloadFormatChanged = { customDownloadFormat ->
+							preferenceManager.customDownloadFormat = customDownloadFormat
+							streamCacheManager.clear()
+						},
+						onCustomDownloadMaxBitrateChanged = { customDownloadMaxBitrate ->
+							preferenceManager.customDownloadMaxBitrate = customDownloadMaxBitrate
+							streamCacheManager.clear()
+						}
+					)
 				}
 
 				Row(
@@ -98,12 +113,12 @@ fun SettingsDownloadQualityScreen() {
 					horizontalArrangement = Arrangement.spacedBy(16.dp)
 				) {
 					Icon(
-						Icons.Outlined.Info,
+						imageVector = Icons.Outlined.Info,
 						contentDescription = null,
 						tint = MaterialTheme.colorScheme.onSurfaceVariant
 					)
 					Text(
-						stringResource(R.string.info_download_quality),
+						text = stringResource(R.string.info_download_quality),
 						color = MaterialTheme.colorScheme.onSurfaceVariant,
 						style = MaterialTheme.typography.bodyMedium
 					)
@@ -141,7 +156,10 @@ private fun RadioButtons(
 }
 
 @Composable
-private fun CustomOptions() {
+private fun CustomOptions(
+	onCustomDownloadFormatChanged: (String) -> Unit,
+	onCustomDownloadMaxBitrateChanged: (Int) -> Unit
+) {
 	val preferenceManager = koinInject<PreferenceManager>()
 	var wifiInput by remember {
 		val current = preferenceManager.customDownloadMaxBitrate
@@ -157,8 +175,7 @@ private fun CustomOptions() {
 			onValueChange = { newValue ->
 				if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
 					wifiInput = newValue
-					preferenceManager.customDownloadMaxBitrate =
-						newValue.toIntOrNull() ?: 0
+					onCustomDownloadMaxBitrateChanged(newValue.toIntOrNull() ?: 0)
 				}
 			},
 			label = { Text(stringResource(R.string.option_max_bitrate)) },
@@ -170,7 +187,7 @@ private fun CustomOptions() {
 
 		OutlinedTextField(
 			value = preferenceManager.customDownloadFormat,
-			onValueChange = { preferenceManager.customDownloadFormat = it },
+			onValueChange = onCustomDownloadFormatChanged,
 			label = { Text(stringResource(R.string.option_download_format)) },
 			modifier = Modifier.fillMaxWidth(),
 			singleLine = true
