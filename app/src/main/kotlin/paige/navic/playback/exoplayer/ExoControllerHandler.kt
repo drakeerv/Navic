@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -39,8 +39,6 @@ import paige.navic.database.dao.AlbumDao
 import paige.navic.database.entity.PlayableSongRow
 import paige.navic.database.mapper.toDomainModel
 import paige.navic.domain.manager.playback.AudioGainManager
-import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.connectivity.ConnectivityManager
@@ -55,9 +53,11 @@ import paige.navic.playback.exoplayer.impl.cache.NavicDataSource
 import paige.navic.playback.exoplayer.impl.cache.NavicDataSource.Companion.HQ_ARTWORK_SIZE
 import paige.navic.playback.exoplayer.impl.cache.NavicDataSource.Companion.buildCoverUri
 import paige.navic.playback.exoplayer.impl.cache.NavicDataSource.Companion.buildSongUri
+import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
 import paige.navic.playback.exoplayer.impl.library.MediaSessionCallback.Companion.COMMAND_SHUFFLE_STATE
 import paige.navic.playback.exoplayer.impl.library.MediaSessionCallback.Companion.SHUFFLE_ENABLED_KEY
 import paige.navic.playback.exoplayer.impl.library.MediaSessionCallback.Companion.SHUFFLE_ORDER_KEY
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.core.PlayerUiState
 import paige.navic.ui.core.QueueSong
 import paige.navic.ui.core.toDomainSong
@@ -653,6 +653,13 @@ class ExoControllerHandler(
 		val target = (controller.effectiveDurationMs() * normalized).toLong()
 		controller.seekTo(target)
 		state.update { it.copy(progress = normalized) }
+	}
+
+	fun seek(positionMs: Long) {
+		val duration = controller.effectiveDurationMs()
+		val progress = (positionMs.toFloat() / duration.toFloat()).coerceIn(0f, 1f)
+		controller.seekTo(positionMs)
+		state.update { it.copy(progress = progress) }
 	}
 
 	private fun updateProgress() {

@@ -160,6 +160,7 @@ fun App() {
 	val sizeClass = calculateWindowSizeClass(activity)
 	val sessionManager = koinInject<SessionManager>()
 	val preferenceManager = koinInject<PreferenceManager>()
+	val player = koinInject<PlayerRepository>()
 
 	val sessionState by sessionManager.sessionState.collectAsStateWithLifecycle()
 	val backStack = rememberNavBackStack(
@@ -228,10 +229,19 @@ fun App() {
 		}
 	}
 
+	// there's probably a better place to put this
 	LaunchedEffect(sessionManager.commandFlow) {
 		sessionManager.commandFlow?.commands?.collectLatest { command ->
 			when (command) {
 				is ServerCommand.DisplayMessage -> snackBarState.showSnackbar(command.message)
+				is ServerCommand.PlaybackCommand.Stop,
+				is ServerCommand.PlaybackCommand.Pause -> player.pause()
+
+				is ServerCommand.PlaybackCommand.Resume -> player.resume()
+				is ServerCommand.PlaybackCommand.Toggle -> player.togglePlay()
+				is ServerCommand.PlaybackCommand.PreviousTrack -> player.previous()
+				is ServerCommand.PlaybackCommand.NextTrack -> player.next()
+				is ServerCommand.PlaybackCommand.Seek -> player.seek(command.positionMs)
 			}
 		}
 	}

@@ -26,6 +26,7 @@ import org.jellyfin.sdk.api.client.extensions.sessionApi
 import org.jellyfin.sdk.api.client.extensions.systemApi
 import org.jellyfin.sdk.api.client.extensions.userApi
 import org.jellyfin.sdk.api.client.extensions.userDataApi
+import org.jellyfin.sdk.api.sockets.subscribe
 import org.jellyfin.sdk.api.sockets.subscribeGeneralCommands
 import org.jellyfin.sdk.model.FileInfo
 import org.jellyfin.sdk.model.api.BaseItemKind
@@ -40,9 +41,12 @@ import org.jellyfin.sdk.model.api.PlayMethod
 import org.jellyfin.sdk.model.api.PlaybackOrder
 import org.jellyfin.sdk.model.api.PlaybackProgressInfo
 import org.jellyfin.sdk.model.api.PlaybackStopInfo
+import org.jellyfin.sdk.model.api.PlaystateCommand
+import org.jellyfin.sdk.model.api.PlaystateMessage
 import org.jellyfin.sdk.model.api.RepeatMode
 import org.jellyfin.sdk.model.api.SortOrder
 import org.jellyfin.sdk.model.extensions.getValue
+import org.jellyfin.sdk.model.extensions.ticks
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumInfo
 import paige.navic.domain.model.DomainAlbumListType
@@ -95,6 +99,25 @@ class JellyfinMusicServer(
 		state.onEach { state ->
 			Logger.i("JellyfinMusicServer", "socket state change: $state")
 		}.launchIn(scope)
+		subscribe<PlaystateMessage>()
+			.onEach { message ->
+				Logger.i("JellyfinMusicServer", "$message")
+				val command = when (message.data?.command) {
+					PlaystateCommand.STOP -> ServerCommand.PlaybackCommand.Stop
+					PlaystateCommand.PAUSE -> ServerCommand.PlaybackCommand.Pause
+					PlaystateCommand.UNPAUSE -> ServerCommand.PlaybackCommand.Resume
+					PlaystateCommand.PLAY_PAUSE -> ServerCommand.PlaybackCommand.Toggle
+					PlaystateCommand.NEXT_TRACK -> ServerCommand.PlaybackCommand.NextTrack
+					PlaystateCommand.PREVIOUS_TRACK -> ServerCommand.PlaybackCommand.PreviousTrack
+					PlaystateCommand.SEEK -> ServerCommand.PlaybackCommand.Seek(
+						message.data?.seekPositionTicks?.ticks?.inWholeMilliseconds ?: 0L
+					)
+
+					else -> null
+				} ?: return@onEach
+				_commands.emit(command)
+			}
+			.launchIn(scope)
 		subscribeGeneralCommands(
 			setOf(
 				GeneralCommandType.DISPLAY_MESSAGE,
@@ -120,7 +143,7 @@ class JellyfinMusicServer(
 						GeneralCommandType.DISPLAY_MESSAGE,
 						GeneralCommandType.SEND_STRING
 					),
-					supportsMediaControl = false,
+					supportsMediaControl = true,
 					supportsPersistentIdentifier = true,
 					iconUrl = "https://navic.app/jellyfin.svg",
 					appStoreUrl = "https://codeberg.org/paige/Navic"

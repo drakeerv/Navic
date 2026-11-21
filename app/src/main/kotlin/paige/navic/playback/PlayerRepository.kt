@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -27,7 +27,6 @@ import kotlinx.coroutines.withContext
 import paige.navic.R
 import paige.navic.database.dao.AlbumDao
 import paige.navic.domain.manager.playback.AudioGainManager
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.connectivity.ConnectivityManager
@@ -43,6 +42,7 @@ import paige.navic.playback.exoplayer.ExoControllerHandler
 import paige.navic.playback.exoplayer.ExoStateHolder
 import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
 import paige.navic.playback.exoplayer.toMediaItem
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.core.PlayerUiState
 import paige.navic.ui.core.QueueSong
 import paige.navic.ui.core.SavedQueueSnapshot
@@ -639,6 +639,10 @@ class PlayerRepository(
 
 	fun seek(normalized: Float) = launch(Dispatchers.Main.immediate) {
 		controllerHandler?.seek(normalized)
+	}
+
+	fun seek(positionMs: Long) = launch(Dispatchers.Main.immediate) {
+		controllerHandler?.seek(positionMs)
 	}
 
 	fun setPlaybackSpeed(value: Float) = launch {
