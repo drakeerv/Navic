@@ -21,7 +21,7 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.model.settings.CoverArtHost
 import paige.navic.util.Logger
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClient
 import kotlin.time.Duration.Companion.seconds
 
@@ -29,7 +29,7 @@ class CoverArtUploadManager(
 	private val sessionManager: SessionManager,
 	private val preferenceManager: PreferenceManager,
 	private val settings: Settings,
-	dnsResolver: NavicDnsResolver
+	dnsResolver: NavicAddressHelper
 ) {
 	private val client = createHttpClient(
 		trustAllCerts = preferenceManager.dangerousSslNoopEnabled,

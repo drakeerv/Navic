@@ -34,7 +34,7 @@ import paige.navic.domain.repository.LyricsRepository
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import paige.navic.util.Logger
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClientWithPreferences
 
 class DownloadCancelledException : Exception("Download was cancelled")
@@ -49,7 +49,7 @@ class DownloadProcessor(
 	private val sessionManager: SessionManager,
 	private val preferenceManager: PreferenceManager,
 	accountSettings: AccountSettings,
-	dnsResolver: NavicDnsResolver
+	dnsResolver: NavicAddressHelper
 ) {
 	private val client = createHttpClientWithPreferences(preferenceManager, accountSettings, dnsResolver).apply {
 		config {

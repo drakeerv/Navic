@@ -13,6 +13,10 @@ object Logger {
 		Log.e(tag, msg, tr)
 	}
 
+	fun d(tag: String, msg: String, tr: Throwable? = null) {
+		Log.d(tag, msg, tr)
+	}
+
 	fun i(tag: String, msg: String, tr: Throwable? = null) {
 		Log.i(tag, msg, tr)
 	}

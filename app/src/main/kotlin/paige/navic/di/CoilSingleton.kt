@@ -23,16 +23,16 @@ import coil3.size.Dimension
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.runtime.StorageManager
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClientWithPreferences
 import kotlin.math.abs
 
 class CoilSingleton(
-	private val context: Context,
-	preferenceManager: PreferenceManager,
-	accountSettings: AccountSettings,
-	dnsResolver: NavicDnsResolver,
-	private val storageManager: StorageManager
+    private val context: Context,
+    preferenceManager: PreferenceManager,
+    accountSettings: AccountSettings,
+    dnsResolver: NavicAddressHelper,
+    private val storageManager: StorageManager
 ) {
 	private var sharedDiskCache: DiskCache? = null
 	private var sharedMemoryCache: MemoryCache? = null

@@ -44,7 +44,7 @@ import paige.navic.ui.screen.song.viewmodel.SongDetailViewModel
 import paige.navic.ui.screen.song.viewmodel.SongListViewModel
 import paige.navic.ui.screen.stats.viewmodel.StatisticsViewModel
 import paige.navic.ui.viewmodel.RootViewModel
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 
 val viewModelModule = module {
 	single<PlayerRepository> {
@@ -62,8 +62,8 @@ val viewModelModule = module {
 			connectivityManager = get()
 		)
 	}
-	single<NavicDnsResolver> {
-		NavicDnsResolver(
+	single<NavicAddressHelper> {
+		NavicAddressHelper(
 			accountSettings = get(),
 			accountStore = get(),
 			connectivityManager = get()

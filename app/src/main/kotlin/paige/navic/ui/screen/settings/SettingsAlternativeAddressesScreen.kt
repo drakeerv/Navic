@@ -58,7 +58,7 @@ import paige.navic.icons.outlined.Edit
 import paige.navic.ui.screen.settings.component.SettingsGroup
 import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
 import paige.navic.ui.screen.settings.component.SettingsToggleItem
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -66,7 +66,7 @@ import kotlin.time.Duration.Companion.milliseconds
 fun SettingsAlternativeAddressesScreen() {
 	val sessionManager = koinInject<SessionManager>()
 	val accountSettings = koinInject<AccountSettings>()
-	val dnsResolver = koinInject<NavicDnsResolver>()
+	val dnsResolver = koinInject<NavicAddressHelper>()
 
 	val alternativeAddresses = remember {
 		accountSettings.alternateServerAddresses.toMutableStateList()

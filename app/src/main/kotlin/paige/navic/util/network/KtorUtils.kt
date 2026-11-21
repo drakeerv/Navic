@@ -69,7 +69,7 @@ fun buildOkHttpConfig(
 
 		dnsResolver?.let {
 			dns(it)
-			if (it is NavicDnsResolver) {
+			if (it is NavicAddressHelper) {
 				this.addInterceptor(it.requestInterceptor)
 			}
 		}
@@ -148,7 +148,7 @@ fun extractProxyConfigFromUrl(url: String): ProxyConfig? {
 fun createHttpClientWithPreferences(
 	preferenceManager: PreferenceManager,
 	accountSettings: AccountSettings,
-	dnsResolver: NavicDnsResolver
+	dnsResolver: NavicAddressHelper
 ): HttpClient {
 	return createHttpClient(
 		preferenceManager.dangerousSslNoopEnabled,

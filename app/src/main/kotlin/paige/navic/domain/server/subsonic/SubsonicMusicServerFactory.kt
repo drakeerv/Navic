@@ -17,7 +17,7 @@ import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.UserCredentials
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.buildKtorEngine
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
@@ -25,7 +25,7 @@ import paige.navic.util.network.getProxyUrlOrNull
 open class SubsonicMusicServerFactory(
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
-	private val dnsResolver: NavicDnsResolver
+	private val dnsResolver: NavicAddressHelper
 ) : MusicServerFactory {
 	override fun create(baseUrl: String, authorization: AuthorizationData): MusicServer {
 		val auth = when (authorization) {

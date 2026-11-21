@@ -51,7 +51,7 @@ import paige.navic.playback.exoplayer.impl.library.AndroidAutoLibrary
 import paige.navic.playback.exoplayer.impl.cache.NavicDataSource.NavicDataSourceFactory
 import paige.navic.util.AppRestarter
 import paige.navic.util.preferencesFile
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
 
@@ -114,7 +114,7 @@ val managerModule = module {
 	single<() -> DataSource.Factory> {
 		val preferenceManager: PreferenceManager = get()
 		val accountSettings: AccountSettings = get()
-		val dnsResolver = get<NavicDnsResolver>()
+		val dnsResolver = get<NavicAddressHelper>()
 
 		@OptIn(UnstableApi::class)
 		val provider: () -> DataSource.Factory = {

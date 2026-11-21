@@ -23,7 +23,7 @@ import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.UserCredentials
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
 import java.util.UUID
@@ -32,7 +32,7 @@ class JellyfinMusicServerFactory(
 	private val context: Context,
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
-	private val dnsResolver: NavicDnsResolver
+	private val dnsResolver: NavicAddressHelper
 ) : MusicServerFactory {
 
 	private val jellyfin by lazy {

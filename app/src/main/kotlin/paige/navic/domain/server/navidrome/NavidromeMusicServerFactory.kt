@@ -13,7 +13,7 @@ import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.ShareServer
 import paige.navic.domain.server.navidrome.api.NavidromeClient
 import paige.navic.domain.server.subsonic.SubsonicMusicServerFactory
-import paige.navic.util.network.NavicDnsResolver
+import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.buildKtorEngine
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
@@ -21,7 +21,7 @@ import paige.navic.util.network.getProxyUrlOrNull
 class NavidromeMusicServerFactory(
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
-	private val dnsResolver: NavicDnsResolver
+	private val dnsResolver: NavicAddressHelper
 ) : SubsonicMusicServerFactory(
 	preferenceManager, accountSettings, dnsResolver
 ) {
