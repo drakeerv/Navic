@@ -19,6 +19,7 @@ import paige.navic.database.entity.SyncActionType
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
+import paige.navic.domain.manager.session.isJellyfin
 import paige.navic.domain.manager.session.supportsExtension
 import paige.navic.domain.model.DomainPlaybackState
 import paige.navic.domain.server.ServerExtension
@@ -64,7 +65,7 @@ class ScrobbleExoListener(
 	) {
 		if (songId == null
 			|| !reachability.isReachable.value
-			|| !sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_PLAYBACK_REPORT)
+			|| (!sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_PLAYBACK_REPORT) && !sessionManager.isJellyfin())
 			) return
 
 		scope.launch {
