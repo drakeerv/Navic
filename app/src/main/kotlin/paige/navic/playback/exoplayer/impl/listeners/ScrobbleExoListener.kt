@@ -1,3 +1,9 @@
+/*
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
+ * SPDX-License-Identifier: GPL-3.0-only
+ */
+
 package paige.navic.playback.exoplayer.impl.listeners
 
 import androidx.media3.common.MediaItem
@@ -10,13 +16,13 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import paige.navic.database.entity.SyncActionType
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.manager.session.supportsExtension
 import paige.navic.domain.model.DomainPlaybackState
 import paige.navic.domain.server.ServerExtension
+import paige.navic.preferences.PreferenceManager
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 
@@ -50,6 +56,10 @@ class ScrobbleExoListener(
 		songId: String?,
 		positionMs: Long,
 		state: DomainPlaybackState,
+		isDeviceMuted: Boolean = player.isDeviceMuted,
+		deviceVolume: Int = player.deviceVolume,
+		@Player.RepeatMode repeatMode: Int = player.repeatMode,
+		shuffleModeEnabled: Boolean = player.shuffleModeEnabled,
 		playbackRate: Float = player.playbackParameters.speed
 	) {
 		if (songId == null
@@ -63,6 +73,10 @@ class ScrobbleExoListener(
 					id = songId,
 					positionMs = positionMs,
 					state = state,
+					isDeviceMuted = isDeviceMuted,
+					deviceVolume = deviceVolume,
+					repeatMode = repeatMode,
+					shuffleModeEnabled = shuffleModeEnabled,
 					playbackRate = playbackRate
 				)
 			}

@@ -6,6 +6,7 @@
 
 package paige.navic.domain.server
 
+import androidx.media3.common.Player
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumInfo
 import paige.navic.domain.model.DomainAlbumListType
@@ -74,6 +75,10 @@ interface MusicServer {
 		id: String,
 		positionMs: Long,
 		state: DomainPlaybackState,
+		isDeviceMuted: Boolean,
+		deviceVolume: Int,
+		@Player.RepeatMode repeatMode: Int,
+		shuffleModeEnabled: Boolean,
 		playbackRate: Float = 1f
 	)
 

@@ -1,11 +1,12 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
 package paige.navic.domain.server.subsonic
 
+import androidx.media3.common.Player
 import dev.zt64.subsonic.api.model.MediaType
 import dev.zt64.subsonic.api.model.PlaybackState
 import dev.zt64.subsonic.api.model.SubsonicErrorCode
@@ -234,6 +235,10 @@ class SubsonicMusicServer(
 		id: String,
 		positionMs: Long,
 		state: DomainPlaybackState,
+		isDeviceMuted: Boolean,
+		deviceVolume: Int,
+		@Player.RepeatMode repeatMode: Int,
+		shuffleModeEnabled: Boolean,
 		playbackRate: Float
 	) {
 		val apiState = when (state) {

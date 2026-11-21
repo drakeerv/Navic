@@ -6,6 +6,7 @@
 
 package paige.navic.domain.server.jellyfin
 
+import androidx.media3.common.Player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jellyfin.sdk.api.client.ApiClient
@@ -366,10 +367,20 @@ class JellyfinMusicServer(
 		id: String,
 		positionMs: Long,
 		state: DomainPlaybackState,
+		isDeviceMuted: Boolean,
+		deviceVolume: Int,
+		@Player.RepeatMode repeatMode: Int,
+		shuffleModeEnabled: Boolean,
 		playbackRate: Float
 	) {
 		val uuid = id.toUuid()
 		val positionTicks = positionMs * 10_000L
+		val repeatMode = when (repeatMode) {
+			Player.REPEAT_MODE_ALL -> RepeatMode.REPEAT_ALL
+			Player.REPEAT_MODE_ONE -> RepeatMode.REPEAT_ONE
+			else -> RepeatMode.REPEAT_NONE
+		}
+		val playbackOrder = if (shuffleModeEnabled) PlaybackOrder.SHUFFLE else PlaybackOrder.DEFAULT
 
 		when (state) {
 			DomainPlaybackState.PLAYING, DomainPlaybackState.STARTING -> {
@@ -379,10 +390,11 @@ class JellyfinMusicServer(
 						positionTicks = positionTicks,
 						isPaused = false,
 						canSeek = true,
-						isMuted = false,
+						isMuted = isDeviceMuted,
+						volumeLevel = deviceVolume,
 						playMethod = PlayMethod.DIRECT_PLAY,
-						repeatMode = RepeatMode.REPEAT_NONE,
-						playbackOrder = PlaybackOrder.DEFAULT
+						repeatMode = repeatMode,
+						playbackOrder = playbackOrder
 					)
 				)
 			}
@@ -393,10 +405,11 @@ class JellyfinMusicServer(
 						positionTicks = positionTicks,
 						isPaused = true,
 						canSeek = true,
-						isMuted = false,
+						isMuted = isDeviceMuted,
+						volumeLevel = deviceVolume,
 						playMethod = PlayMethod.DIRECT_PLAY,
-						repeatMode = RepeatMode.REPEAT_NONE,
-						playbackOrder = PlaybackOrder.DEFAULT
+						repeatMode = repeatMode,
+						playbackOrder = playbackOrder
 					)
 				)
 			}
