@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -48,28 +48,24 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.ImageLoader
-import coil3.compose.AsyncImage
-import coil3.compose.LocalPlatformContext as LocalCoilPlatformContext
+import coil3.compose.SubcomposeAsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import paige.navic.R
+import paige.navic.designsystem.theme.positive
 import paige.navic.di.LocalNavStack
 import paige.navic.domain.manager.playback.SleepTimerManager
 import paige.navic.domain.manager.playback.SleepTimerMode
-import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.LoginManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SyncManager
+import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.canShare
 import paige.navic.domain.manager.session.getUser
 import paige.navic.domain.manager.session.supportsExtension
 import paige.navic.domain.server.ServerExtension
-import paige.navic.ui.component.common.Monogram
-import paige.navic.ui.component.dialog.AlertDialog
-import paige.navic.ui.component.common.SegmentedListItem
-import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.Settings
 import paige.navic.icons.outlined.Add
@@ -79,10 +75,14 @@ import paige.navic.icons.outlined.Edit
 import paige.navic.icons.outlined.Forum
 import paige.navic.icons.outlined.Refresh
 import paige.navic.icons.outlined.Share
-import paige.navic.ui.navigation.Screen
-import paige.navic.designsystem.theme.positive
+import paige.navic.ui.component.common.Monogram
+import paige.navic.ui.component.common.SegmentedListItem
+import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.common.ServerTypeIcon
+import paige.navic.ui.component.dialog.AlertDialog
+import paige.navic.ui.navigation.Screen
 import paige.navic.ui.util.label
+import coil3.compose.LocalPlatformContext as LocalCoilPlatformContext
 
 @Composable
 private fun AccountAvatar(
@@ -109,13 +109,15 @@ private fun AccountAvatar(
 			.build()
 	}
 
-	AsyncImage(
+	SubcomposeAsyncImage(
 		model = model,
 		imageLoader = imageLoader,
 		contentDescription = null,
 		modifier = modifier
 			.size(size)
-			.clip(CircleShape)
+			.clip(CircleShape),
+		error = { Monogram(modifier = modifier.size(size), text = name) },
+		loading = { Monogram(modifier = modifier.size(size), text = name) }
 	)
 }
 
@@ -152,7 +154,9 @@ private fun AccountRow(
 			onClick = onClick
 		) {
 			Row(
-				modifier = Modifier.padding(12.dp).fillMaxWidth(),
+				modifier = Modifier
+					.padding(12.dp)
+					.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically,
 				horizontalArrangement = Arrangement.spacedBy(12.dp)
 			) {
