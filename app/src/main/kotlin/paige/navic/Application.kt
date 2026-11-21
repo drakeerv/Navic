@@ -10,6 +10,7 @@ import android.app.ActivityManager
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.google.android.gms.net.CronetProviderInstaller
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -23,6 +24,7 @@ import kotlin.system.exitProcess
 class Application : android.app.Application(), KoinComponent {
 	override fun onCreate() {
 		super.onCreate()
+		CronetProviderInstaller.installProvider(this)
 
 		if (isCrashProcess()) {
 			return

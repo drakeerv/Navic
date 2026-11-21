@@ -178,4 +178,5 @@ class PreferenceManager(
 
 	var proxyUrl by preference("")
 	var dangerousSslNoopEnabled by preference(false)
+	var cronetEnabled by preference(false)
 }

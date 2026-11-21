@@ -25,6 +25,7 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.runtime.StorageManager
 import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClientWithPreferences
+import org.chromium.net.CronetEngine
 import kotlin.math.abs
 
 class CoilSingleton(
@@ -32,14 +33,15 @@ class CoilSingleton(
     preferenceManager: PreferenceManager,
     accountSettings: AccountSettings,
     dnsResolver: NavicAddressHelper,
-    private val storageManager: StorageManager
+    private val storageManager: StorageManager,
+    cronetEngine: CronetEngine?
 ) {
 	private var sharedDiskCache: DiskCache? = null
 	private var sharedMemoryCache: MemoryCache? = null
 
 	@OptIn(ExperimentalCoilApi::class)
 	private val networkFetcher = KtorNetworkFetcherFactory(
-		createHttpClientWithPreferences(preferenceManager, accountSettings, dnsResolver)
+		createHttpClientWithPreferences(preferenceManager, accountSettings, dnsResolver, cronetEngine)
 	)
 
 	// https://slack-chats.kotlinlang.org/t/8294624/hi-i-m-using-coil-to-load-images-in-compose-and-i-need-to-se

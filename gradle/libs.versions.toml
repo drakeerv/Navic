@@ -3,6 +3,7 @@ agp = "9.5.1"
 android-sdk = "37.2"
 android-minSdk = "24"
 android-targetSdk = "37"
+cronetOkhttp = "0.1.2"
 kotlin = "2.4.21"
 
 # Androidx
@@ -35,6 +36,7 @@ koin = "4.2.2"
 kotlinxCoroutines = "1.11.0"
 mimeTypes = "2.0.0"
 pagingCommon = "3.5.3"
+playServicesCronet = "18.1.1"
 recyclerview = "1.4.0"
 
 [libraries]
@@ -76,6 +78,7 @@ androidx-browser = { module = "androidx.browser:browser", version = "1.10.0" }
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "androidx-work" }
 
 # Kotlinx
+cronet-okhttp = { module = "com.google.net.cronet:cronet-okhttp", version.ref = "cronetOkhttp" }
 cryptohash = { module = "com.appmattus.crypto:cryptohash", version = "1.0.2" } # R8 fails to minify this on 2.0.0 for some reason, might kang the xxhash stuff latter
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "kotlinxCoroutines" }
@@ -106,6 +109,7 @@ koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin" }
 koin-androidx-workmanager = { module = "io.insert-koin:koin-androidx-workmanager", version.ref = "koin" }
+play-services-cronet = { module = "com.google.android.gms:play-services-cronet", version.ref = "playServicesCronet" }
 subsonicKotlin = { module = "dev.zt64.subsonic:subsonic-client", version = "1.0.0-beta08-SNAPSHOT" }
 jellyfin-core = { module = "org.jellyfin.sdk:jellyfin-core", version.ref = "jellyfin-sdk" }
 jellyfin-model = { module = "org.jellyfin.sdk:jellyfin-model", version.ref = "jellyfin-sdk" }

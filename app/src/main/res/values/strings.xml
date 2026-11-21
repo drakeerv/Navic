@@ -316,6 +316,8 @@
 
 	<string name="option_proxy_url">Proxy URL</string>
 	<string name="option_ignore_ssl_certificates">Ignore SSL certificates</string>
+	<string name="option_enable_cronet">Enable Cronet (HTTP/3)</string>
+	<string name="subtitle_enable_cronet">Use Chromium\'s Cronet for HTTP requests if available</string>
 
 	<!-- Actions -->
 

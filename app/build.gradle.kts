@@ -212,6 +212,10 @@ dependencies {
 	implementation(libs.coil.network.ktor3)
 	implementation(libs.coil.gif)
 
+	// HTTP/3
+	implementation(libs.cronet.okhttp)
+	implementation(libs.play.services.cronet)
+
 	// Compose 3rd party
 	implementation(libs.kmpalette.core)
 	implementation(libs.kmpalette.network)

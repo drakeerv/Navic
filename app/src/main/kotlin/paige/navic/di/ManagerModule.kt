@@ -13,6 +13,7 @@ import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.okhttp.OkHttpDataSource
 import androidx.media3.extractor.metadata.icy.IcyHeaders
 import com.russhwolf.settings.SharedPreferencesSettings
+import org.chromium.net.CronetEngine
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -67,6 +68,14 @@ val managerModule = module {
 				commit = true
 			)
 		)
+	}
+	single<CronetEngine?> {
+		runCatching {
+			CronetEngine
+				.Builder(get<Context>())
+				.enableQuic(true)
+				.build()
+		}.getOrNull()
 	}
 	singleOf(::AppRestarter)
 	single { AccountSettings(get(), get<AccountStore>().keyPrefix) }
@@ -123,7 +132,9 @@ val managerModule = module {
 				createOkHttpClient(
 					proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
 					trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
-					dnsResolver,
+					cronetEngine = get(),
+					enableCronet = preferenceManager.cronetEnabled,
+					dnsResolver = dnsResolver,
 					customHeaders = accountSettings.customHeadersMap()
 				)
 			).setDefaultRequestProperties(

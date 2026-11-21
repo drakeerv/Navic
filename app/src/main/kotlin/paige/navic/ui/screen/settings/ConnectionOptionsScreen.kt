@@ -103,6 +103,16 @@ fun SettingsConnectionOptionsScreen() {
 		exoStateHolder.reloadNetworkDataSource()
 	}
 
+	var cronetChecked by remember {
+		mutableStateOf(preferenceManager.cronetEnabled)
+	}
+	val updateCronet: (Boolean) -> Unit = { bool ->
+		cronetChecked = bool
+		preferenceManager.cronetEnabled = bool
+		sessionManager.refreshClient()
+		exoStateHolder.reloadNetworkDataSource()
+	}
+
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.option_connection_options)) }) }
 	) { innerPadding ->
@@ -175,7 +185,7 @@ fun SettingsConnectionOptionsScreen() {
 						supportingContent = { Text(stringResource(R.string.subtitle_alternative_addresses)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
 							index = 0,
-							count = 3
+							count = 4
 						),
 						onClick = dropUnlessResumed {
 							if (Screen.Settings.AlternativeAddresses !in backStack) {
@@ -190,15 +200,25 @@ fun SettingsConnectionOptionsScreen() {
 						supportingContent = { Text(stringResource(R.string.subtitle_ignore_ssl_certificates)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
 							index = 1,
-							count = 3
+							count = 4
+						)
+					)
+					SettingsToggleItem(
+						checked = cronetChecked,
+						onCheckedChange = updateCronet,
+						content = { Text(stringResource(R.string.option_enable_cronet)) },
+						supportingContent = { Text(stringResource(R.string.subtitle_enable_cronet)) },
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = 2,
+							count = 4
 						)
 					)
 					SettingsNavItem(
 						content = { Text(stringResource(R.string.option_custom_headers)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_custom_headers)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 2,
-							count = 3
+							index = 3,
+							count = 4
 						),
 						onClick = dropUnlessResumed {
 							if (Screen.Settings.CustomHeaders !in backStack) {

@@ -26,13 +26,15 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
+import org.chromium.net.CronetEngine
 import java.util.UUID
 
 class JellyfinMusicServerFactory(
 	private val context: Context,
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
-	private val dnsResolver: NavicAddressHelper
+	private val dnsResolver: NavicAddressHelper,
+	private val cronetEngine: CronetEngine?
 ) : MusicServerFactory {
 
 	private val jellyfin by lazy {
@@ -46,6 +48,8 @@ class JellyfinMusicServerFactory(
 				createOkHttpClient(
 					proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
 					trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
+					cronetEngine = cronetEngine,
+					enableCronet = preferenceManager.cronetEnabled,
 					dnsResolver = dnsResolver,
 					customHeaders = accountSettings.customHeadersMap()
 				)

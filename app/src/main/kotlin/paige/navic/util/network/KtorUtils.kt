@@ -6,6 +6,7 @@
 
 package paige.navic.util.network
 
+import com.google.net.cronet.okhttptransport.CronetInterceptor
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -17,6 +18,8 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
 import okhttp3.Dns
 import okhttp3.OkHttpClient
+import okhttp3.OkHttpClient.Builder
+import org.chromium.net.CronetEngine
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import java.security.SecureRandom
@@ -45,13 +48,16 @@ fun buildKtorEngine(
 	}
 }
 
-fun buildOkHttpConfig(
-	proxyUrl: String? = null,
-	trustAllCerts: Boolean = false,
+// media3's ktor data source is bugged
+fun createOkHttpClient(
+	proxyUrl: String?,
+	trustAllCerts: Boolean,
+	cronetEngine: CronetEngine?,
+	enableCronet: Boolean = false,
 	dnsResolver: Dns? = null,
 	customHeaders: Map<String, String>? = null
-): OkHttpClient.Builder {
-	return OkHttpClient.Builder().apply {
+): OkHttpClient {
+	return Builder().apply {
 		proxyUrl?.let {
 			proxy(extractProxyConfigFromUrl(it))
 		}
@@ -70,12 +76,12 @@ fun buildOkHttpConfig(
 		dnsResolver?.let {
 			dns(it)
 			if (it is NavicAddressHelper) {
-				this.addInterceptor(it.requestInterceptor)
+				addInterceptor(it.requestInterceptor)
 			}
 		}
 
 		if (!customHeaders.isNullOrEmpty()) {
-			addInterceptor {
+			this.addInterceptor {
 				val request = it.request()
 					.newBuilder()
 					.apply {
@@ -85,35 +91,32 @@ fun buildOkHttpConfig(
 				it.proceed(request)
 			}
 		}
-	}
-}
 
-// media3's ktor data source is bugged
-fun createOkHttpClient(
-	proxyUrl: String?,
-	trustAllCerts: Boolean,
-	dnsResolver: Dns? = null,
-	customHeaders: Map<String, String>? = null
-): OkHttpClient {
-	return buildOkHttpConfig(
-		proxyUrl,
-		trustAllCerts,
-		dnsResolver,
-		customHeaders
-	).build()
+			// according to google, this should be the last thing in the interceptors
+		if (enableCronet) cronetEngine?.let { engine ->
+			runCatching {
+				CronetInterceptor.newBuilder(engine).build()
+			}.getOrNull()?.let(this::addInterceptor)
+		}
+	}.build()
 }
 
 fun createHttpClient(
 	trustAllCerts: Boolean = false,
 	customHeaders: Map<String, String>? = null,
+	cronetEngine: CronetEngine?,
+	enableCronet: Boolean = false,
 	proxyUrl: String? = null,
 	dnsResolver: Dns? = null
 ): HttpClient {
 	val engine = buildKtorEngine(
 		createOkHttpClient(
-			proxyUrl,
-			trustAllCerts,
-			dnsResolver
+			proxyUrl = proxyUrl,
+			trustAllCerts = trustAllCerts,
+			cronetEngine = cronetEngine,
+			enableCronet = enableCronet,
+			dnsResolver = dnsResolver,
+			customHeaders = customHeaders
 		)
 	)
 	val block: HttpClientConfig<*>.() -> Unit = {
@@ -148,12 +151,15 @@ fun extractProxyConfigFromUrl(url: String): ProxyConfig? {
 fun createHttpClientWithPreferences(
 	preferenceManager: PreferenceManager,
 	accountSettings: AccountSettings,
-	dnsResolver: NavicAddressHelper
+	dnsResolver: NavicAddressHelper,
+	cronetEngine: CronetEngine?
 ): HttpClient {
 	return createHttpClient(
-		preferenceManager.dangerousSslNoopEnabled,
-		accountSettings.customHeadersMap(),
-		preferenceManager.proxyUrl,
-		dnsResolver
+		trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
+		customHeaders = accountSettings.customHeadersMap(),
+		cronetEngine = cronetEngine,
+		enableCronet = preferenceManager.cronetEnabled,
+		proxyUrl = preferenceManager.proxyUrl,
+		dnsResolver = dnsResolver
 	)
 }
