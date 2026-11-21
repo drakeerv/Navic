@@ -38,7 +38,10 @@ class JellyfinMusicServerFactory(
 	private val jellyfin by lazy {
 		createJellyfin {
 			context = this@JellyfinMusicServerFactory.context
-			clientInfo = ClientInfo(name = "Navic", version = BuildConfig.VERSION_NAME)
+			clientInfo = ClientInfo(
+				name = "Navic",
+				version = BuildConfig.VERSION_NAME.removePrefix("v")
+			)
 			apiClientFactory = OkHttpFactory(
 				createOkHttpClient(
 					proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
