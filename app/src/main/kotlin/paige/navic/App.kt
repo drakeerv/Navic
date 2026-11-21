@@ -233,7 +233,9 @@ fun App() {
 	LaunchedEffect(sessionManager.commandFlow) {
 		sessionManager.commandFlow?.commands?.collectLatest { command ->
 			when (command) {
-				is ServerCommand.DisplayMessage -> snackBarState.showSnackbar(command.message)
+				is ServerCommand.DisplayMessage -> snackBarState.showSnackbar(
+					message = "Message from server: ${command.message}"
+				)
 				is ServerCommand.PlaybackCommand.Stop,
 				is ServerCommand.PlaybackCommand.Pause -> player.pause()
 
