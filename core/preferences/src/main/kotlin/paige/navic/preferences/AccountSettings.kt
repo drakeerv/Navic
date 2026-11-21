@@ -7,17 +7,19 @@
 package paige.navic.preferences
 
 import com.russhwolf.settings.Settings
+import paige.navic.domain.model.settings.ServerAddress
 import paige.navic.preferences.base.BasePreferenceManager
 
 /**
  * Preferences that belong to the active server account rather than the app.
  */
-public class AccountSettings(
+class AccountSettings(
 	settings: Settings,
 	keyPrefix: String
 ) : BasePreferenceManager(settings, keyPrefix) {
 	var customHeaders by preference(CUSTOM_HEADERS)
-	var alternateServerAddresses by jsonPreference(ALTERNATE_ADDRESSES, emptyList<String>())
+	var alternateServerAddresses by jsonPreference(ALTERNATE_ADDRESSES, emptyList<ServerAddress>())
+	var allowInsecureConnections by preference(false)
 
 	fun customHeadersMap(): Map<String, String> = buildMap {
 		for (line in customHeaders.lines()) {

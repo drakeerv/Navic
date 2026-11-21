@@ -553,7 +553,11 @@
 	<string name="info_library_syncing">Navic stores a local database of metadata from your library. This makes it so that you can access your library even when your server isn\'t reachable. Navic periodically updates this database, but you can also manually sync it with this option.</string>
 
 	<string name="alt_addresses_edit_address">Edit address</string>
-	<string name="alt_addresses_dialog_hint">Insert a bare IP or hostname (specifying the port is allowed):</string>
+	<string name="alt_addresses_dialog_hint">Insert a bare IP or hostname:</string>
+	<string name="alt_addresses_host">Host</string>
+	<string name="alt_addresses_port">Port</string>
+	<string name="alt_addresses_allow_insecure">Allow insecure connections</string>
+	<string name="alt_addresses_allow_insecure_description">Tries HTTP addresses when enabled; HTTPS addresses are always tried</string>
 	<string name="alt_addresses_text_field_placeholder">Eg. 192.168.1.6</string>
 
 	<string name="media_session_channel_name">Media playback</string>

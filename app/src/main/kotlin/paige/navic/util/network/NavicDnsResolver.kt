@@ -9,8 +9,15 @@ package paige.navic.util.network
 import androidx.core.net.toUri
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapMerge
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -21,8 +28,11 @@ import paige.navic.domain.manager.session.account.AccountStore
 import paige.navic.preferences.AccountSettings
 import paige.navic.domain.manager.session.connectivity.ConnectivityManager
 import paige.navic.domain.manager.session.connectivity.NetworkStatus
+import paige.navic.util.Logger
 import paige.navic.util.TTLLruCache
 import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.concurrent.TimeUnit
 
 class NavicDnsResolver(
@@ -31,9 +41,10 @@ class NavicDnsResolver(
 	val connectivityManager: ConnectivityManager
 ) : Dns {
 	private companion object {
+		const val TAG = "NavicDnsResolver"
 		val lookupCache = TTLLruCache<String, List<InetAddress>>(
 			maxSize = 50,
-			defaultTtlMillis = TimeUnit.MINUTES.toMillis(5)
+			defaultTtlMillis = TimeUnit.MINUTES.toMillis(/* duration = */ 10)
 		)
 		val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 	}
@@ -61,6 +72,7 @@ class NavicDnsResolver(
 		return fromCache
 	}
 
+	@OptIn(ExperimentalCoroutinesApi::class)
 	fun resolve(hostname: String): List<InetAddress> {
 		val serverDomain = accountStore.activeAccount
 			?.baseUrl
@@ -68,23 +80,40 @@ class NavicDnsResolver(
 			?.host
 		val systemAddresses = Dns.SYSTEM.lookup(hostname)
 		if (hostname != serverDomain) return systemAddresses
-		val alternates = hosts.mapNotNull {
-			runCatching {
-				InetAddress.getByName(it)
-			}.getOrNull()
+
+		val alternates = runBlocking {
+			accountSettings.alternateServerAddresses
+				.filter {
+					accountSettings.allowInsecureConnections || it.scheme.isSecure
+				}
+				.asFlow()
+				.flatMapMerge { address ->
+					flow {
+						emit(
+							runCatching {
+								InetAddress.getByName(address.host)
+							}.getOrNull()?.takeIf {
+								runCatching {
+									Socket().use { socket ->
+										socket.connect(
+											InetSocketAddress(address.host, address.port)
+										)
+									}
+								}.isSuccess
+							}
+						)
+					}
+				}
+				.filterNotNull()
+				.flowOn(Dispatchers.IO)
+				.toList()
+		}
+		if (alternates.isNotEmpty()) {
+			Logger.i(TAG, "candidates for alternate addresses (not ranked by local or private): $alternates")
 		}
 
 		return (systemAddresses + alternates).sortedByDescending { it.isLocalOrPrivate() }
 	}
-
-	private val addresses: List<String>
-		get() = accountSettings.alternateServerAddresses
-
-	private val hosts: List<String>
-		get() = addresses.map { it.extractHost() }
-
-	private val hostMap: Map<String, String>
-		get() = hosts.zip(addresses).toMap()
 
 	val requestInterceptor: Interceptor
 		get() = Interceptor { chain ->
@@ -102,15 +131,25 @@ class NavicDnsResolver(
 			}
 
 			val localResolution = lookupResult.firstOrNull { it.isLocalOrPrivate() }
-			val localHost = hostMap[localResolution?.hostAddress]
 
-			val scheme = localHost?.extractScheme() ?: "http"
-			val port = localHost?.extractPort()
+			val alternateAddress =
+				accountSettings.alternateServerAddresses.find { it.host == localResolution?.hostAddress }
+					?: return@Interceptor chain.proceed(request)
 
-			val newUrl = request.url.newBuilder().build(scheme, port)
+			Logger.i(TAG, "currently using $alternateAddress as the address")
+
+			val newUrl = request.url.newBuilder()
+				.host(alternateAddress.host)
+				.build(
+					scheme = alternateAddress.scheme.name,
+					alternateAddress.port
+				)
 
 			if (localResolution != null) {
-				request = request.newBuilder().url(newUrl).build()
+				request = request
+					.newBuilder()
+					.url(newUrl)
+					.build()
 			}
 
 			chain.proceed(request)
@@ -125,15 +164,7 @@ class NavicDnsResolver(
 		return this.build()
 	}
 
-	private fun String.extractScheme(): String? = this.substringBefore("://")
-		.lowercase()
-		.takeIf { it.isNotBlank() && this != it }
-
-	private fun String.extractHost(): String = this.substringAfter("://").substringBefore(":")
-
-	private fun String.extractPort(): Int? = this.substringAfterLast(":").toIntOrNull()
-}
-
-fun InetAddress.isLocalOrPrivate(): Boolean {
-	return this.isLoopbackAddress || this.isSiteLocalAddress || this.isLinkLocalAddress
+	fun InetAddress.isLocalOrPrivate(): Boolean {
+		return this.isLoopbackAddress || this.isSiteLocalAddress || this.isLinkLocalAddress
+	}
 }

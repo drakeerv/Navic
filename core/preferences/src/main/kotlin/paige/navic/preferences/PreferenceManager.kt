@@ -44,10 +44,10 @@ import paige.navic.domain.model.settings.ToolbarPosition
 import paige.navic.preferences.base.BasePreferenceManager
 import com.russhwolf.settings.Settings as KmpSettings
 
-public class PreferenceManager(
+class PreferenceManager(
 	settings: KmpSettings
 ) : BasePreferenceManager(settings) {
-	var queueInfoType by (preference(QueueInfoType.Full))
+	var queueInfoType by preference(QueueInfoType.Full)
 	var appIconVariant by preference(AppIconVariant.Default)
 	var font by preference(FontOption.GoogleSans)
 	var fontPath by preference("")
