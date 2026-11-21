@@ -34,6 +34,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.TimeUnit
+import kotlin.time.Duration.Companion.seconds
 
 class NavicDnsResolver(
 	val accountSettings: AccountSettings,
@@ -96,7 +97,8 @@ class NavicDnsResolver(
 								runCatching {
 									Socket().use { socket ->
 										socket.connect(
-											InetSocketAddress(address.host, address.port)
+											/* endpoint = */ InetSocketAddress(address.host, address.port),
+											/* timeout = */ 1000 // is this modest enough? i don't know
 										)
 									}
 								}.isSuccess
