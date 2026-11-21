@@ -22,6 +22,7 @@ enum class ServerScheme(val isSecure: Boolean) {
 data class ServerAddress(
 	val scheme: ServerScheme,
 	val host: String,
+	val basePath: String? = null,
 	private val configuredPort: Int? = null
 ) {
 	val port: Int

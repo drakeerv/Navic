@@ -139,7 +139,15 @@ class NavicDnsResolver(
 			Logger.i(TAG, "currently using $alternateAddress as the address")
 
 			val newUrl = request.url.newBuilder()
-				.host(alternateAddress.host)
+				.apply {
+					host(alternateAddress.host)
+
+					val basePath = alternateAddress.basePath.takeIf { !it.isNullOrBlank() }
+
+					if (basePath != null) {
+						encodedPath(basePath)
+					}
+				}
 				.build(
 					scheme = alternateAddress.scheme.name,
 					alternateAddress.port

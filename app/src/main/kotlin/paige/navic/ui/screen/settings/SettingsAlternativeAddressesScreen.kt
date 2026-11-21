@@ -210,13 +210,15 @@ private fun AddressDialog(
 ) {
 	var hostField by remember { mutableStateOf(address.host) }
 	var portField by remember { mutableStateOf(address.configuredPortText()) }
+	var basePathField by remember { mutableStateOf(address.basePath) }
 
 	val port = portField.toIntOrNull()
 	val portIsValid = portField.isBlank() || (port != null && port in 1..65535)
 	val current = ServerAddress(
 		scheme = address.scheme,
 		host = hostField,
-		configuredPort = if (portIsValid) port else address.configuredPort()
+		configuredPort = if (portIsValid) port else address.configuredPort(),
+		basePath = basePathField
 	)
 
 	LaunchedEffect(current, portIsValid) {
@@ -282,6 +284,13 @@ private fun AddressDialog(
 					placeholder = { Text(address.scheme.getKnownPort().toString()) },
 					singleLine = true,
 					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+					modifier = Modifier.fillMaxWidth()
+				)
+				OutlinedTextField(
+					value = basePathField ?: "",
+					onValueChange = { basePathField = it },
+					label = { Text(stringResource(R.string.alt_addresses_base_path)) },
+					singleLine = true,
 					modifier = Modifier.fillMaxWidth()
 				)
 			}
