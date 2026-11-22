@@ -48,7 +48,7 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ~/.android/sdk
-          key: ${{ runner.os }}-sdk-${{ hashFiles('gradle/libs.versions.toml', 'vendor/androidx-media/libraries/decoder_ffmpeg/build.gradle.kts') }}
+          key: ${{ runner.os }}-v2-sdk-${{ hashFiles('gradle/libs.versions.toml', 'vendor/androidx-media/libraries/decoder_ffmpeg/build.gradle.kts') }}
 
       - name: Resolve FFmpeg cache key
         id: ffmpeg-key
