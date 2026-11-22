@@ -35,6 +35,8 @@ jobs:
   build-android:
     name: Android
     runs-on: ubuntu-latest
+    # for now dont build for prs because it causes so many issues
+    if: ${{ forgejo.event_name != 'pull_request' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
