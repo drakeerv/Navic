@@ -61,6 +61,8 @@ import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.session.DownloadManager
+import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.session.supportsDownloads
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainSongCollection
@@ -96,6 +98,7 @@ fun CollectionDetailScreen(
 	collectionId: String
 ) {
 	val preferenceManager = koinInject<PreferenceManager>()
+	val sessionManager = koinInject<SessionManager>()
 
 	val viewModel = koinViewModel<CollectionDetailViewModel>(
 		key = collectionId,
@@ -227,7 +230,8 @@ fun CollectionDetailScreen(
 
 					item {
 						CollectionDetailScreenHeadingRowButtons(
-							collection = collection
+							collection = collection,
+							showDownloadButton = sessionManager.supportsDownloads()
 						)
 					}
 

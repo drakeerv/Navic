@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -52,7 +52,8 @@ import paige.navic.designsystem.theme.defaultFont
 
 @Composable
 fun CollectionDetailScreenHeadingRowButtons(
-	collection: DomainSongCollection
+	collection: DomainSongCollection,
+	showDownloadButton: Boolean = false
 ) {
 	val player = koinInject<PlayerRepository>()
 	val snackBarManager = koinInject<SnackBarManager>()
@@ -74,26 +75,28 @@ fun CollectionDetailScreenHeadingRowButtons(
 	) {
 		val buttonShape = CircleShape
 		val buttonHeight = 44.dp
-		OutlinedButton(
-			modifier = Modifier.size(width = 52.dp, height = buttonHeight),
-			onClick = {
-				player.setShuffle(true)
-				player.playNow(collection, collection.songs.indices.random())
-			},
-			shape = buttonShape,
-			contentPadding = PaddingValues(0.dp),
-			enabled = collection.songs.isNotEmpty()
-		) {
-			Icon(
-				Icons.Outlined.Shuffle,
-				contentDescription = stringResource(R.string.action_shuffle),
-				modifier = Modifier.size(24.dp)
-			)
+		if (showDownloadButton) {
+			OutlinedButton(
+				modifier = Modifier.size(width = 52.dp, height = buttonHeight),
+				onClick = {
+					player.setShuffle(true)
+					player.playNow(collection, collection.songs.indices.random())
+				},
+				shape = buttonShape,
+				contentPadding = PaddingValues(0.dp),
+				enabled = collection.songs.isNotEmpty()
+			) {
+				Icon(
+					Icons.Outlined.Shuffle,
+					contentDescription = stringResource(R.string.action_shuffle),
+					modifier = Modifier.size(24.dp)
+				)
+			}
 		}
 		Button(
 			modifier = Modifier
 				.weight(1f)
-				.height(buttonHeight),
+				.heightIn(min = buttonHeight),
 			onClick = {
 				player.setShuffle(false)
 				player.playNow(collection)
@@ -119,75 +122,108 @@ fun CollectionDetailScreenHeadingRowButtons(
 				fontFamily = defaultFont(round = 100f)
 			)
 		}
-		OutlinedButton(
-			modifier = Modifier.size(width = 52.dp, height = buttonHeight),
-			onClick = {
-				scope.launch {
-					when (downloadStatus) {
-						DownloadStatus.NOT_DOWNLOADED, DownloadStatus.FAILED -> {
-							downloadManager.downloadCollection(collection.songs.map { it.id })
-							snackBarManager.notify(R.string.notice_download_started)
-						}
+		if (!showDownloadButton) {
+			OutlinedButton(
+				modifier = Modifier
+					.weight(1f)
+					.heightIn(min = buttonHeight),
+				onClick = {
+					player.setShuffle(true)
+					player.playNow(collection, collection.songs.indices.random())
+				},
+				shape = buttonShape,
+				enabled = collection.songs.isNotEmpty()
+			) {
+				Icon(
+					Icons.Outlined.Shuffle,
+					null,
+					modifier = Modifier
+						.size(25.dp)
+						.padding(end = 3.dp)
+				)
+				Text(
+					stringResource(R.string.action_shuffle),
+					maxLines = 1,
+					autoSize = TextAutoSize.StepBased(
+						minFontSize = 1.sp,
+						maxFontSize = 15.sp
+					),
+					fontWeight = FontWeight.SemiBold,
+					fontFamily = defaultFont(round = 100f)
+				)
+			}
+		}
+		if (showDownloadButton) {
+			OutlinedButton(
+				modifier = Modifier.size(width = 52.dp, height = buttonHeight),
+				onClick = {
+					scope.launch {
+						when (downloadStatus) {
+							DownloadStatus.NOT_DOWNLOADED, DownloadStatus.FAILED -> {
+								downloadManager.downloadCollection(collection.songs.map { it.id })
+								snackBarManager.notify(R.string.notice_download_started)
+							}
 
-						DownloadStatus.DOWNLOADING -> {
-							downloadManager.cancelCollectionDownload(collection.songs.map { it.id })
-						}
+							DownloadStatus.DOWNLOADING -> {
+								downloadManager.cancelCollectionDownload(collection.songs.map { it.id })
+							}
 
-						DownloadStatus.DOWNLOADED -> {
-							downloadDeletionHandler.requestDelete(
-								target = DeleteDownloadTarget.Collection.of(collection),
-								notifySnackBar = true
+							DownloadStatus.DOWNLOADED -> {
+								downloadDeletionHandler.requestDelete(
+									target = DeleteDownloadTarget.Collection.of(collection),
+									notifySnackBar = true
+								)
+							}
+						}
+					}
+				},
+				shape = buttonShape,
+				enabled = collection.songs.isNotEmpty() ||
+					(downloadStatus == DownloadStatus.DOWNLOADED || downloadStatus == DownloadStatus.DOWNLOADING),
+				contentPadding = PaddingValues(0.dp)
+			) {
+				when (downloadStatus) {
+					DownloadStatus.DOWNLOADING -> {
+						Box(contentAlignment = Alignment.Center) {
+							CircularProgressIndicator(
+								modifier = Modifier.size(24.dp),
+								strokeWidth = 2.dp,
+								color = MaterialTheme.colorScheme.primary
+							)
+							Icon(
+								imageVector = Icons.Outlined.Close,
+								contentDescription = "Cancel",
+								modifier = Modifier.size(12.dp),
+								tint = MaterialTheme.colorScheme.primary
 							)
 						}
 					}
-				}
-			},
-			shape = buttonShape,
-			enabled = collection.songs.isNotEmpty() ||
-				(downloadStatus == DownloadStatus.DOWNLOADED || downloadStatus == DownloadStatus.DOWNLOADING),
-			contentPadding = PaddingValues(0.dp)
-		) {
-			when (downloadStatus) {
-				DownloadStatus.DOWNLOADING -> {
-					Box(contentAlignment = Alignment.Center) {
-						CircularProgressIndicator(
-							modifier = Modifier.size(24.dp),
-							strokeWidth = 2.dp,
-							color = MaterialTheme.colorScheme.primary
-						)
+
+					DownloadStatus.DOWNLOADED -> {
 						Icon(
-							imageVector = Icons.Outlined.Close,
-							contentDescription = "Cancel",
-							modifier = Modifier.size(12.dp),
+							imageVector = Icons.Outlined.Delete,
+							contentDescription = stringResource(R.string.action_delete_download),
+							modifier = Modifier.size(24.dp),
 							tint = MaterialTheme.colorScheme.primary
 						)
 					}
-				}
 
-				DownloadStatus.DOWNLOADED -> {
-					Icon(
-						imageVector = Icons.Outlined.Delete,
-						contentDescription = stringResource(R.string.action_delete_download),
-						modifier = Modifier.size(24.dp),
-						tint = MaterialTheme.colorScheme.primary
-					)
-				}
+					DownloadStatus.FAILED -> {
+						Icon(
+							imageVector = Icons.Outlined.DownloadOff,
+							contentDescription = stringResource(R.string.info_download_failed),
+							modifier = Modifier.size(24.dp),
+							tint = MaterialTheme.colorScheme.error
+						)
+					}
 
-				DownloadStatus.FAILED -> {
-					Icon(
-						imageVector = Icons.Outlined.DownloadOff,
-						contentDescription = stringResource(R.string.info_download_failed),
-						modifier = Modifier.size(24.dp),
-						tint = MaterialTheme.colorScheme.error
-					)
-				}
-
-				else -> {
-					Icon(
-						imageVector = Icons.Outlined.Download,
-						contentDescription = null,
-						modifier = Modifier.size(24.dp)
-					)
+					else -> {
+						Icon(
+							imageVector = Icons.Outlined.Download,
+							contentDescription = null,
+							modifier = Modifier.size(24.dp)
+						)
+					}
 				}
 			}
 		}
