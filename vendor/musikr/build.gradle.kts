@@ -76,7 +76,6 @@ val assembleTaglib = tasks.register<Exec>("assembleTaglib") {
 	outputs.cacheIf { true }
 
 	commandLine(
-		"sh",
 		jniDir.resolve("build_taglib.sh").absolutePath,
 		jniDir.absolutePath,
 		androidComponents.sdkComponents.ndkDirectory.get().asFile.absolutePath
