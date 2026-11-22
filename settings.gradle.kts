@@ -62,6 +62,7 @@ dependencyResolutionManagement {
 
 include(
 	":app",
+	":vendor:musikr",
 
 	// Core
 	":core:common",
@@ -73,5 +74,7 @@ include(
 	":core:server",
 	":core:widgets"
 )
+
+project(":vendor:musikr").projectDir = file("vendor/musikr")
 includeMedia3(file("vendor/androidx-media"))
 includeBuild("vendor/subsonic-kotlin")

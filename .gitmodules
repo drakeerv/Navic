@@ -4,3 +4,7 @@
 [submodule "vendor/subsonic-kotlin"]
 	path = vendor/subsonic-kotlin
 	url = https://github.com/Nightdavisao/subsonic-kotlin
+[submodule "vendor/musikr/src/main/cpp/taglib"]
+	path = vendor/musikr/src/main/cpp/taglib
+	url = https://github.com/taglib/taglib.git
+	tag = ee1931b
