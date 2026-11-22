@@ -87,6 +87,15 @@ jobs:
       - name: Setup Android SDK
         uses: https://github.com/android-actions/setup-android@v4
 
+      - name: Build with Gradle (debug)
+        id: build_debug
+        if: forgejo.event_name == 'pull_request'
+        run: |
+          ./gradlew :app:assembleDefaultDebug --stacktrace --no-daemon --no-watch-fs
+          mv app/build/outputs/apk/**/**/*.apk ./
+          ./gradlew :app:assembleFdroidDebug --stacktrace --no-daemon --no-watch-fs
+          mv app/build/outputs/apk/**/**/*.apk ./
+
       - name: Build with Gradle (release)
         id: build_release
         if: ${{ (forgejo.event_name == 'push' || forgejo.event_name == 'workflow_dispatch') && env.SIGNING_KEY_ALIAS }}
@@ -102,15 +111,6 @@ jobs:
           ./gradlew :app:packageFdroidRelease --stacktrace --no-daemon --no-watch-fs
           mv app/build/outputs/apk/**/**/*.apk ./
           rm release.keystore
-
-      - name: Build with Gradle (debug)
-        id: build_debug
-        if: forgejo.event_name == 'pull_request'
-        run: |
-          ./gradlew :app:assembleDefaultDebug --stacktrace --no-daemon --no-watch-fs
-          mv app/build/outputs/apk/**/**/*.apk ./
-          ./gradlew :app:assembleFdroidDebug --stacktrace --no-daemon --no-watch-fs
-          mv app/build/outputs/apk/**/**/*.apk ./
 
       - name: Upload APK artifact
         uses: https://data.forgejo.org/forgejo/upload-artifact@v4
