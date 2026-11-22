@@ -31,13 +31,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import paige.navic.R
 
+// Checks if string starts with http scheme or contains a . or :
+private val HttpRegex = "(^https?|(?=[.:]))".toRegex()
+
 @Composable
 fun LoginScreenSuggestionChips(
 	instanceState: TextFieldState,
-	showSuggestions: Boolean = instanceState.text.isNotEmpty() &&
-		!instanceState.text.startsWith("http://") &&
-		!instanceState.text.startsWith("https://") &&
-		(instanceState.text.contains(".") || instanceState.text.contains(":"))
+	showSuggestions: Boolean = instanceState.text.run { isNotEmpty() && !contains(HttpRegex) }
 ) {
 	AnimatedVisibility(
 		modifier = Modifier.fillMaxWidth(),
