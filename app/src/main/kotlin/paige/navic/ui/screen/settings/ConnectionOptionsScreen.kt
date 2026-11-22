@@ -33,6 +33,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.dropUnlessResumed
 import org.koin.compose.koinInject
+import paige.navic.BuildConfig
 import paige.navic.R
 import paige.navic.di.LocalNavStack
 import paige.navic.domain.manager.session.SessionManager
@@ -180,12 +181,14 @@ fun SettingsConnectionOptionsScreen() {
 					)
 				}
 				SettingsGroup {
+					val count = if (BuildConfig.FDROID) 3 else 4
+
 					SettingsNavItem(
 						content = { Text(stringResource(R.string.option_alternate_addresses)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_alternative_addresses)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
 							index = 0,
-							count = 4
+							count = count
 						),
 						onClick = dropUnlessResumed {
 							if (Screen.Settings.AlternativeAddresses !in backStack) {
@@ -200,25 +203,27 @@ fun SettingsConnectionOptionsScreen() {
 						supportingContent = { Text(stringResource(R.string.subtitle_ignore_ssl_certificates)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
 							index = 1,
-							count = 4
+							count = count
 						)
 					)
-					SettingsToggleItem(
-						checked = cronetChecked,
-						onCheckedChange = updateCronet,
-						content = { Text(stringResource(R.string.option_enable_cronet)) },
-						supportingContent = { Text(stringResource(R.string.subtitle_enable_cronet)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 2,
-							count = 4
+					if (!BuildConfig.FDROID) {
+						SettingsToggleItem(
+							checked = cronetChecked,
+							onCheckedChange = updateCronet,
+							content = { Text(stringResource(R.string.option_enable_cronet)) },
+							supportingContent = { Text(stringResource(R.string.subtitle_enable_cronet)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = 2,
+								count = count
+							)
 						)
-					)
+					}
 					SettingsNavItem(
 						content = { Text(stringResource(R.string.option_custom_headers)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_custom_headers)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 3,
-							count = 4
+							index = if (BuildConfig.FDROID) 2 else 3,
+							count = count
 						),
 						onClick = dropUnlessResumed {
 							if (Screen.Settings.CustomHeaders !in backStack) {

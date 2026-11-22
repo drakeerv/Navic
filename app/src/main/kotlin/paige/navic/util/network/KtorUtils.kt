@@ -6,7 +6,6 @@
 
 package paige.navic.util.network
 
-import com.google.net.cronet.okhttptransport.CronetInterceptor
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -17,9 +16,9 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
 import okhttp3.Dns
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.OkHttpClient.Builder
-import org.chromium.net.CronetEngine
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import java.security.SecureRandom
@@ -52,7 +51,7 @@ fun buildKtorEngine(
 fun createOkHttpClient(
 	proxyUrl: String?,
 	trustAllCerts: Boolean,
-	cronetEngine: CronetEngine?,
+	cronetInterceptor: Interceptor?,
 	enableCronet: Boolean = false,
 	dnsResolver: Dns? = null,
 	customHeaders: Map<String, String>? = null
@@ -93,18 +92,14 @@ fun createOkHttpClient(
 		}
 
 		// according to google, this should be the last thing in the interceptors
-		if (enableCronet) cronetEngine?.let { engine ->
-			runCatching {
-				CronetInterceptor.newBuilder(engine).build()
-			}.getOrNull()?.let(this::addInterceptor)
-		}
+		if (enableCronet) cronetInterceptor?.let(this::addInterceptor)
 	}.build()
 }
 
 fun createHttpClient(
 	trustAllCerts: Boolean = false,
 	customHeaders: Map<String, String>? = null,
-	cronetEngine: CronetEngine?,
+	cronetInterceptor: Interceptor?,
 	enableCronet: Boolean = false,
 	proxyUrl: String? = null,
 	dnsResolver: Dns? = null
@@ -113,7 +108,7 @@ fun createHttpClient(
 		createOkHttpClient(
 			proxyUrl = proxyUrl,
 			trustAllCerts = trustAllCerts,
-			cronetEngine = cronetEngine,
+			cronetInterceptor = cronetInterceptor,
 			enableCronet = enableCronet,
 			dnsResolver = dnsResolver,
 			customHeaders = customHeaders
@@ -152,12 +147,12 @@ fun createHttpClientWithPreferences(
 	preferenceManager: PreferenceManager,
 	accountSettings: AccountSettings,
 	dnsResolver: NavicAddressHelper,
-	cronetEngine: CronetEngine?
+	cronetInterceptor: Interceptor?
 ): HttpClient {
 	return createHttpClient(
 		trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
 		customHeaders = accountSettings.customHeadersMap(),
-		cronetEngine = cronetEngine,
+		cronetInterceptor = cronetInterceptor,
 		enableCronet = preferenceManager.cronetEnabled,
 		proxyUrl = preferenceManager.proxyUrl,
 		dnsResolver = dnsResolver

@@ -10,7 +10,6 @@ import android.app.ActivityManager
 import android.content.Intent
 import android.os.Build
 import android.util.Log
-import com.google.android.gms.net.CronetProviderInstaller
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
 import org.koin.androidx.workmanager.koin.workManagerFactory
@@ -19,12 +18,13 @@ import org.koin.core.component.KoinComponent
 import org.koin.dsl.module
 import paige.navic.di.ActivityProvider
 import paige.navic.di.initKoin
+import paige.navic.util.network.CronetSupportImpl
 import kotlin.system.exitProcess
 
 class Application : android.app.Application(), KoinComponent {
 	override fun onCreate() {
 		super.onCreate()
-		CronetProviderInstaller.installProvider(this)
+		CronetSupportImpl().install(this)
 
 		if (isCrashProcess()) {
 			return

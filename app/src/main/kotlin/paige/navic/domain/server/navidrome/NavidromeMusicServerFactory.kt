@@ -17,15 +17,15 @@ import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.buildKtorEngine
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
-import org.chromium.net.CronetEngine
+import okhttp3.Interceptor
 
 class NavidromeMusicServerFactory(
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
 	private val dnsResolver: NavicAddressHelper,
-	private val cronetEngine: CronetEngine?
+	private val cronetInterceptor: Interceptor?
 ) : SubsonicMusicServerFactory(
-	preferenceManager, accountSettings, dnsResolver, cronetEngine
+	preferenceManager, accountSettings, dnsResolver, cronetInterceptor
 ) {
 	override fun create(baseUrl: String, authorization: AuthorizationData): MusicServer {
 		val server = super.create(baseUrl, authorization)
@@ -36,7 +36,7 @@ class NavidromeMusicServerFactory(
 			createOkHttpClient(
 				proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
 				trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
-				cronetEngine = cronetEngine,
+				cronetInterceptor = cronetInterceptor,
 				enableCronet = preferenceManager.cronetEnabled,
 				dnsResolver = dnsResolver
 			)

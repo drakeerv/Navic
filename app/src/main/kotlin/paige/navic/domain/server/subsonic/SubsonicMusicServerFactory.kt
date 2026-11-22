@@ -11,7 +11,7 @@ import dev.zt64.subsonic.client.SubsonicClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.header
-import org.chromium.net.CronetEngine
+import okhttp3.Interceptor
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.server.AuthorizationData
@@ -27,7 +27,7 @@ open class SubsonicMusicServerFactory(
 	private val preferenceManager: PreferenceManager,
 	private val accountSettings: AccountSettings,
 	private val dnsResolver: NavicAddressHelper,
-	private val cronetEngine: CronetEngine?
+	private val cronetInterceptor: Interceptor?
 ) : MusicServerFactory {
 	override fun create(baseUrl: String, authorization: AuthorizationData): MusicServer {
 		val auth = when (authorization) {
@@ -77,7 +77,7 @@ open class SubsonicMusicServerFactory(
 			createOkHttpClient(
 				proxyUrl = preferenceManager.proxyUrl.getProxyUrlOrNull(),
 				trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
-				cronetEngine = cronetEngine,
+				cronetInterceptor = cronetInterceptor,
 				enableCronet = preferenceManager.cronetEnabled,
 				dnsResolver = dnsResolver
 			)

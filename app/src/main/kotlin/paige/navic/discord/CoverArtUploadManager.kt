@@ -23,7 +23,7 @@ import paige.navic.domain.model.settings.CoverArtHost
 import paige.navic.util.Logger
 import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClient
-import org.chromium.net.CronetEngine
+import okhttp3.Interceptor
 import kotlin.time.Duration.Companion.seconds
 
 class CoverArtUploadManager(
@@ -31,11 +31,11 @@ class CoverArtUploadManager(
 	private val preferenceManager: PreferenceManager,
 	private val settings: Settings,
 	dnsResolver: NavicAddressHelper,
-	cronetEngine: CronetEngine?
+	cronetInterceptor: Interceptor?
 ) {
 	private val client = createHttpClient(
 		trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
-		cronetEngine = cronetEngine,
+		cronetInterceptor = cronetInterceptor,
 		enableCronet = preferenceManager.cronetEnabled,
 		proxyUrl = preferenceManager.proxyUrl,
 		dnsResolver = dnsResolver

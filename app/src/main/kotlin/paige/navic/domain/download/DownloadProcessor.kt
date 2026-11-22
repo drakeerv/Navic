@@ -36,7 +36,7 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.util.Logger
 import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClientWithPreferences
-import org.chromium.net.CronetEngine
+import okhttp3.Interceptor
 
 class DownloadCancelledException : Exception("Download was cancelled")
 
@@ -51,9 +51,9 @@ class DownloadProcessor(
 	private val preferenceManager: PreferenceManager,
 	accountSettings: AccountSettings,
 	dnsResolver: NavicAddressHelper,
-	cronetEngine: CronetEngine?
+	cronetInterceptor: Interceptor?
 ) {
-	private val client = createHttpClientWithPreferences(preferenceManager, accountSettings, dnsResolver, cronetEngine).apply {
+	private val client = createHttpClientWithPreferences(preferenceManager, accountSettings, dnsResolver, cronetInterceptor).apply {
 		config {
 			HttpResponseValidator {
 				validateResponse { response ->

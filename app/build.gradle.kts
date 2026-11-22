@@ -213,8 +213,8 @@ dependencies {
 	implementation(libs.coil.gif)
 
 	// HTTP/3
-	implementation(libs.cronet.okhttp)
-	implementation(libs.play.services.cronet)
+	"defaultImplementation"(libs.cronet.okhttp)
+	"defaultImplementation"(libs.play.services.cronet)
 
 	// Compose 3rd party
 	implementation(libs.kmpalette.core)
