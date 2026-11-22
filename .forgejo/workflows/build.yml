@@ -28,7 +28,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ forgejo.workflow }}-${{ forgejo.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -94,7 +94,7 @@ jobs:
           SIGNING_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           SIGNING_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           SIGNING_STORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          SIGNING_STORE_FILE: ${{ github.workspace }}/release.keystore
+          SIGNING_STORE_FILE: ${{ forgejo.workspace }}/release.keystore
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 -d > release.keystore
           ./gradlew :app:packageDefaultRelease --stacktrace --no-daemon --no-watch-fs
@@ -150,7 +150,7 @@ jobs:
 
   upload-artifacts-to-discord:
     name: Upload Artifacts to Discord
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/bleeding-edge')
+    if: forgejo.event_name == 'push' && (forgejo.ref == 'refs/heads/master' || forgejo.ref == 'refs/heads/bleeding-edge')
     needs: [ build-android ]
     runs-on: ubuntu-latest
     steps:
@@ -162,7 +162,7 @@ jobs:
         env:
           CI_BUILD_WEBHOOK: ${{ secrets.CI_BUILD_WEBHOOK }}
           BLEEDING_EDGE_CI_WEBHOOK: ${{ secrets.BLEEDING_EDGE_CI_WEBHOOK }}
-          REF_NAME: ${{ github.ref_name }}
+          REF_NAME: ${{ forgejo.ref_name }}
         run: |
           shopt -s nullglob globstar
           
@@ -184,7 +184,7 @@ jobs:
             exit 0
           fi
 
-          run_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_id }}"
 
           payload=$(jq -n --arg content "Builds for [${GITHUB_SHA::7}](<$run_url>)" '{$content}')
 
@@ -192,7 +192,7 @@ jobs:
 
   create-release:
     name: Create release
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    if: forgejo.event_name == 'push' && startsWith(forgejo.ref, 'refs/tags/v')
     needs: [ build-android ]
     runs-on: ubuntu-latest
     steps:
