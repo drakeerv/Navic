@@ -21,6 +21,7 @@ import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.manager.session.isJellyfin
 import paige.navic.domain.manager.session.supportsExtension
+import paige.navic.domain.manager.session.supportsScrobbling
 import paige.navic.domain.model.DomainPlaybackState
 import paige.navic.domain.server.ServerExtension
 import paige.navic.preferences.PreferenceManager
@@ -85,7 +86,7 @@ class ScrobbleExoListener(
 	}
 
 	private fun submitNowPlayingScrobble(songId: String?) {
-		if (!preferenceManager.enableScrobbling || songId == null) return
+		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbling() || songId == null) return
 
 		if (!reachability.isReachable.value) return
 
@@ -97,7 +98,7 @@ class ScrobbleExoListener(
 	}
 
 	private fun scrobbleSubmission(songId: String?) {
-		if (!preferenceManager.enableScrobbling || songId == null) return
+		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbling() || songId == null) return
 
 		scope.launch {
 			val currentTime = Clock.System.now()

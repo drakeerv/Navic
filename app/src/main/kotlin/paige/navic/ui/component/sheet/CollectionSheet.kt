@@ -43,6 +43,8 @@ import paige.navic.database.entity.DownloadStatus
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.canUserShare
+import paige.navic.domain.manager.session.supportsDownloads
+import paige.navic.domain.manager.session.supportsRatings
 import paige.navic.domain.manager.session.isJellyfin
 import paige.navic.domain.manager.session.isNavidrome
 import paige.navic.domain.model.DomainAlbum
@@ -155,7 +157,7 @@ fun CollectionSheet(
 			},
 			colors = colors
 		)
-		if (rating != null && onSetRating != null && preferenceManager.enableRatings) {
+		if (rating != null && onSetRating != null && preferenceManager.enableRatings && sessionManager.supportsRatings()) {
 			RatingRow(
 				rating = rating,
 				setRating = onSetRating
@@ -314,7 +316,7 @@ fun CollectionSheet(
 				)
 			}
 
-			when (downloadStatus) {
+			if (sessionManager.supportsDownloads()) when (downloadStatus) {
 				DownloadStatus.DOWNLOADING -> {
 					ListItem(
 						content = { Text(stringResource(R.string.action_cancel_download)) },

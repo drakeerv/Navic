@@ -36,6 +36,7 @@ import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.RadioServer
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerStatus
 import paige.navic.domain.server.ShareServer
@@ -110,27 +111,40 @@ class SubsonicMusicServer(
 			emptyList()
 		}
 
-		return ServerInfo(
-			extensions = buildSet {
-				subsonicExtensions
-					.map { it.name to it.versions }
-					.mapNotNull { (name, version) ->
-						when (name) {
-							"transcoding" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_DECISION
-							"transcodeOffset" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET
-							"playbackReport" if version.contains(1) -> ServerExtension.OPENSUBSONIC_PLAYBACK_REPORT
-							else -> null
-						}
-					}.forEach(::add)
+		val supportsChat = runCatching { client.getChatMessages() }.isSuccess
+		val detectedExtensions = buildSet {
+			subsonicExtensions
+				.map { it.name to it.versions }
+				.mapNotNull { (name, version) ->
+					when (name) {
+						"transcoding" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_DECISION
+						"transcodeOffset" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET
+						"playbackReport" if version.contains(1) -> ServerExtension.OPENSUBSONIC_PLAYBACK_REPORT
+						else -> null
+					}
+				}.forEach(::add)
 
-				if (runCatching { client.getChatMessages() }.isSuccess) {
-					add(ServerExtension.SUBSONIC_CHAT)
-				}
-			},
+			if (supportsChat) {
+				add(ServerExtension.SUBSONIC_CHAT)
+			}
+		}
+
+		return ServerInfo(
+			extensions = detectedExtensions,
 			serverVersion = response.serverVersion,
 			version = response.version,
 			type = response.type,
-			isOpenSubsonic = response.openSubsonic
+			isOpenSubsonic = response.openSubsonic,
+			capabilities = ServerCapabilities(
+				isRemote = true,
+				supportsDownloads = true,
+				supportsScrobbling = true,
+				supportsRatings = true,
+				supportsShares = true,
+				supportsRadio = true,
+				supportsChat = supportsChat,
+				supportsPlaylistMutation = true
+			)
 		)
 	}
 

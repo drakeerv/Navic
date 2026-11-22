@@ -286,3 +286,19 @@ fun SessionManager.isJellyfin(): Boolean {
 fun SessionManager.supportsExtension(extension: ServerExtension): Boolean {
 	return this.getServerInfo()?.extensions?.contains(extension) == true
 }
+
+fun SessionManager.supportsDownloads(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsDownloads != false
+}
+
+fun SessionManager.supportsScrobbling(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsScrobbling != false
+}
+
+fun SessionManager.supportsRatings(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsRatings != false
+}
+
+fun SessionManager.supportsShares(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsShares != false
+}

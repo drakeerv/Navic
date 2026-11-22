@@ -64,6 +64,7 @@ import paige.navic.domain.server.CommandFlowServer
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.ServerCommand
+import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerStatus
@@ -171,7 +172,17 @@ class JellyfinMusicServer(
 			serverVersion = info.version,
 			version = null,
 			type = "jellyfin",
-			isOpenSubsonic = false
+			isOpenSubsonic = false,
+			capabilities = ServerCapabilities(
+				isRemote = true,
+				supportsDownloads = true,
+				supportsScrobbling = false,
+				supportsRatings = true,
+				supportsShares = false,
+				supportsRadio = false,
+				supportsChat = false,
+				supportsPlaylistMutation = true
+			)
 		)
 	}
 

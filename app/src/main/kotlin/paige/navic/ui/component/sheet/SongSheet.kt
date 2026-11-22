@@ -46,6 +46,8 @@ import paige.navic.domain.manager.playback.SleepTimerManager
 import paige.navic.domain.manager.playback.SleepTimerMode
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.canUserShare
+import paige.navic.domain.manager.session.supportsDownloads
+import paige.navic.domain.manager.session.supportsRatings
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.model.DomainExplicitStatus
 import paige.navic.domain.model.DomainSong
@@ -182,7 +184,7 @@ fun SongSheet(
 				},
 				colors = colors
 			)
-			if (rating != null && onSetRating != null && preferenceManager.enableRatings) {
+			if (rating != null && onSetRating != null && preferenceManager.enableRatings && sessionManager.supportsRatings()) {
 				RatingRow(
 					rating = rating,
 					setRating = onSetRating
@@ -223,7 +225,7 @@ fun SongSheet(
 					)
 				}
 
-				if (downloadStatus != null) {
+				if (downloadStatus != null && sessionManager.supportsDownloads()) {
 					when (downloadStatus) {
 						DownloadStatus.DOWNLOADING -> {
 							ListItem(
@@ -298,7 +300,7 @@ fun SongSheet(
 							)
 						}
 					}
-				} else if (onDownload != null) {
+				} else if (onDownload != null && sessionManager.supportsDownloads()) {
 					ListItem(
 						content = { Text(stringResource(R.string.action_download)) },
 						leadingContent = { Icon(Icons.Outlined.Download, null) },

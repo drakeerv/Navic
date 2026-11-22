@@ -43,10 +43,22 @@ data class ServerStatus(
 	val isOpenSubsonic: Boolean
 )
 
+data class ServerCapabilities(
+	val isRemote: Boolean = true,
+	val supportsDownloads: Boolean = true,
+	val supportsScrobbling: Boolean = true,
+	val supportsRatings: Boolean = true,
+	val supportsShares: Boolean = true,
+	val supportsRadio: Boolean = true,
+	val supportsChat: Boolean = true,
+	val supportsPlaylistMutation: Boolean = true
+)
+
 data class ServerInfo(
 	val extensions: Set<ServerExtension> = emptySet(),
 	val serverVersion: String? = null,
 	val version: String? = null,
 	val type: String? = null,
-	val isOpenSubsonic: Boolean = false
+	val isOpenSubsonic: Boolean = false,
+	val capabilities: ServerCapabilities = ServerCapabilities()
 )
