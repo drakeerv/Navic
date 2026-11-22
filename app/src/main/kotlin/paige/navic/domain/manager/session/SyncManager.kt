@@ -119,7 +119,8 @@ class SyncManager(
 		if (!syncImmediately) return
 
 		scope.launch {
-			if (albumDao.getAlbumCount() == 0 || preferenceManager.lastFullSyncTime <= 0L) {
+			val isLocal = sessionManager.getServerInfo()?.capabilities?.isRemote == false
+			if (isLocal || albumDao.getAlbumCount() == 0 || preferenceManager.lastFullSyncTime <= 0L) {
 				Logger.i("SyncManager", "Syncing now because we haven't synced before")
 				enqueueManualSync(
 					force = false,

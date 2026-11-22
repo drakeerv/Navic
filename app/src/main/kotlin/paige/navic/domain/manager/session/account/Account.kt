@@ -22,12 +22,15 @@ data class Account(
 	val password: String? = null,
 	val apiKey: String? = null,
 	val jellyfinToken: String? = null,
-	val jellyfinUserId: String? = null
+	val jellyfinUserId: String? = null,
+	val localFolderUris: List<String> = emptyList()
 ) {
 	val hasCredentials: Boolean
 		get() = credentials() != null || authorization() != null
 
 	fun credentials(): UserCredentials? = when {
+		serverType == ServerType.LOCAL -> null
+
 		serverType == ServerType.JELLYFIN -> {
 			UserCredentials.Jellyfin(
 				username ?: return null,
@@ -47,6 +50,9 @@ data class Account(
 	}
 
 	fun authorization(): AuthorizationData? = when {
+		serverType == ServerType.LOCAL ->
+			localFolderUris.takeIf { it.isNotEmpty() }?.let(AuthorizationData::LocalFolders)
+
 		serverType == ServerType.JELLYFIN -> {
 			val token = jellyfinToken?.takeIf(String::isNotBlank) ?: return null
 			val userId = jellyfinUserId?.takeIf(String::isNotBlank) ?: return null

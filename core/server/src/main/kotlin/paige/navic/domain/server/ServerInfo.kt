@@ -33,7 +33,8 @@ enum class ServerType(
 ) {
 	SUBSONIC("Subsonic"),
 	NAVIDROME("Navidrome"),
-	JELLYFIN("Jellyfin")
+	JELLYFIN("Jellyfin"),
+	LOCAL("Local")
 }
 
 data class ServerStatus(

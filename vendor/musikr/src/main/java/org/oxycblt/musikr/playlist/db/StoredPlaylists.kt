@@ -26,9 +26,9 @@ import org.oxycblt.musikr.playlist.PlaylistHandle
 import org.oxycblt.musikr.playlist.SongPointer
 
 abstract class StoredPlaylists {
-    internal abstract suspend fun new(name: String, songs: List<Song>): PlaylistHandle
+    abstract suspend fun new(name: String, songs: List<Song>): PlaylistHandle
 
-    internal abstract suspend fun read(): List<PlaylistFile>
+    abstract suspend fun read(): List<PlaylistFile>
 
     companion object {
         fun from(context: Context): StoredPlaylists =

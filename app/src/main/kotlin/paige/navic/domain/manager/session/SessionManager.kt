@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import paige.navic.BuildConfig
 import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.account.AccountStore
 import paige.navic.domain.model.DomainUser
@@ -193,6 +194,32 @@ class SessionManager(
 		return account
 	}
 
+	suspend fun login(instanceUrl: String, authorization: AuthorizationData, serverType: ServerType): Account {
+		val server = serverFactory.create(instanceUrl, authorization)
+		val serverInfo = server.serverInfo()
+		val user = server.currentUser()
+
+		val localFolders = (authorization as? AuthorizationData.LocalFolders)?.folderUris.orEmpty()
+		val account = accountStore.upsert(
+			Account(
+				id = UUID.randomUUID().toString(),
+				baseUrl = instanceUrl,
+				serverType = serverType,
+				localFolderUris = localFolders
+			)
+		)
+
+		if (account.id == accountStore.activeAccountId) {
+			api = server
+			_state.value = SessionState.Authenticated(
+				currentUser = user,
+				serverInfo = serverInfo
+			)
+		}
+
+		return account
+	}
+
 	fun signOut() {
 		ttlLruCache.clear()
 		_state.value = SessionState.Unauthenticated
@@ -248,10 +275,17 @@ class SessionManager(
 		}
 	}
 
-	fun getCoverArtUrl(coverArtId: String) = api.getCoverArtUrl(
-		coverArtId,
-		size = "${preferenceManager.coverArtQuality.value}"
-	)
+	fun getCoverArtUrl(coverArtId: String): String {
+		val serverInfo = getServerInfo()
+		if (serverInfo?.type == "local") {
+			return "content://${BuildConfig.APPLICATION_ID}.cover-art/$coverArtId" +
+				"?size=${preferenceManager.coverArtQuality.value}"
+		}
+		return api.getCoverArtUrl(
+			coverArtId,
+			size = "${preferenceManager.coverArtQuality.value}"
+		)
+	}
 
 }
 

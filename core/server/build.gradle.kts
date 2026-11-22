@@ -17,6 +17,7 @@ dependencies {
 	api(project(":core:model"))
 	implementation(project(":core:common"))
 	implementation(project(":core:database"))
+	implementation(project(":vendor:musikr"))
 
 	implementation(libs.subsonicKotlin)
 	api(libs.jellyfin.core)

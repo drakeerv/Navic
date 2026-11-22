@@ -95,7 +95,7 @@ sealed interface Music {
 
         override fun toString() = "u${format.microNamespace}${item.microNamespace}$uuid"
 
-        internal enum class Item(val intCode: Int, val microNamespace: Char) {
+        enum class Item(val intCode: Int, val microNamespace: Char) {
             // Item used to be MusicType back when the music module was
             // part of Auxio, so these old integer codes remain.
             // TODO: Introduce new UID format that removes these.
@@ -134,7 +134,7 @@ sealed interface Music {
              *
              * @param item The type of [Item] that created this [UID].
              */
-            internal fun auxio(item: Item): UID {
+            fun auxio(item: Item): UID {
                 return UID(Format.AUXIO, item, UUID.randomUUID())
             }
 

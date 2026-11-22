@@ -20,6 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.session.getServerInfo
+import paige.navic.domain.manager.session.supportsDownloads
 import java.io.File
 
 class CoverArtProvider : ContentProvider() {
@@ -45,6 +47,16 @@ class CoverArtProvider : ContentProvider() {
 
 	private fun renderCover(coverId: String, size: Int): File = runBlocking(Dispatchers.IO) {
 		val context = requireNotNull(context)
+		val localBytes = if (!sessionManager.supportsDownloads() && sessionManager.getServerInfo()?.type == "local") {
+			runCatching { sessionManager.api.getCoverArt(coverId, size.toString()) }.getOrNull()
+		} else null
+
+		if (localBytes != null && localBytes.isNotEmpty()) {
+			val file = File.createTempFile("cover-", ".img", context.cacheDir)
+			file.writeBytes(localBytes)
+			return@runBlocking file
+		}
+
 		val request = ImageRequest.Builder(context)
 			.data(sessionManager.getCoverArtUrl(coverId))
 			.diskCacheKey(coverId)

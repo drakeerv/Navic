@@ -20,6 +20,9 @@ import paige.navic.util.Logger
 
 @Dao
 interface GenreDao {
+	@Query("SELECT * FROM GenreEntity ORDER BY genreName COLLATE NOCASE")
+	suspend fun getAllGenres(): List<GenreEntity>
+
 	@RawQuery
 	fun getGenresByQuery(query: RoomRawQuery): PagingSource<Int, GenreWithCovers>
 

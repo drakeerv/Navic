@@ -43,6 +43,7 @@ import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.server.MultipleMusicServerFactory
 import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.jellyfin.JellyfinMusicServerFactory
+import paige.navic.domain.server.local.LocalMusicServerFactory
 import paige.navic.domain.server.navidrome.NavidromeMusicServerFactory
 import paige.navic.domain.server.subsonic.SubsonicMusicServerFactory
 import paige.navic.domain.sync.SyncActionProcessor
@@ -100,11 +101,13 @@ val managerModule = module {
 	singleOf(::JellyfinMusicServerFactory)
 	singleOf(::NavidromeMusicServerFactory)
 	singleOf(::SubsonicMusicServerFactory)
+	singleOf(::LocalMusicServerFactory)
 	single<MusicServerFactory> {
 		MultipleMusicServerFactory(
 			navidromeFactory = get(),
 			subsonicFactory = get(),
-			jellyfinFactory = get()
+			jellyfinFactory = get(),
+			localFactory = get()
 		)
 	}
 	singleOf(::SyncActionProcessor)
@@ -146,6 +149,7 @@ val managerModule = module {
 	}
 	single {
 		NavicDataSourceFactory(
+			context = androidApplication(),
 			downloadManager = get(),
 			sessionManager = get(),
 			streamCacheManager = get(),

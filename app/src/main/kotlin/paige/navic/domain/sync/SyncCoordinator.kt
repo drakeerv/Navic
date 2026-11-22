@@ -12,6 +12,10 @@ import kotlinx.coroutines.sync.withLock
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SessionState
+import paige.navic.domain.manager.session.getServerInfo
+import paige.navic.domain.server.LocalSyncServer
+import paige.navic.domain.server.SyncProgressMessage
+import paige.navic.R
 import paige.navic.domain.repository.DbRepository
 import paige.navic.util.Logger
 import kotlin.time.Clock
@@ -45,13 +49,28 @@ class SyncCoordinator(
 
 		val actionResult = actionProcessor.processPending()
 
-		if (!isFullSyncDue(force)) {
+		val isLocal = sessionManager.getServerInfo()?.capabilities?.isRemote == false
+		if (!isLocal && !isFullSyncDue(force)) {
 			return@withLock actionResult
 		}
 
 		Logger.i("SyncCoordinator", "Starting full library pull...")
 
-		val result = repository.syncEverything(onProgress)
+		val result = (sessionManager.api as? LocalSyncServer)?.let { syncServer ->
+			try {
+				syncServer.sync { progress, message ->
+					val resId = when (message) {
+						SyncProgressMessage.Indexing -> R.string.info_syncing
+						SyncProgressMessage.Saved -> R.string.info_syncing_saved
+						SyncProgressMessage.Finished -> R.string.info_syncing_finished
+					}
+					onProgress(progress, resId)
+				}
+				Result.success(Unit)
+			} catch (e: Exception) {
+				Result.failure(e)
+			}
+		} ?: repository.syncEverything(onProgress)
 		result.onSuccess {
 			preferenceManager.lastFullSyncTime = Clock.System.now().toEpochMilliseconds()
 			Logger.i("SyncCoordinator", "Full library sync complete.")

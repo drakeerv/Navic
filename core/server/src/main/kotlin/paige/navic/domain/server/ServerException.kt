@@ -8,5 +8,7 @@ package paige.navic.domain.server
 
 open class ServerException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
+class LocalNoOpException(message: String = "Operation is maintained by local database") : ServerException(message)
+
 class InvalidCredentialsException(message: String, cause: Throwable? = null) :
 	ServerException(message, cause)

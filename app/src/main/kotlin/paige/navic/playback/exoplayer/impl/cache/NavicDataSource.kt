@@ -6,6 +6,7 @@
 
 package paige.navic.playback.exoplayer.impl.cache
 
+import android.content.Context
 import android.net.Uri
 import androidx.annotation.OptIn
 import androidx.core.net.toUri
@@ -14,6 +15,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.BaseDataSource
 import androidx.media3.datasource.DataSource
 import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.ContentDataSource
 import androidx.media3.datasource.FileDataSource
 import androidx.media3.datasource.cache.CacheDataSource
 import kotlinx.coroutines.CancellationException
@@ -30,6 +32,7 @@ import java.io.File
 
 @OptIn(UnstableApi::class)
 class NavicDataSource(
+	private val context: Context,
 	private val downloadManager: DownloadManager,
 	private val sessionManager: SessionManager,
 	private val streamCacheManager: StreamCacheManager,
@@ -43,6 +46,7 @@ class NavicDataSource(
 		get() = sessionManager.ttlLruCache
 
 	class NavicDataSourceFactory(
+		private val context: Context,
 		private val downloadManager: DownloadManager,
 		private val sessionManager: SessionManager,
 		private val streamCacheManager: StreamCacheManager,
@@ -52,6 +56,7 @@ class NavicDataSource(
 	) : DataSource.Factory {
 		override fun createDataSource(): DataSource {
 			return NavicDataSource(
+				context,
 				downloadManager,
 				sessionManager,
 				streamCacheManager,
@@ -126,7 +131,9 @@ class NavicDataSource(
 
 		var cacheKey: String? = null
 
-		val targetUri = songId?.let {
+		val targetUri = if (uri.scheme == "content" || uri.scheme == "file" || uri.scheme == "http" || uri.scheme == "https") {
+			uri
+		} else songId?.let {
 			runBlocking {
 				withContext(Dispatchers.IO) {
 					val localPath = downloadManager.getDownloadedFilePath(it)
@@ -152,7 +159,8 @@ class NavicDataSource(
 		val resolvedDataSpec = resolvedDataSpecBuilder.build()
 
 		val source = when {
-			targetUri.scheme == "file" || targetUri.scheme == "content" -> FileDataSource()
+			targetUri.scheme == "content" -> ContentDataSource(context)
+			targetUri.scheme == "file" -> FileDataSource()
 			cacheKey != null -> cacheDataSourceFactory.createDataSource()
 			else -> upstreamFactory.createDataSource()
 		}

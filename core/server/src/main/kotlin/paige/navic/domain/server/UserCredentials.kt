@@ -25,6 +25,10 @@ sealed interface AuthorizationData {
 		val accessToken: String,
 		val userId: String
 	) : AuthorizationData
+
+	data class LocalFolders(
+		val folderUris: List<String>
+	) : AuthorizationData
 }
 
 sealed interface UserCredentials {

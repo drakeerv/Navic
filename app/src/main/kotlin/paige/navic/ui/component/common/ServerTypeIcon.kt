@@ -7,7 +7,9 @@ import paige.navic.domain.server.ServerType
 import paige.navic.icons.Icons
 import paige.navic.icons.brand.Jellyfin
 import paige.navic.icons.brand.Navidrome
+import paige.navic.icons.brand.Navic
 import paige.navic.icons.brand.Subsonic
+import paige.navic.icons.filled.Storage
 
 @Composable
 fun ServerTypeIcon(
@@ -19,6 +21,7 @@ fun ServerTypeIcon(
 			ServerType.SUBSONIC -> Icons.Brand.Subsonic
 			ServerType.NAVIDROME -> Icons.Brand.Navidrome
 			ServerType.JELLYFIN -> Icons.Brand.Jellyfin
+			ServerType.LOCAL -> Icons.Filled.Storage
 		},
 		contentDescription = serverType.prettyName,
 		modifier = modifier

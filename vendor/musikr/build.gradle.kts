@@ -50,9 +50,9 @@ dependencies {
 	implementation(libs.androidx.room.ktx)
 	ksp(libs.androidx.room.compiler)
 
-	testImplementation("junit:junit:4.13.2")
-	testImplementation("io.mockk:mockk:1.14.12")
-	testImplementation("org.robolectric:robolectric:4.18")
+	testImplementation(libs.junit)
+	testImplementation(libs.mockk)
+	testImplementation(libs.robolectric)
 	testImplementation(libs.androidx.test.core.ktx)
 	testImplementation(libs.kotlinx.coroutines.test)
 	androidTestImplementation(libs.androidx.test.ext.junit)
@@ -60,13 +60,27 @@ dependencies {
 }
 
 val assembleTaglib = tasks.register<Exec>("assembleTaglib") {
+	description = "Build TagLib"
 	val jniDir = layout.projectDirectory.dir("src/main/cpp").asFile
-	val packageDir = jniDir.resolve("taglib/pkg")
-	if (packageDir.exists()) {
-		commandLine("true")
-	} else {
-		commandLine("sh", jniDir.resolve("build_taglib.sh").absolutePath, jniDir.absolutePath, androidComponents.sdkComponents.ndkDirectory.get().asFile.absolutePath)
-	}
+	val taglibDir = jniDir.resolve("taglib")
+	val packageDir = taglibDir.resolve("pkg")
+
+	inputs.dir(taglibDir).ignoreEmptyDirectories()
+	inputs.files(
+		jniDir.resolve("build_taglib.sh"),
+		jniDir.resolve("android.toolchain.cmake")
+	)
+	outputs.dir(packageDir)
+	outputs.dir(taglibDir.resolve("build"))
+
+	outputs.cacheIf { true }
+
+	commandLine(
+		"sh",
+		jniDir.resolve("build_taglib.sh").absolutePath,
+		jniDir.absolutePath,
+		androidComponents.sdkComponents.ndkDirectory.get().asFile.absolutePath
+	)
 }
 
 tasks.matching { it.name == "preDebugBuild" || it.name == "preReleaseBuild" }.configureEach {

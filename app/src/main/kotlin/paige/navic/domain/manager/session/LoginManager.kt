@@ -30,6 +30,7 @@ import paige.navic.domain.manager.runtime.StorageManager
 import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.account.AccountStore
 import paige.navic.domain.server.AuthMethod
+import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.UserCredentials
@@ -61,6 +62,13 @@ class LoginManager(
 	var serverType by mutableStateOf<ServerType?>(null)
 
 	var authMethod by mutableStateOf(AuthMethod.Token)
+
+	var localFolderUris by mutableStateOf<List<String>>(emptyList())
+		private set
+
+	fun setLocalFolders(uris: List<String>) {
+		localFolderUris = uris.distinct()
+	}
 
 
 	fun selectServerType(type: ServerType) {
@@ -132,6 +140,7 @@ class LoginManager(
 		passwordState.clearText()
 		account.serverType?.let(::selectServerType)
 		selectAuthMethod(account.authMethod)
+		localFolderUris = account.localFolderUris
 	}
 
 	fun login() {
@@ -145,11 +154,13 @@ class LoginManager(
 			if (type != ServerType.JELLYFIN && method == AuthMethod.ApiKey) it.trim() else it
 		}
 
-		val requiresUsername = type == ServerType.JELLYFIN || method == AuthMethod.Token
+		val requiresUsername = type != ServerType.LOCAL &&
+			(type == ServerType.JELLYFIN || method == AuthMethod.Token)
 		val invalidField = when {
-			url.isBlank() -> LoginField.Instance
+			type == ServerType.LOCAL && localFolderUris.isEmpty() -> LoginField.Instance
+			type != ServerType.LOCAL && url.isBlank() -> LoginField.Instance
 			requiresUsername && username.isBlank() -> LoginField.Username
-			secret.isBlank() -> LoginField.Password
+			type != ServerType.LOCAL && secret.isBlank() -> LoginField.Password
 			else -> null
 		}
 
@@ -159,22 +170,30 @@ class LoginManager(
 		}
 
 		scope.launch {
-			val normalizedUrl = normalizeUrl(url)
 			val previousAccountId = sessionManager.activeAccountId
 
 			val account = try {
 				_events.tryEmit(LoginEvent.Loading)
-				val credentials = when {
-					type == ServerType.JELLYFIN ->
-						UserCredentials.Jellyfin(username, secret)
+				if (type == ServerType.LOCAL) {
+					sessionManager.login(
+						instanceUrl = "local",
+						authorization = AuthorizationData.LocalFolders(localFolderUris),
+						serverType = ServerType.LOCAL
+					)
+				} else {
+					val normalizedUrl = normalizeUrl(url)
+					val credentials = when {
+						type == ServerType.JELLYFIN ->
+							UserCredentials.Jellyfin(username, secret)
 
-					method == AuthMethod.ApiKey ->
-						UserCredentials.ApiKey(secret)
+						method == AuthMethod.ApiKey ->
+							UserCredentials.ApiKey(secret)
 
-					else ->
-						UserCredentials.Password(username, secret)
+						else ->
+							UserCredentials.Password(username, secret)
+					}
+					sessionManager.login(normalizedUrl, credentials)
 				}
-				sessionManager.login(normalizedUrl, credentials)
 			} catch (_: InvalidCredentialsException) {
 				_events.tryEmit(LoginEvent.InvalidCredentials)
 				return@launch

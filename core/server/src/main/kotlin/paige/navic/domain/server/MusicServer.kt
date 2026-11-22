@@ -162,3 +162,13 @@ interface PlaylistCoverServer {
 interface CommandFlowServer {
 	val commands: SharedFlow<ServerCommand>
 }
+
+enum class SyncProgressMessage {
+	Indexing,
+	Saved,
+	Finished
+}
+
+interface LocalSyncServer {
+	suspend fun sync(onProgress: suspend (Float, SyncProgressMessage) -> Unit = { _, _ -> })
+}

@@ -219,7 +219,8 @@ private fun ServerChoices(
 	val serverTypes = listOf(
 		ServerType.SUBSONIC,
 		ServerType.NAVIDROME,
-		ServerType.JELLYFIN
+		ServerType.JELLYFIN,
+		ServerType.LOCAL
 	)
 
 	Column(

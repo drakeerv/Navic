@@ -167,6 +167,7 @@ dependencies {
 	implementation(project(":core:model"))
 	implementation(project(":core:preferences"))
 	implementation(project(":core:server"))
+	implementation(project(":vendor:musikr"))
 	implementation(project(":core:widgets"))
 
 	// Compose
@@ -238,7 +239,6 @@ dependencies {
 	implementation(libs.jellyfin.core)
 	implementation(libs.jellyfin.model)
 	"defaultImplementation"(libs.antisocialcord)
-	implementation(libs.cryptohash)
 	implementation(libs.mimetypes)
 	implementation(libs.kotlinx.coroutines.guava)
 }

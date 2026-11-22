@@ -21,18 +21,18 @@ package org.oxycblt.musikr.playlist
 import org.oxycblt.musikr.Music
 import org.oxycblt.musikr.Song
 
-internal data class PlaylistFile(
+data class PlaylistFile(
     val name: String,
     val songPointers: List<SongPointer>,
     val handle: PlaylistHandle,
 )
 
-internal sealed interface SongPointer {
+sealed interface SongPointer {
     data class UID(val uid: Music.UID) : SongPointer
     //    data class Path(val options: List<Path>) : SongPointer
 }
 
-internal interface PlaylistHandle {
+interface PlaylistHandle {
     val uid: Music.UID
 
     suspend fun rename(name: String)

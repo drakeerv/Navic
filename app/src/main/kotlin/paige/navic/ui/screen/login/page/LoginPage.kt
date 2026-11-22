@@ -13,6 +13,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -116,6 +118,18 @@ fun LoginPage(
 
 	val permissionManager = koinInject<PermissionManager>()
 	val loginScope = rememberCoroutineScope()
+	val context = androidx.compose.ui.platform.LocalContext.current
+	val folderPicker = rememberLauncherForActivityResult(
+		ActivityResultContracts.OpenDocumentTree()
+	) { uri ->
+		if (uri == null) return@rememberLauncherForActivityResult
+		context.contentResolver.takePersistableUriPermission(
+			uri,
+			android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+				android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+		)
+		viewModel.setLocalFolders(viewModel.localFolderUris + uri.toString())
+	}
 	var localNetworkDenied by rememberSaveable { mutableStateOf(false) }
 	var notificationsDenied by rememberSaveable { mutableStateOf(false) }
 
@@ -251,6 +265,30 @@ fun LoginPage(
 					}
 				}
 
+				if (viewModel.serverType == ServerType.LOCAL) {
+					Column(
+						modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+						verticalArrangement = Arrangement.spacedBy(8.dp)
+					) {
+						Button(
+							modifier = Modifier.fillMaxWidth(),
+							onClick = { folderPicker.launch(null) },
+							enabled = !isBusy
+						) {
+							Text(if (viewModel.localFolderUris.isEmpty()) "Choose music folders" else "Add music folder")
+						}
+						viewModel.localFolderUris.forEachIndexed { index, uri ->
+							SegmentedListButton(
+								modifier = Modifier.fillMaxWidth(),
+								 onClick = {
+									viewModel.setLocalFolders(viewModel.localFolderUris.filterIndexed { i, _ -> i != index })
+								}
+							) {
+								Text(uri)
+							}
+						}
+					}
+				} else {
 				LoginScreenFields(
 					isBusy = isBusy,
 					instanceState = instanceState,
@@ -270,21 +308,22 @@ fun LoginPage(
 
 				Spacer(Modifier.height(12.dp))
 
-				Text(
-					text = stringResource(R.string.option_connection_options),
-					color = MaterialTheme.colorScheme.primary,
-					textDecoration = TextDecoration.Underline,
-					modifier = Modifier
-						.padding(horizontal = 16.dp)
-						.clickable(onClick = dropUnlessResumed {
-							backStack.lastOrNull()?.let {
-								if (it is Screen.Login) {
-									backStack.add(Screen.Settings.ConnectionOptions)
-									focusManager.clearFocus(true)
+					Text(
+						text = stringResource(R.string.option_connection_options),
+						color = MaterialTheme.colorScheme.primary,
+						textDecoration = TextDecoration.Underline,
+						modifier = Modifier
+							.padding(horizontal = 16.dp)
+							.clickable(onClick = dropUnlessResumed {
+								backStack.lastOrNull()?.let {
+									if (it is Screen.Login) {
+										backStack.add(Screen.Settings.ConnectionOptions)
+										focusManager.clearFocus(true)
+									}
 								}
-							}
-						})
-				)
+							})
+					)
+				}
 			}
 
 			Column(

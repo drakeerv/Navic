@@ -12,10 +12,10 @@ import kotlinx.serialization.Serializable
 @Immutable
 @Serializable
 data class DomainReplayGain(
-	val albumGain: Float?,
-	val albumPeak: Float?,
-	val trackGain: Float?,
-	val trackPeak: Float?,
-	val baseGain: Float?,
-	val fallbackGain: Float?
+	val albumGain: Float? = null,
+	val albumPeak: Float? = null,
+	val trackGain: Float? = null,
+	val trackPeak: Float? = null,
+	val baseGain: Float? = null,
+	val fallbackGain: Float? = null
 )

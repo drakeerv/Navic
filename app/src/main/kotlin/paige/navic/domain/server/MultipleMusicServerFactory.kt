@@ -7,17 +7,20 @@
 package paige.navic.domain.server
 
 import paige.navic.domain.server.jellyfin.JellyfinMusicServerFactory
+import paige.navic.domain.server.local.LocalMusicServerFactory
 import paige.navic.domain.server.navidrome.NavidromeMusicServerFactory
 import paige.navic.domain.server.subsonic.SubsonicMusicServerFactory
 
 class MultipleMusicServerFactory(
 	private val navidromeFactory: NavidromeMusicServerFactory,
 	private val subsonicFactory: SubsonicMusicServerFactory,
-	val jellyfinFactory: JellyfinMusicServerFactory
+	val jellyfinFactory: JellyfinMusicServerFactory,
+	private val localFactory: LocalMusicServerFactory
 ) : MusicServerFactory {
 	override fun create(baseUrl: String, authorization: AuthorizationData): MusicServer {
 		return when (authorization) {
 			is AuthorizationData.JellyfinToken -> jellyfinFactory.create(baseUrl, authorization)
+			is AuthorizationData.LocalFolders -> localFactory.create(baseUrl, authorization)
 			else -> navidromeFactory.create(baseUrl, authorization)
 		}
 	}

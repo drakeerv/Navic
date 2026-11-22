@@ -19,6 +19,7 @@ import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainFilter
+import paige.navic.domain.server.LocalNoOpException
 import kotlin.time.Clock
 
 class AlbumRepository(
@@ -53,7 +54,11 @@ class AlbumRepository(
 		reversed: Boolean,
 		filters: Set<DomainFilter> = emptySet()
 	): Flow<PagingData<DomainAlbum>> {
-		dbRepository.syncLibrarySongs().getOrThrow()
+		try {
+			dbRepository.syncLibrarySongs().getOrThrow()
+		} catch (_: LocalNoOpException) {
+			// local library is already maintained by Musikr indexing
+		}
 		return getLocalData(listType, reversed, filters)
 	}
 
