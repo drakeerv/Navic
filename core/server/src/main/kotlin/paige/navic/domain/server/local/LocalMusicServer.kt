@@ -38,7 +38,6 @@ import paige.navic.domain.model.DomainPlaybackState
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainSearchResult
 import paige.navic.domain.model.DomainSong
-import paige.navic.domain.model.DomainSongArtist
 import paige.navic.domain.model.DomainUser
 import paige.navic.domain.model.ServerLyrics
 import paige.navic.domain.server.MusicServer
@@ -54,14 +53,7 @@ import paige.navic.domain.server.LocalNoOpException
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerStatus
 import kotlin.time.Instant
-import kotlin.time.Duration.Companion.milliseconds
-import paige.navic.database.entity.AlbumEntity
-import paige.navic.database.entity.ArtistEntity
-import paige.navic.database.entity.GenreEntity
-import paige.navic.database.entity.SongEntity
-import paige.navic.domain.model.DomainExplicitStatus
-import paige.navic.domain.model.DomainReplayGain
-import paige.navic.util.xxHash32
+import paige.navic.domain.server.local.mappers.toEntity
 
 class LocalMusicServer(
 	private val context: Context,
@@ -84,119 +76,10 @@ class LocalMusicServer(
 		ensureLibrary()
 
 		val library = requireNotNull(libraryResult?.library)
-		val artists = library.artists.mapNotNull { artist ->
-			val name = (artist.name as? org.oxycblt.musikr.tag.Name.Known)?.raw
-				?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-			ArtistEntity(
-				artistId = "local-artist-${name.xxHash32()}",
-				name = name,
-				albumCount = artist.explicitAlbums.size,
-				coverArtId = artist.covers.covers.firstOrNull()?.id
-			)
-		}
-		val albums = library.albums.mapNotNull { album ->
-			val name = (album.name as? org.oxycblt.musikr.tag.Name.Known)?.raw
-				?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-			val artist = album.artists.firstOrNull()
-			val artistName = (artist?.name as? org.oxycblt.musikr.tag.Name.Known)?.raw
-			val artistId = artistName?.takeIf { it.isNotBlank() }
-				?.let { "local-artist-${it.xxHash32()}" }
-				?: "local-artist-unknown"
-			AlbumEntity(
-				albumId = album.uid.toString(),
-				name = name,
-				artistName = artistName,
-				artistId = artistId,
-				displayArtist = album.artists.joinToString { artistItem ->
-					(artistItem.name as? org.oxycblt.musikr.tag.Name.Known)?.raw.orEmpty()
-				},
-				year = album.dates?.min?.year,
-				coverArtId = album.covers.covers.firstOrNull()?.id,
-				genre = album.songs.flatMap { it.genres }.firstOrNull()
-					?.let { (it.name as? org.oxycblt.musikr.tag.Name.Known)?.raw },
-				genres = album.songs.flatMap { it.genres }.mapNotNull {
-					(it.name as? org.oxycblt.musikr.tag.Name.Known)?.raw
-				}.distinct(),
-				songCount = album.songs.size,
-				duration = album.durationMs.milliseconds,
-				createdAt = Instant.fromEpochMilliseconds(album.addedMs),
-				starredAt = null,
-				lastPlayedAt = null,
-				userRating = null,
-				version = null,
-				musicBrainzId = null,
-				isExternal = false
-			)
-		}
-		val genres = library.genres.mapNotNull { genre ->
-			val name = (genre.name as? org.oxycblt.musikr.tag.Name.Known)?.raw
-				?.takeIf { it.isNotBlank() } ?: return@mapNotNull null
-			GenreEntity(
-				genreName = name,
-				albumCount = genre.artists.sumOf { it.explicitAlbums.size },
-				songCount = genre.songs.size
-			)
-		}
-		val songs = library.songs.map { song ->
-			val artists = song.artists.map { artist ->
-				val name = (artist.name as? org.oxycblt.musikr.tag.Name.Known)?.raw.orEmpty()
-				DomainSongArtist(
-					id = "local-artist-${name.xxHash32()}",
-					name = name
-				)
-			}.filter { it.name.isNotBlank() }
-			val albumArtists = song.album.artists.map { artist ->
-				val name = (artist.name as? org.oxycblt.musikr.tag.Name.Known)?.raw.orEmpty()
-				DomainSongArtist(
-					id = "local-artist-${name.xxHash32()}",
-					name = name
-				)
-			}.filter { it.name.isNotBlank() }
-			SongEntity(
-				songId = song.uid.toString(),
-				title = song.name.raw,
-				artistName = artists.firstOrNull()?.name,
-				artistId = artists.firstOrNull()?.id ?: "local-artist-unknown",
-				albumTitle = (song.album.name as? org.oxycblt.musikr.tag.Name.Known)?.raw,
-				belongsToAlbumId = song.album.uid.toString(),
-				parentId = song.album.uid.toString(),
-				comment = null,
-				trackNumber = song.track,
-				discNumber = song.disc?.number,
-				isrc = emptyList(),
-				year = song.date?.year,
-				genre = song.genres.firstOrNull()
-					?.let { (it.name as? org.oxycblt.musikr.tag.Name.Known)?.raw },
-				genres = song.genres.mapNotNull { (it.name as? org.oxycblt.musikr.tag.Name.Known)?.raw },
-				moods = emptyList(),
-				duration = song.durationMs.milliseconds,
-				bpm = null,
-				contributors = emptyList(),
-				playCount = 0,
-				userRating = null,
-				averageRating = null,
-				bitRate = song.bitrateKbps,
-				bitDepth = null,
-				sampleRate = song.sampleRateHz,
-				audioChannelCount = null,
-				replayGain = DomainReplayGain(
-					albumGain = song.replayGainAdjustment.album,
-					trackGain = song.replayGainAdjustment.track
-				),
-				fileSize = song.size,
-				fileExtension = android.webkit.MimeTypeMap.getSingleton()
-					.getExtensionFromMimeType(song.format.mimeType),
-				mimeType = song.format.mimeType,
-				filePath = song.uri.toString(),
-				starredAt = null,
-				coverArtId = song.cover?.id,
-				musicBrainzId = null,
-				explicitStatus = DomainExplicitStatus.Unknown,
-				artists = artists,
-				albumArtists = albumArtists,
-				isExternal = false
-			)
-		}
+		val artists = library.artists.map { it.toEntity() }
+		val albums = library.albums.map { it.toEntity() }
+		val genres = library.genres.mapNotNull { it.toEntity() }
+		val songs = library.songs.mapNotNull { it.toEntity() }
 
 		onProgress(0.75f, SyncProgressMessage.Saved)
 		artistDao.insertArtists(artists)

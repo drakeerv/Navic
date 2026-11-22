@@ -17,6 +17,7 @@ import org.oxycblt.musikr.tag.parse.ParsedTags
 import paige.navic.database.dao.SongDao
 import paige.navic.database.entity.SongEntity
 import paige.navic.domain.model.DomainExplicitStatus
+import paige.navic.domain.model.DomainSongArtist
 import paige.navic.util.xxHash32
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -68,8 +69,8 @@ class NavicMutableCache(
 		val title = audio.tags.name ?: file.path.name.orEmpty()
 		val artistName = audio.tags.artistNames.firstOrNull()?.takeIf { it.isNotBlank() }
 		val albumTitle = audio.tags.albumName?.takeIf { it.isNotBlank() }
-		val artistId = artistName?.let { "local-artist-${it.xxHash32()}" } ?: "local-artist-unknown"
-		val albumId = albumTitle?.let { "local-album-${it.xxHash32()}-$artistId" }
+		val artistId = artistName?.xxHash32() ?: "unknown"
+		val albumId = albumTitle?.let { "${it.xxHash32()}-$artistId" }
 		val entity = SongEntity(
 			songId = file.uri.toString(),
 			title = title,
@@ -105,18 +106,25 @@ class NavicMutableCache(
 			coverArtId = audio.coverId,
 			musicBrainzId = audio.tags.musicBrainzId,
 			explicitStatus = DomainExplicitStatus.Unknown,
-			artists = audio.tags.artistNames.filter { it.isNotBlank() }.map { name ->
-				paige.navic.domain.model.DomainSongArtist(
-					id = "local-artist-${name.xxHash32()}",
-					name = name
-				)
-			},
-			albumArtists = audio.tags.albumArtistNames.filter { it.isNotBlank() }.map { name ->
-				paige.navic.domain.model.DomainSongArtist(
-					id = "local-artist-${name.xxHash32()}",
-					name = name
-				)
-			},
+			artists = audio
+				.tags
+				.artistNames
+				.filter { it.isNotBlank() }
+				.map { name ->
+					DomainSongArtist(
+						id = name.xxHash32(),
+						name = name
+					)
+				},
+			albumArtists = audio
+				.tags
+				.albumArtistNames
+				.filter { it.isNotBlank() }.map { name ->
+					DomainSongArtist(
+						id = name.xxHash32(),
+						name = name
+					)
+				},
 			isExternal = false
 		)
 		songDao.insertSong(entity)
