@@ -111,7 +111,7 @@ android {
 		}
 		create("fdroid") {
 			dimension = "version"
-			description = "removes Discord RPC and update checker features"
+			description = "removes Discord RPC, Cronet GMS provider and update checker features"
 			buildConfigField("boolean", "FDROID", "true")
 		}
 	}
