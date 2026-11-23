@@ -576,6 +576,7 @@
 	<string name="theme_mode_dark">Dark</string>
 	<string name="theme_mode_light">Light</string>
 	<string name="alt_addresses_base_path">Base path (optional)</string>
+	<string name="subtitle_local_library">Local library</string>
 
 	<!-- Plurals -->
 

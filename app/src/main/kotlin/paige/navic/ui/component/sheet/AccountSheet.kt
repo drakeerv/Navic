@@ -66,6 +66,7 @@ import paige.navic.domain.manager.session.canShare
 import paige.navic.domain.manager.session.getUser
 import paige.navic.domain.manager.session.supportsExtension
 import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.server.ServerType
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.Settings
 import paige.navic.icons.outlined.Add
@@ -135,16 +136,21 @@ private fun AccountRow(
 ) {
 	val accountName = account.username?.ifBlank { account.baseUrl } ?: account.baseUrl
 	val avatarSize = if (active) 56.dp else 40.dp
+	val serverType = account.serverType
 
 	val leadingContent: @Composable () -> Unit = {
-		AccountAvatar(
-			url = avatarUrl,
-			name = accountName,
-			cacheKey = "avatar:${account.id}:${account.username}",
-			size = avatarSize,
-			imageLoader = imageLoader,
-			coilPlatformContext = coilPlatformContext
-		)
+		if (serverType != ServerType.LOCAL) {
+			AccountAvatar(
+				url = avatarUrl,
+				name = accountName,
+				cacheKey = "avatar:${account.id}:${account.username}",
+				size = avatarSize,
+				imageLoader = imageLoader,
+				coilPlatformContext = coilPlatformContext
+			)
+		} else {
+			ServerTypeIcon(serverType = serverType, modifier = Modifier.size(42.dp))
+		}
 	}
 
 	if (active) {
@@ -166,16 +172,25 @@ private fun AccountRow(
 						horizontalArrangement = Arrangement.spacedBy(4.dp),
 						verticalAlignment = Alignment.CenterVertically
 					) {
-						Text(accountName)
-						account.serverType?.let {
-							ServerTypeIcon(serverType = it, modifier = Modifier.size(16.dp))
+						Text(
+							if (serverType != ServerType.LOCAL) {
+								accountName
+							} else {
+								stringResource(R.string.subtitle_local_library)
+							}
+						)
+
+						if (serverType != null && serverType != ServerType.LOCAL) {
+							ServerTypeIcon(serverType = serverType, modifier = Modifier.size(16.dp))
 						}
 					}
-					Text(
-						text = account.baseUrl,
-						style = MaterialTheme.typography.labelSmall,
-						color = MaterialTheme.colorScheme.onSurfaceVariant
-					)
+					if (serverType != ServerType.LOCAL) {
+						Text(
+							text = account.baseUrl,
+							style = MaterialTheme.typography.labelSmall,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+					}
 				}
 				Icon(
 					imageVector = Icons.Outlined.Edit,
