@@ -317,7 +317,7 @@
 	<string name="option_proxy_url">Proxy URL</string>
 	<string name="option_ignore_ssl_certificates">Ignore SSL certificates</string>
 	<string name="option_enable_cronet">Enable Cronet (HTTP/3)</string>
-	<string name="subtitle_enable_cronet">Use Chromium\'s Cronet for HTTP requests if available</string>
+	<string name="subtitle_enable_cronet">Use Chromium\'s Cronet for HTTP requests. Generally only available if your device has either the proprietary Google Mobile Services, or microG installed.</string>
 
 	<!-- Actions -->
 
@@ -592,7 +592,7 @@
 	<string name="info_local_folder_permission_denied">Navic could not keep access to that folder. Try selecting it again.</string>
 	<string name="info_local_folders_saved">Local folders saved. Syncing your library…</string>
 	<string name="info_on_this_device">on this device</string>
-    <string name="notice_remove_local_account">This will delete the indexed database of your local music library, playlists and starred songs.</string>
+	<string name="notice_remove_local_account">This will delete the indexed database of your local music library, playlists and starred songs.</string>
 	<string name="title_delete_local_library_database">Delete local database?</string>
 
 	<!-- Plurals -->
