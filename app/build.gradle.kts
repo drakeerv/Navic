@@ -19,7 +19,9 @@ configurations.all {
 }
 
 val isTaskRelease =
-	gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+	gradle.startParameter.taskNames.any {
+		it.contains("release", ignoreCase = true) || it.endsWith("ci", ignoreCase = true)
+	}
 
 android {
 	namespace = "paige.navic"
@@ -44,6 +46,8 @@ android {
 		targetSdk = libs.versions.android.targetSdk.get().toInt()
 		versionCode = 61
 		versionName = "v1.0.0-beta02"
+
+		buildConfigField("boolean", "CI_BUILD", "false")
 
 		ndk {
 			abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
@@ -72,6 +76,14 @@ android {
 		debug {
 			applicationIdSuffix = ".debug"
 			resValue("string", "app_name", "Navic (Dev)")
+		}
+
+		create("ci") {
+			initWith(getByName("release"))
+			applicationIdSuffix = ".ci"
+			matchingFallbacks += "release"
+			resValue("string", "app_name", "Navic CI")
+			buildConfigField("boolean", "CI_BUILD", "true")
 		}
 	}
 
@@ -140,6 +152,10 @@ android {
 }
 
 androidComponents {
+	beforeVariants(selector().withBuildType("ci")) { variantBuilder ->
+		if (variantBuilder.productFlavors.any { it.second == "fdroid" })
+			variantBuilder.enable = false
+	}
 	onVariants { variant ->
 		variant.outputs.forEach { output ->
 			output.outputFileName = if (variant.flavorName == "fdroid") {
@@ -148,13 +164,13 @@ androidComponents {
 				"Navic.apk"
 			}
 		}
-	}
-	onVariants(selector().withBuildType("release")) {
-		it.packaging.resources.excludes.apply {
-			add("/**/*.version")
-			add("/kotlin-tooling-metadata.json")
-			add("/DebugProbesKt.bin")
-			add("/**/*.kotlin_builtins")
+		if (variant.buildType == "release" || variant.buildType == "ci") {
+			variant.packaging.resources.excludes.apply {
+				add("/**/*.version")
+				add("/kotlin-tooling-metadata.json")
+				add("/DebugProbesKt.bin")
+				add("/**/*.kotlin_builtins")
+			}
 		}
 	}
 }

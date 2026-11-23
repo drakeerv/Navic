@@ -90,7 +90,6 @@ import paige.navic.domain.server.ServerCommand
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.layout.SideBar
-import paige.navic.ui.component.sheet.ChangelogSheet
 import paige.navic.ui.component.snackbar.NavicSnackBar
 import paige.navic.ui.component.snackbar.SwipeableSnackBarHost
 import paige.navic.ui.navigation.BottomSheetSceneStrategy
@@ -140,6 +139,7 @@ import paige.navic.ui.screen.song.SongListScreen
 import paige.navic.ui.screen.starred.StarredScreen
 import paige.navic.ui.screen.stats.StatisticsScreen
 import paige.navic.ui.util.Material3Transitions
+import paige.navic.update.UpdateSupport
 
 @OptIn(ExperimentalSerializationApi::class)
 private val config = SavedStateConfiguration {
@@ -344,8 +344,8 @@ fun App() {
 						)
 					}
 				}
-				if (preferenceManager.checkForUpdates && !BuildConfig.FDROID) {
-					ChangelogSheet()
+				if (preferenceManager.checkForUpdates) {
+					UpdateSupport.Sheet()
 				}
 			}
 		}

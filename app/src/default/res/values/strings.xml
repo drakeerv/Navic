@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Navic, a Subsonic music streaming app for Android
+  ~ Copyright (c) 2026 paige
+  ~ SPDX-License-Identifier: GPL-3.0-only
+  -->
+
+<resources>
+	<string name="info_update_ci">New build from %1$s: %2$s</string>
+	<string name="action_downloading">Downloading…</string>
+</resources>

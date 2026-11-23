@@ -112,7 +112,7 @@ jobs:
       - name: Install CMake
         run: sdkmanager "cmake;3.30.5"
 
-      - name: Build with Gradle (release)
+      - name: Build with Gradle
         id: build_release
         shell: bash
         if: ${{ (forgejo.event_name == 'push' || forgejo.event_name == 'workflow_dispatch') && env.SIGNING_KEY_ALIAS }}
@@ -124,10 +124,13 @@ jobs:
           IS_RELEASE: ${{ startsWith(forgejo.ref, 'refs/tags/v') }}
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 -d > release.keystore
-          ./gradlew :app:packageDefaultRelease --stacktrace --no-daemon --no-watch-fs
-          mv app/build/outputs/apk/**/**/*.apk ./
           if [ "$IS_RELEASE" = true ] ; then
+            ./gradlew :app:packageDefaultRelease --stacktrace --no-daemon --no-watch-fs
+            mv app/build/outputs/apk/**/**/*.apk ./
             ./gradlew :app:packageFdroidRelease --stacktrace --no-daemon --no-watch-fs
+            mv app/build/outputs/apk/**/**/*.apk ./
+          else
+            ./gradlew :app:packageDefaultCi --stacktrace --no-daemon --no-watch-fs
             mv app/build/outputs/apk/**/**/*.apk ./
           fi
           rm release.keystore

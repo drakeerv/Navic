@@ -16,7 +16,6 @@ import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainSongListType
 import paige.navic.playback.PlayerRepository
 import paige.navic.ui.component.dialog.DeletionViewModel
-import paige.navic.ui.component.sheet.ChangelogViewModel
 import paige.navic.ui.screen.album.viewmodel.AlbumListViewModel
 import paige.navic.ui.screen.artist.viewmodel.ArtistDetailViewModel
 import paige.navic.ui.screen.artist.viewmodel.ArtistListViewModel
@@ -166,7 +165,6 @@ val viewModelModule = module {
 	}
 	viewModelOf(::SongDetailViewModel)
 	viewModelOf(::SettingsDataStorageViewModel)
-	viewModelOf(::ChangelogViewModel)
 	viewModel { params ->
 		NowPlayingViewModel(
 			player = params.get(),

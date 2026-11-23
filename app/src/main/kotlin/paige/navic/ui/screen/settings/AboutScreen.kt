@@ -58,7 +58,6 @@ import paige.navic.di.LocalSizeClass
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Code
 import paige.navic.icons.outlined.Globe
-import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.MarqueeText
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.dialog.LinkConfirmationDialog
@@ -67,15 +66,13 @@ import paige.navic.ui.component.layout.NestedTopBarDefaults
 import paige.navic.ui.screen.settings.component.SettingsGroup
 import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
 import paige.navic.ui.screen.settings.component.SettingsLinkItem
-import paige.navic.ui.screen.settings.component.SettingsToggleItem
+import paige.navic.update.UpdateSupport
 import kotlin.random.Random
 
 private const val CODEBERG_BASE_URL = "https://codeberg.org/paige/Navic"
 
 @Composable
 fun SettingsAboutScreen() {
-	val preferenceManager = koinInject<PreferenceManager>()
-
 	val sizeClass = LocalSizeClass.current
 	val hideBack = sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 
@@ -102,16 +99,7 @@ fun SettingsAboutScreen() {
 		) {
 			AboutHeader()
 
-			if (!BuildConfig.FDROID) {
-				SettingsGroup {
-					SettingsToggleItem(
-						content = { Text(stringResource(R.string.option_check_for_updates)) },
-						supportingContent = { Text(stringResource(R.string.subtitle_check_for_updates)) },
-						checked = preferenceManager.checkForUpdates,
-						onCheckedChange = { preferenceManager.checkForUpdates = it }
-					)
-				}
-			}
+			UpdateSupport.SettingsItem()
 
 			DeveloperList()
 
