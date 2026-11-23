@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -14,80 +14,131 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.LinkInteractionListener
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import paige.navic.ui.component.dialog.LinkConfirmationDialog
+
+object MarkdownDefaults {
+	@Composable
+	fun colors(
+		textColor: Color = Color.Unspecified,
+		codeBlockContainerColor: Color = Color.Unspecified
+	) = MarkdownColors(
+		textColor = textColor,
+		codeBlockContainerColor = codeBlockContainerColor.takeOrElse { MaterialTheme.colorScheme.surface }
+	)
+}
+
+data class MarkdownColors(
+	val textColor: Color,
+	val codeBlockContainerColor: Color
+)
 
 @Composable
 fun Markdown(
 	text: String,
 	modifier: Modifier = Modifier,
-	color: Color = Color.Unspecified
+	colors: MarkdownColors = MarkdownDefaults.colors()
 ) {
 	val lines = text.split("\n")
+	var linkToOpen by rememberSaveable { mutableStateOf<String?>(null) }
+	val linkInteractionListener = remember {
+		LinkInteractionListener { link ->
+			linkToOpen = (link as LinkAnnotation.Url).url
+		}
+	}
+
 	Column(modifier = modifier) {
 		lines.forEach { line ->
 			if (line.isBlank()) {
 				Spacer(Modifier.height(8.dp))
 			} else {
-				MarkdownLine(line, color)
+				MarkdownLine(line, colors, linkInteractionListener)
 			}
 		}
 	}
+
+	LinkConfirmationDialog(
+		linkToOpen = linkToOpen,
+		onDismissRequest = { linkToOpen = null }
+	)
 }
 
 @Composable
-private fun MarkdownLine(line: String, color: Color) {
+private fun MarkdownLine(
+	line: String,
+	colors: MarkdownColors,
+	linkInteractionListener: LinkInteractionListener
+) {
 	val trimmed = line.trimStart()
 	val orderedListMatch = Regex("""^(\d+\.)\s+(.*)""").find(trimmed)
 
 	when {
 		trimmed.startsWith("# ") -> {
-			Text(
-				text = parseInlineMarkdown(trimmed.substring(2)),
+			MarkdownText(
+				text = trimmed.substring(2),
+				colors = colors,
+				linkInteractionListener = linkInteractionListener,
 				style = MaterialTheme.typography.headlineLarge,
-				color = color,
 				modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
 			)
 		}
 
 		trimmed.startsWith("## ") -> {
-			Text(
-				text = parseInlineMarkdown(trimmed.substring(3)),
+			MarkdownText(
+				text = trimmed.substring(3),
+				colors = colors,
+				linkInteractionListener = linkInteractionListener,
 				style = MaterialTheme.typography.headlineMedium,
-				color = color,
 				modifier = Modifier.padding(top = 12.dp, bottom = 6.dp)
 			)
 		}
 
 		trimmed.startsWith("### ") -> {
-			Text(
-				text = parseInlineMarkdown(trimmed.substring(4)),
+			MarkdownText(
+				text = trimmed.substring(4),
+				colors = colors,
+				linkInteractionListener = linkInteractionListener,
 				style = MaterialTheme.typography.headlineSmall,
-				color = color,
 				modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
 			)
 		}
 
 		trimmed.startsWith("- ") || trimmed.startsWith("* ") -> {
 			Row(modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp)) {
-				Text(
+				MarkdownText(
 					text = "• ",
-					color = color.takeIf { it != Color.Unspecified } ?: LocalContentColor.current,
-					style = MaterialTheme.typography.bodyMedium
+					colors = colors,
+					linkInteractionListener = linkInteractionListener
 				)
-				MarkdownText(parseInlineMarkdown(trimmed.substring(2)), color)
+				MarkdownText(
+					text = trimmed.substring(2),
+					colors = colors,
+					linkInteractionListener = linkInteractionListener
+				)
 			}
 		}
 
@@ -97,17 +148,21 @@ private fun MarkdownLine(line: String, color: Color) {
 			Row(modifier = Modifier.padding(start = 8.dp, top = 2.dp, bottom = 2.dp)) {
 				Text(
 					text = "$number ",
-					color = color.takeIf { it != Color.Unspecified } ?: LocalContentColor.current,
-					style = MaterialTheme.typography.bodyMedium
+					color = colors.textColor
 				)
-				MarkdownText(parseInlineMarkdown(content), color)
+				MarkdownText(
+					text = content,
+					colors = colors,
+					linkInteractionListener = linkInteractionListener
+				)
 			}
 		}
 
 		else -> {
 			MarkdownText(
-				parseInlineMarkdown(line),
-				color,
+				text = line,
+				colors = colors,
+				linkInteractionListener = linkInteractionListener,
 				modifier = Modifier.padding(vertical = 2.dp)
 			)
 		}
@@ -116,34 +171,35 @@ private fun MarkdownLine(line: String, color: Color) {
 
 @Composable
 private fun MarkdownText(
-	annotatedString: AnnotatedString,
-	color: Color,
+	text: String,
+	colors: MarkdownColors = MarkdownDefaults.colors(),
+	style: TextStyle = LocalTextStyle.current,
+	linkInteractionListener: LinkInteractionListener,
 	modifier: Modifier = Modifier
 ) {
-	val style = MaterialTheme.typography.bodyMedium.copy(
-		color = if (color != Color.Unspecified) color else LocalContentColor.current
-	)
 	Text(
-		text = annotatedString,
+		text = buildAnnotatedString {
+			appendMarkdown(text, colors, linkInteractionListener)
+		},
 		modifier = modifier,
 		style = style
 	)
 }
 
-private fun parseInlineMarkdown(text: String): AnnotatedString {
-	return buildAnnotatedString {
-		appendMarkdown(text)
-	}
-}
-
-private fun AnnotatedString.Builder.appendMarkdown(text: String) {
+private fun AnnotatedString.Builder.appendMarkdown(
+	text: String,
+	colors: MarkdownColors,
+	linkInteractionListener: LinkInteractionListener
+) {
 	var remaining = text
 	while (remaining.isNotEmpty()) {
 		val boldMatch = Regex("""\*\*(.*?)\*\*""").find(remaining)
 		val italicMatch = Regex("""\*(.*?)\*""").find(remaining)
 		val strikeoutMatch = Regex("""~~(.*?)~~""").find(remaining)
+		val codeMatch = Regex("""`(.*?)`""").find(remaining)
+		val linkMatch = Regex("""\[(.*?)]\((.*?)\)""").find(remaining)
 
-		val matches = listOfNotNull(boldMatch, italicMatch, strikeoutMatch)
+		val matches = listOfNotNull(boldMatch, italicMatch, strikeoutMatch, codeMatch, linkMatch)
 		if (matches.isEmpty()) {
 			append(remaining)
 			remaining = ""
@@ -157,20 +213,50 @@ private fun AnnotatedString.Builder.appendMarkdown(text: String) {
 		val content = nextMatch.groupValues[1]
 		when (nextMatch) {
 			boldMatch -> {
-				withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-					appendMarkdown(content)
+				withStyle(SpanStyle(color = colors.textColor, fontWeight = FontWeight.Bold)) {
+					appendMarkdown(content, colors, linkInteractionListener)
 				}
 			}
 
 			italicMatch -> {
-				withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-					appendMarkdown(content)
+				withStyle(SpanStyle(color = colors.textColor, fontStyle = FontStyle.Italic)) {
+					appendMarkdown(content, colors, linkInteractionListener)
 				}
 			}
 
 			strikeoutMatch -> {
-				withStyle(SpanStyle(textDecoration = TextDecoration.LineThrough)) {
-					appendMarkdown(content)
+				withStyle(
+					SpanStyle(
+						color = colors.textColor,
+						textDecoration = TextDecoration.LineThrough
+					)
+				) {
+					appendMarkdown(content, colors, linkInteractionListener)
+				}
+			}
+
+			codeMatch -> {
+				withStyle(
+					SpanStyle(
+						fontFamily = FontFamily.Monospace,
+						background = colors.codeBlockContainerColor
+					)
+				) {
+					appendMarkdown(content, colors, linkInteractionListener)
+				}
+			}
+
+			linkMatch -> {
+				val link = nextMatch.groupValues[2]
+				withLink(
+					LinkAnnotation.Url(
+						url = link,
+						linkInteractionListener = linkInteractionListener
+					)
+				) {
+					withStyle(SpanStyle(color = colors.textColor)) {
+						appendMarkdown(content, colors, linkInteractionListener)
+					}
 				}
 			}
 		}
