@@ -55,7 +55,9 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
 )
 target_compile_options(${CMAKE_PROJECT_NAME}
         PRIVATE
-        "-Os"
+        "-O3"
+        "-g0"
+        "-flto"
         "-ffunction-sections"
         "-fdata-sections"
         "-fvisibility=hidden"
@@ -69,7 +71,10 @@ target_link_options(${CMAKE_PROJECT_NAME}
         # as a cursory glance indicates that it doesn't hardcode any page sizes.
         PRIVATE "-Wl,--exclude-libs,ALL"
         PRIVATE "-Wl,--gc-sections"
-        PRIVATE "-Wl,-z,max-page-size=16384")
+        PRIVATE "-Wl,--icf=all"
+        PRIVATE "-Wl,--strip-debug"
+        PRIVATE "-Wl,-z,max-page-size=16384"
+        PRIVATE "-flto")
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this
