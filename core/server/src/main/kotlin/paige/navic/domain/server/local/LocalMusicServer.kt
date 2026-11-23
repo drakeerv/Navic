@@ -49,7 +49,7 @@ import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.LocalNoOpException
 import paige.navic.domain.server.ServerInfo
-import paige.navic.domain.server.ServerStatus
+import paige.navic.domain.server.ServerType
 import java.io.File
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -117,26 +117,18 @@ class LocalMusicServer(
 		)
 	}
 
-	override suspend fun ping(): ServerStatus = ServerStatus(
-		serverVersion = null,
-		version = null,
-		type = "local",
-		isOpenSubsonic = false
-	)
+	override suspend fun ping() = Unit
 
 	override suspend fun serverInfo(): ServerInfo = ServerInfo(
-		serverVersion = null,
-		version = null,
-		type = "local",
-		isOpenSubsonic = false,
+		type = ServerType.LOCAL,
 		capabilities = ServerCapabilities(
 			isRemote = false,
 			supportsDownloads = false,
-			supportsScrobbleSubmission = true,
+			supportsTranscoding = false,
+			supportsPlaySubmission = true,
 			supportsRatings = false,
 			supportsShares = false,
 			supportsRadio = false,
-			supportsChat = false,
 			supportsPlaylistMutation = true
 		)
 	)

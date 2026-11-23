@@ -1,31 +1,18 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
 package paige.navic.domain.server
 
-enum class ServerExtension(
-	val prettyName: String,
-	val serverType: ServerType
+enum class ServerFeature(
+	val prettyName: String
 ) {
-	OPENSUBSONIC_TRANSCODE_DECISION(
-		prettyName = "Transcode decision",
-		serverType = ServerType.SUBSONIC
-	),
-	OPENSUBSONIC_TRANSCODE_OFFSET(
-		prettyName = "Transcode time offset",
-		serverType = ServerType.SUBSONIC
-	),
-	OPENSUBSONIC_PLAYBACK_REPORT(
-		prettyName = "Playback report",
-		serverType = ServerType.SUBSONIC
-	),
-	SUBSONIC_CHAT(
-		prettyName = "Chat",
-		serverType = ServerType.SUBSONIC
-	)
+	TRANSCODE_DECISION("Transcode decision"),
+	TRANSCODE_OFFSET("Transcode offset"),
+	PLAYBACK_REPORT("Playback report"),
+	CHAT("Chat")
 }
 
 enum class ServerType(
@@ -37,29 +24,22 @@ enum class ServerType(
 	LOCAL("Local")
 }
 
-data class ServerStatus(
-	val serverVersion: String?,
-	val version: String?,
-	val type: String?,
-	val isOpenSubsonic: Boolean
-)
-
 data class ServerCapabilities(
 	val isRemote: Boolean = true,
 	val supportsDownloads: Boolean = true,
-	val supportsScrobbleSubmission: Boolean = true,
+	val supportsTranscoding: Boolean = true,
+	val supportsPlaySubmission: Boolean = true,
 	val supportsRatings: Boolean = true,
 	val supportsShares: Boolean = true,
 	val supportsRadio: Boolean = true,
-	val supportsChat: Boolean = true,
 	val supportsPlaylistMutation: Boolean = true
 )
 
 data class ServerInfo(
-	val extensions: Set<ServerExtension> = emptySet(),
-	val serverVersion: String? = null,
+	val type: ServerType,
 	val version: String? = null,
-	val type: String? = null,
-	val isOpenSubsonic: Boolean = false,
-	val capabilities: ServerCapabilities = ServerCapabilities()
+	val features: Set<ServerFeature> = emptySet(),
+	val capabilities: ServerCapabilities = ServerCapabilities(),
+	/** Provider-specific diagnostics that do not belong in the generic model. */
+	val details: Map<String, String> = emptyMap()
 )

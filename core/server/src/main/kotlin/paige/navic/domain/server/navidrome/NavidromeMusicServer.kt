@@ -12,9 +12,9 @@ import paige.navic.domain.model.DomainShareItem
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
-import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
+import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.ShareServer
 import paige.navic.domain.server.navidrome.api.NavidromeClient
 import kotlin.time.Clock
@@ -30,26 +30,11 @@ class NavidromeMusicServer(
 	@Volatile
 	private var isNavidrome: Boolean? = null
 
-	override suspend fun serverInfo(): ServerInfo {
-		val delegateInfo = delegate.serverInfo()
-		return delegateInfo.copy(
-			capabilities = ServerCapabilities(
-				isRemote = true,
-				supportsDownloads = true,
-				supportsScrobbleSubmission = true,
-				supportsRatings = true,
-				supportsShares = true,
-				supportsRadio = true,
-				supportsChat = delegateInfo.capabilities.supportsChat,
-				supportsPlaylistMutation = true
-			)
-		)
-	}
+	override suspend fun serverInfo(): ServerInfo =
+		delegate.serverInfo().copy(type = ServerType.NAVIDROME)
 
 	private suspend fun navidromeOrNull(): NavidromeClient? {
-		val navidrome = isNavidrome ?: delegate.serverInfo()
-			.type
-			.equals("navidrome", ignoreCase = true)
+		val navidrome = isNavidrome ?: (delegate.serverInfo().type == ServerType.NAVIDROME)
 			.also { isNavidrome = it }
 
 		return this.navidrome.takeIf { navidrome }

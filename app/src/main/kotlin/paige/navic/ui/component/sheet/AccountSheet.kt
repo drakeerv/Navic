@@ -64,8 +64,8 @@ import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.canShare
 import paige.navic.domain.manager.session.getUser
-import paige.navic.domain.manager.session.supportsExtension
-import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.manager.session.supportsFeature
+import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerType
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.Settings
@@ -364,7 +364,7 @@ fun AccountSheet(
 				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
 				val isSharingAllowed = sessionManager.getUser()?.canShare() == true
-				val supportsChat = sessionManager.supportsExtension(ServerExtension.SUBSONIC_CHAT)
+				val supportsChat = sessionManager.supportsFeature(ServerFeature.CHAT)
 
 				var count = 1
 

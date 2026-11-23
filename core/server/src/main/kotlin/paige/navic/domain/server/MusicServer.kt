@@ -26,7 +26,7 @@ import paige.navic.domain.model.ServerLyrics
 import kotlin.time.Instant
 
 interface MusicServer {
-	suspend fun ping(): ServerStatus
+	suspend fun ping()
 
 	suspend fun serverInfo(): ServerInfo
 

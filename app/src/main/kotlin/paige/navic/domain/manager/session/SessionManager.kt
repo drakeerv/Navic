@@ -26,7 +26,7 @@ import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.RadioServer
-import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.ShareServer
@@ -81,9 +81,6 @@ class SessionManager(
 
 	val instanceUrl: String
 		get() = accountStore.activeAccount?.baseUrl.orEmpty()
-
-	val authMethod: AuthMethod
-		get() = accountStore.activeAccount?.authMethod ?: AuthMethod.Token
 
 	private fun createClient(account: Account?): MusicServer = serverFactory.create(
 		baseUrl = account?.baseUrl.orEmpty(),
@@ -277,7 +274,7 @@ class SessionManager(
 
 	fun getCoverArtUrl(coverArtId: String): String {
 		val serverInfo = getServerInfo()
-		if (serverInfo?.type == "local") {
+		if (serverInfo?.type == ServerType.LOCAL) {
 			return "content://${BuildConfig.APPLICATION_ID}.cover-art/$coverArtId" +
 				"?size=${preferenceManager.coverArtQuality.value}"
 		}
@@ -310,27 +307,31 @@ fun SessionManager.getServerInfo(): ServerInfo? {
 }
 
 fun SessionManager.isNavidrome(): Boolean {
-	return this.getServerInfo()?.type.equals("navidrome", ignoreCase = true)
+	return this.getServerInfo()?.type == ServerType.NAVIDROME
 }
 
 fun SessionManager.isJellyfin(): Boolean {
-	return this.getServerInfo()?.type.equals("jellyfin", ignoreCase = true)
+	return this.getServerInfo()?.type == ServerType.JELLYFIN
 }
 
 fun SessionManager.isLocal(): Boolean {
-	return this.getServerInfo()?.capabilities?.isRemote == false
+	return this.getServerInfo()?.type == ServerType.LOCAL
 }
 
-fun SessionManager.supportsExtension(extension: ServerExtension): Boolean {
-	return this.getServerInfo()?.extensions?.contains(extension) == true
+fun SessionManager.supportsFeature(feature: ServerFeature): Boolean {
+	return this.getServerInfo()?.features?.contains(feature) == true
+}
+
+fun SessionManager.supportsTranscoding(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsTranscoding != false
 }
 
 fun SessionManager.supportsDownloads(): Boolean {
 	return this.getServerInfo()?.capabilities?.supportsDownloads != false
 }
 
-fun SessionManager.supportsScrobbleSubmission(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsScrobbleSubmission != false
+fun SessionManager.supportsPlaySubmission(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsPlaySubmission != false
 }
 
 fun SessionManager.supportsRatings(): Boolean {

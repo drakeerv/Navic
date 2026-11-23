@@ -35,10 +35,10 @@ import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.RadioServer
 import paige.navic.domain.server.ServerException
-import paige.navic.domain.server.ServerExtension
 import paige.navic.domain.server.ServerCapabilities
+import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerInfo
-import paige.navic.domain.server.ServerStatus
+import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.ShareServer
 import paige.navic.domain.server.subsonic.mapper.toApi
 import paige.navic.domain.server.subsonic.mapper.toDomainModel
@@ -54,7 +54,7 @@ class SubsonicMusicServer(
 		const val ID3_SUPPORT = "v1.8.0"
 	}
 
-	private var extensions: Set<ServerExtension>? = null
+	private var features: Set<ServerFeature>? = null
 
 	private data class SemanticVersioning(
 		val major: Int = 0,
@@ -91,14 +91,8 @@ class SubsonicMusicServer(
 
 	private suspend fun supportsID3() = isEqualOrAboveSubsonicVersion(ID3_SUPPORT)
 
-	override suspend fun ping(): ServerStatus {
-		val response = call { client.ping() }
-		return ServerStatus(
-			serverVersion = response.serverVersion,
-			version = response.version,
-			type = response.type,
-			isOpenSubsonic = response.openSubsonic
-		)
+	override suspend fun ping() {
+		call { client.ping() }
 	}
 
 	override suspend fun serverInfo(): ServerInfo {
@@ -112,39 +106,46 @@ class SubsonicMusicServer(
 		}
 
 		val supportsChat = runCatching { client.getChatMessages() }.isSuccess
-		val detectedExtensions = buildSet {
+		val detectedFeatures = buildSet {
 			subsonicExtensions
 				.map { it.name to it.versions }
 				.mapNotNull { (name, version) ->
 					when (name) {
-						"transcoding" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_DECISION
-						"transcodeOffset" if version.contains(1) -> ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET
-						"playbackReport" if version.contains(1) -> ServerExtension.OPENSUBSONIC_PLAYBACK_REPORT
+						"transcoding" if version.contains(1) -> ServerFeature.TRANSCODE_DECISION
+						"transcodeOffset" if version.contains(1) -> ServerFeature.TRANSCODE_OFFSET
+						"playbackReport" if version.contains(1) -> ServerFeature.PLAYBACK_REPORT
 						else -> null
 					}
 				}.forEach(::add)
 
 			if (supportsChat) {
-				add(ServerExtension.SUBSONIC_CHAT)
+				add(ServerFeature.CHAT)
 			}
 		}
+		features = detectedFeatures
 
 		return ServerInfo(
-			extensions = detectedExtensions,
-			serverVersion = response.serverVersion,
+			type = when {
+				response.type.equals("navidrome", ignoreCase = true) -> ServerType.NAVIDROME
+				response.type.equals("jellyfin", ignoreCase = true) -> ServerType.JELLYFIN
+				else -> ServerType.SUBSONIC
+			},
 			version = response.version,
-			type = response.type,
-			isOpenSubsonic = response.openSubsonic,
+			features = detectedFeatures,
 			capabilities = ServerCapabilities(
 				isRemote = true,
 				supportsDownloads = true,
-				supportsScrobbleSubmission = true,
+				supportsPlaySubmission = true,
 				supportsRatings = true,
 				supportsShares = true,
 				supportsRadio = true,
-				supportsChat = supportsChat,
 				supportsPlaylistMutation = true
-			)
+			),
+			details = buildMap {
+				put("OpenSubsonic", response.openSubsonic.toString())
+				response.serverVersion?.let { put("Server version", it) }
+				response.type?.let { put("Reported type", it) }
+			}
 		)
 	}
 
@@ -310,10 +311,10 @@ class SubsonicMusicServer(
 			maxBitRate = bitrateKbps,
 			format
 		)
-		val supportedExtensions = extensions ?: serverInfo().extensions
-		if (ServerExtension.OPENSUBSONIC_TRANSCODE_DECISION !in supportedExtensions
-			|| skipTranscodeDecisions
-		) return directUrl
+		val supportedFeatures = features ?: serverInfo().features
+		if (ServerFeature.TRANSCODE_DECISION !in supportedFeatures || skipTranscodeDecisions) {
+			return directUrl
+		}
 
 		val decision = call {
 			client.getTranscodeDecision(

@@ -65,9 +65,10 @@ import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.ServerCommand
 import paige.navic.domain.server.ServerCapabilities
+import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
-import paige.navic.domain.server.ServerStatus
+import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.jellyfin.mapper.toDomainAlbum
 import paige.navic.domain.server.jellyfin.mapper.toDomainArtist
 import paige.navic.domain.server.jellyfin.mapper.toDomainPlaylist
@@ -155,32 +156,26 @@ class JellyfinMusicServer(
 		}
 	}
 
-	override suspend fun ping(): ServerStatus {
-		//systemApi.getPingSystem()
-		val info = api.systemApi.getPublicSystemInfo().content
-		return ServerStatus(
-			serverVersion = info.version,
-			version = info.version,
-			type = "jellyfin",
-			isOpenSubsonic = false
-		)
+	override suspend fun ping() {
+		api.systemApi.getPublicSystemInfo()
 	}
 
 	override suspend fun serverInfo(): ServerInfo {
 		val info = api.systemApi.getPublicSystemInfo().content
 		return ServerInfo(
-			serverVersion = info.version,
-			version = null,
-			type = "jellyfin",
-			isOpenSubsonic = false,
+			type = ServerType.JELLYFIN,
+			version = info.version,
+			features = setOf(
+				ServerFeature.TRANSCODE_OFFSET,
+				ServerFeature.PLAYBACK_REPORT
+			),
 			capabilities = ServerCapabilities(
 				isRemote = true,
 				supportsDownloads = true,
-				supportsScrobbleSubmission = false,
+				supportsPlaySubmission = false,
 				supportsRatings = true,
 				supportsShares = false,
 				supportsRadio = false,
-				supportsChat = false,
 				supportsPlaylistMutation = true
 			)
 		)

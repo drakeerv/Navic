@@ -59,6 +59,9 @@ import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.runtime.StorageManager
 import paige.navic.domain.manager.session.DownloadManager
+import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.session.isLocal
+import paige.navic.domain.manager.session.supportsDownloads
 import paige.navic.domain.model.settings.CoverArtQuality
 import paige.navic.domain.model.settings.DownloadStorage
 import paige.navic.domain.model.settings.OfflineMode
@@ -98,6 +101,9 @@ fun SettingsDataStorageScreen() {
 	val sizeClass = LocalSizeClass.current
 	val hideBack = sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 	val preferenceManager = koinInject<PreferenceManager>()
+	val sessionManager = koinInject<SessionManager>()
+	val showDownloads = sessionManager.supportsDownloads()
+	val showStreamCache = !sessionManager.isLocal()
 	val storageManager = koinInject<StorageManager>()
 	val streamCacheManager = koinInject<StreamCacheManager>()
 	val downloadManager = koinInject<DownloadManager>()
@@ -242,22 +248,32 @@ fun SettingsDataStorageScreen() {
 				verticalArrangement = Arrangement.spacedBy(SettingsGroupDefaults.GapBetweenGroups)
 			) {
 				SettingsGroup(title = { Text(stringResource(R.string.title_network)) }) {
-					SettingsNavItem(
-						onClick = dropUnlessResumed { backStack.add(Screen.Settings.DownloadQuality) },
-						content = { Text(stringResource(R.string.title_download_quality)) },
-						supportingContent = { Text(stringResource(R.string.subtitle_download_quality)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 3)
-					)
+					val networkSettingsCount = 1 + if (showDownloads) 2 else 0
+					var networkSettingIndex = 0
+					if (showDownloads) {
+						SettingsNavItem(
+							onClick = dropUnlessResumed { backStack.add(Screen.Settings.DownloadQuality) },
+							content = { Text(stringResource(R.string.title_download_quality)) },
+							supportingContent = { Text(stringResource(R.string.subtitle_download_quality)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = networkSettingIndex++,
+								count = networkSettingsCount
+							)
+						)
 
-					SettingsChoiceItem(
-						choices = OfflineMode.entries.toImmutableList(),
-						selectedChoice = preferenceManager.offlineMode,
-						onChoiceSelected = { preferenceManager.offlineMode = it },
-						description = stringResource(R.string.subtitle_offline_mode),
-						content = { Text(stringResource(R.string.option_offline_mode)) },
-						label = { it.label() },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 3)
-					)
+						SettingsChoiceItem(
+							choices = OfflineMode.entries.toImmutableList(),
+							selectedChoice = preferenceManager.offlineMode,
+							onChoiceSelected = { preferenceManager.offlineMode = it },
+							description = stringResource(R.string.subtitle_offline_mode),
+							content = { Text(stringResource(R.string.option_offline_mode)) },
+							label = { it.label() },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = networkSettingIndex++,
+								count = networkSettingsCount
+							)
+						)
+					}
 
 					SettingsChoiceItem(
 						choices = CoverArtQuality.entries.toImmutableList(),
@@ -272,7 +288,10 @@ fun SettingsDataStorageScreen() {
 						},
 						content = { Text(stringResource(R.string.option_cover_art_quality)) },
 						label = { it.label() },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 3)
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = networkSettingIndex,
+							count = networkSettingsCount
+						)
 					)
 				}
 
@@ -342,9 +361,10 @@ fun SettingsDataStorageScreen() {
 					)
 				}
 
-				SettingsGroup(title = { Text(stringResource(R.string.title_download_management)) }) {
-					SettingsChoiceItem(
-						choices = DownloadStorage.entries.toImmutableList(),
+				if (showDownloads) {
+					SettingsGroup(title = { Text(stringResource(R.string.title_download_management)) }) {
+						SettingsChoiceItem(
+							choices = DownloadStorage.entries.toImmutableList(),
 						selectedChoice = preferenceManager.downloadStorage,
 						onChoiceSelected = { choice ->
 							if (choice != preferenceManager.downloadStorage) {
@@ -455,37 +475,57 @@ fun SettingsDataStorageScreen() {
 						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 3)
 					)
 				}
+				}
 				SettingsGroup(title = { Text(stringResource(R.string.title_storage_usage)) }) {
-					SegmentedListItem(
-						content = { Text(stringResource(R.string.option_downloaded_songs)) },
-						supportingContent = {
-							Text(
-								text = "${
-									pluralStringResource(
-										R.plurals.count_songs,
-										downloadCount,
-										downloadCount
-									)
-								} ($downloadsSizeMb) // $freeSpaceFormatted free"
+					val storageUsageCount =
+						1 + (if (showDownloads) 1 else 0) + (if (showStreamCache) 1 else 0)
+					var storageUsageIndex = 0
+					if (showDownloads) {
+						SegmentedListItem(
+							content = { Text(stringResource(R.string.option_downloaded_songs)) },
+							supportingContent = {
+								Text(
+									text = "${
+										pluralStringResource(
+											R.plurals.count_songs,
+											downloadCount,
+											downloadCount
+										)
+									} ($downloadsSizeMb) // $freeSpaceFormatted free"
+								)
+							},
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = storageUsageIndex++,
+								count = storageUsageCount
 							)
-						},
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 3)
-					)
+						)
+					}
 
 					SegmentedListItem(
 						content = { Text(stringResource(R.string.option_image_cache_size)) },
 						supportingContent = { Text(imageCacheSizeMb) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 3)
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = storageUsageIndex++,
+							count = storageUsageCount
+						)
 					)
 
-					SegmentedListItem(
-						content = { Text(stringResource(R.string.option_streaming_cache_size)) },
-						supportingContent = { Text(streamCacheSize) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 3)
-					)
+					if (showStreamCache) {
+						SegmentedListItem(
+							content = { Text(stringResource(R.string.option_streaming_cache_size)) },
+							supportingContent = { Text(streamCacheSize) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = storageUsageIndex,
+								count = storageUsageCount
+							)
+						)
+					}
 				}
 
 				SettingsGroup(title = { Text(stringResource(R.string.title_danger_zone)) }) {
+					val dangerCount =
+						3 + (if (showStreamCache) 1 else 0) + (if (showDownloads) 1 else 0)
+					var dangerIndex = 0
 					SegmentedListItem(
 						onClick = {
 							imageLoader.memoryCache?.clear()
@@ -495,33 +535,49 @@ fun SettingsDataStorageScreen() {
 							}
 						},
 						content = { Text(stringResource(R.string.action_clear_image_cache)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 5),
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = dangerIndex++,
+							count = dangerCount
+						),
 						colors = SegmentedListItemDefaults.segmentedErrorColors()
 					)
-					SegmentedListItem(
-						onClick = {
-							scope.launch(Dispatchers.IO) {
-								streamCacheManager.clear()
-								streamCacheSize = "0 B"
-							}
-						},
-						content = { Text(stringResource(R.string.action_clear_stream_cache)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 5),
-						colors = SegmentedListItemDefaults.segmentedErrorColors()
-					)
-					SegmentedListItem(
-						onClick = {
-							downloadDeletionHandler.requestDelete(DeleteDownloadTarget.Library)
-						},
-						content = { Text(stringResource(R.string.action_clear_downloads)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 5),
-						colors = SegmentedListItemDefaults.segmentedErrorColors()
-					)
+					if (showStreamCache) {
+						SegmentedListItem(
+							onClick = {
+								scope.launch(Dispatchers.IO) {
+									streamCacheManager.clear()
+									streamCacheSize = "0 B"
+								}
+							},
+							content = { Text(stringResource(R.string.action_clear_stream_cache)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = dangerIndex++,
+								count = dangerCount
+							),
+							colors = SegmentedListItemDefaults.segmentedErrorColors()
+						)
+					}
+					if (showDownloads) {
+						SegmentedListItem(
+							onClick = {
+								downloadDeletionHandler.requestDelete(DeleteDownloadTarget.Library)
+							},
+							content = { Text(stringResource(R.string.action_clear_downloads)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = dangerIndex++,
+								count = dangerCount
+							),
+							colors = SegmentedListItemDefaults.segmentedErrorColors()
+						)
+					}
 					SegmentedListItem(
 						onClick = viewModel::removeAllActions,
 						content = { Text(stringResource(R.string.action_clear_pending_actions)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_clear_pending_sync_actions)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = 5),
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = dangerIndex++,
+							count = dangerCount
+						),
 						colors = SegmentedListItemDefaults.segmentedErrorColors()
 					)
 					SegmentedListItem(
@@ -530,7 +586,10 @@ fun SettingsDataStorageScreen() {
 						content = { Text(stringResource(R.string.action_rebuild_database)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_rebuild_database)) },
 						trailingContent = offlineIcon,
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 4, count = 5),
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = dangerIndex,
+							count = dangerCount
+						),
 						colors = SegmentedListItemDefaults.segmentedErrorColors()
 					)
 				}

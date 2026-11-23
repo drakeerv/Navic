@@ -37,11 +37,10 @@ import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
-import paige.navic.domain.manager.session.isJellyfin
-import paige.navic.domain.manager.session.supportsExtension
+import paige.navic.domain.manager.session.supportsFeature
 import paige.navic.domain.model.settings.StreamingQuality
 import paige.navic.domain.model.settings.description
-import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.server.ServerFeature
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Info
 import paige.navic.playback.exoplayer.impl.cache.StreamCacheManager
@@ -63,8 +62,7 @@ fun SettingsStreamingQualityScreen() {
 	val isReachable by reachability.isReachable.collectAsStateWithLifecycle()
 	val isMetered by reachability.isMetered.collectAsStateWithLifecycle()
 	val supportsTranscodeOffset = remember {
-		sessionManager.isJellyfin()
-			|| sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET)
+		sessionManager.supportsFeature(ServerFeature.TRANSCODE_OFFSET)
 	}
 
 	Scaffold(

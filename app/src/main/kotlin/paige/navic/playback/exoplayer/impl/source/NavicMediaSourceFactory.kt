@@ -21,8 +21,8 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.connectivity.ConnectivityManager
-import paige.navic.domain.manager.session.supportsExtension
-import paige.navic.domain.server.ServerExtension
+import paige.navic.domain.manager.session.supportsFeature
+import paige.navic.domain.server.ServerFeature
 import paige.navic.playback.exoplayer.impl.cache.NavicDataSource
 
 /**
@@ -71,7 +71,7 @@ internal class NavicMediaSourceFactory(
 				durationMs != null &&
 				durationMs > 0L &&
 				(bitrateKbps > 0 || format != null) &&
-				sessionManager.supportsExtension(ServerExtension.OPENSUBSONIC_TRANSCODE_OFFSET) ->
+				sessionManager.supportsFeature(ServerFeature.TRANSCODE_OFFSET) ->
 				TimeOffsetMediaSource(
 					mediaItem = mediaItem,
 					durationUs = durationMs * 1_000L,

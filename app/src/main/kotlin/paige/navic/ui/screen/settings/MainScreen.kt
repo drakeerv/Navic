@@ -45,6 +45,8 @@ import paige.navic.icons.outlined.ChevronForward
 import paige.navic.icons.outlined.Code
 import paige.navic.icons.outlined.DataTable
 import paige.navic.icons.outlined.Note
+import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.session.isLocal
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
@@ -55,6 +57,9 @@ import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
 
 @Composable
 fun SettingsScreen() {
+	val sessionManager = koinInject<SessionManager>()
+	val isLocal = sessionManager.isLocal()
+	val pageCount = if (isLocal) 6 else 7
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.title_settings)) }) }
 	) { innerPadding ->
@@ -72,7 +77,7 @@ fun SettingsScreen() {
 					iconSize = 24.dp,
 					title = R.string.title_appearance,
 					subtitle = R.string.subtitle_appearance,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = pageCount)
 				)
 				PageRow(
 					destination = Screen.Settings.NowPlaying,
@@ -80,7 +85,7 @@ fun SettingsScreen() {
 					iconSize = 24.dp,
 					title = R.string.title_now_playing,
 					subtitle = R.string.subtitle_now_playing,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = pageCount)
 				)
 				PageRow(
 					destination = Screen.Settings.BottomAppBar,
@@ -88,7 +93,7 @@ fun SettingsScreen() {
 					iconSize = 24.dp,
 					title = R.string.title_bottom_app_bar,
 					subtitle = R.string.subtitle_bottom_app_bar,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = pageCount)
 				)
 				PageRow(
 					destination = Screen.Settings.Playback,
@@ -96,7 +101,7 @@ fun SettingsScreen() {
 					iconSize = 24.dp,
 					title = R.string.title_playback,
 					subtitle = R.string.subtitle_playback,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = pageCount)
 				)
 				PageRow(
 					destination = Screen.Settings.DataStorage,
@@ -104,23 +109,31 @@ fun SettingsScreen() {
 					iconSize = 24.dp,
 					title = R.string.title_data_storage,
 					subtitle = R.string.subtitle_data_storage,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 4, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(index = 4, count = pageCount)
 				)
-				PageRow(
-					destination = Screen.Settings.ConnectionOptions,
-					icon = Icons.Outlined.AccountCircle,
-					iconSize = 24.dp,
-					title = R.string.option_connection_options,
-					subtitle = R.string.subtitle_connection_options,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 5, count = 7)
-				)
+				if (!isLocal) {
+					PageRow(
+						destination = Screen.Settings.ConnectionOptions,
+						icon = Icons.Outlined.AccountCircle,
+						iconSize = 24.dp,
+						title = R.string.option_connection_options,
+						subtitle = R.string.subtitle_connection_options,
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = 5,
+							count = pageCount
+						)
+					)
+				}
 				PageRow(
 					destination = Screen.Settings.Developer,
 					icon = Icons.Outlined.Code,
 					iconSize = 24.dp,
 					title = R.string.title_developer,
 					subtitle = R.string.subtitle_developer,
-					shapes = SegmentedListItemDefaults.segmentedShapes(index = 6, count = 7)
+					shapes = SegmentedListItemDefaults.segmentedShapes(
+						index = if (isLocal) 5 else 6,
+						count = pageCount
+					)
 				)
 			}
 			SettingsGroup {

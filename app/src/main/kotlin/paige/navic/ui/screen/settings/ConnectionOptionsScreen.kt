@@ -244,29 +244,30 @@ fun SettingsConnectionOptionsScreen() {
 private fun ServerInfoSection(
 	info: ServerInfo
 ) {
-	val extensions = info.extensions
-		.takeIf { it.isNotEmpty() }
-		?.joinToString(", ") { it.prettyName }
-	val infoMap = remember {
-		mapOf(
-			R.string.info_server_type to info.type,
-			R.string.info_server_version to info.version,
-			R.string.info_subsonic_server_version to info.serverVersion,
-			R.string.info_server_is_opensubsonic to info.isOpenSubsonic.toString(),
-			R.string.info_supported_server_extensions to extensions
-		).filterValues { it != null }.mapValues { it.value as String }
+	val rows = buildList {
+		add(stringResource(R.string.info_server_type) to info.type.prettyName)
+		info.version?.let { add(stringResource(R.string.info_server_version) to it) }
+		info.features
+			.takeIf { it.isNotEmpty() }
+			?.let { features ->
+				add(
+					stringResource(R.string.info_supported_server_extensions) to
+						features.joinToString(", ") { it.prettyName }
+				)
+			}
+		info.details.forEach { (key, value) -> add(key to value) }
 	}
 
 	SettingsGroup(
 		title = { Text(stringResource(R.string.info_server_info)) }
 	) {
-		infoMap.onEachIndexed { index, (label, value) ->
+		rows.onEachIndexed { index, (label, value) ->
 			SegmentedListItem(
-				content = { Text(stringResource(label)) },
+				content = { Text(label) },
 				supportingContent = { Text(value) },
 				shapes = SegmentedListItemDefaults.segmentedShapes(
 					index = index,
-					count = infoMap.size
+					count = rows.size
 				),
 				colors = SegmentedListItemDefaults.segmentedColors()
 			)

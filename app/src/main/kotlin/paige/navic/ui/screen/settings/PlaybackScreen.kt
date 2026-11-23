@@ -32,6 +32,10 @@ import paige.navic.BuildConfig
 import paige.navic.R
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
+import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.session.isLocal
+import paige.navic.domain.manager.session.supportsPlaySubmission
+import paige.navic.domain.manager.session.supportsTranscoding
 import paige.navic.domain.model.settings.DiscordStatusType
 import paige.navic.domain.model.settings.ExplicitContentPlayback
 import paige.navic.playback.exoplayer.impl.listeners.ExoDiscordIntegration
@@ -57,6 +61,10 @@ fun SettingsPlaybackScreen() {
 	val sizeClass = LocalSizeClass.current
 	val hideBack = sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 	val preferenceManager = koinInject<PreferenceManager>()
+	val sessionManager = koinInject<SessionManager>()
+	val showStreamingQuality = sessionManager.supportsTranscoding()
+	val showScrobbling =
+		!sessionManager.isLocal() && sessionManager.supportsPlaySubmission()
 	var coverArtProvidersSheetOpen by rememberSaveable { mutableStateOf(false) }
 
 	Scaffold(
@@ -82,27 +90,37 @@ fun SettingsPlaybackScreen() {
 				verticalArrangement = Arrangement.spacedBy(SettingsGroupDefaults.GapBetweenGroups)
 			) {
 				SettingsGroup {
-					SettingsNavItem(
-						onClick = dropUnlessResumed { backStack.add(Screen.Settings.StreamingQuality) },
-						content = { Text(stringResource(R.string.title_streaming_quality)) },
-						supportingContent = { Text(stringResource(R.string.subtitle_streaming_quality)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 4)
-					)
+					val playbackSettingsCount = if (showStreamingQuality) 4 else 3
+					var playbackSettingIndex = 0
+					if (showStreamingQuality) {
+						SettingsNavItem(
+							onClick = dropUnlessResumed { backStack.add(Screen.Settings.StreamingQuality) },
+							content = { Text(stringResource(R.string.title_streaming_quality)) },
+							supportingContent = { Text(stringResource(R.string.subtitle_streaming_quality)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = playbackSettingIndex++,
+								count = playbackSettingsCount
+							)
+						)
+					}
 					SettingsChoiceItem(
 						choices = ExplicitContentPlayback.entries.toImmutableList(),
 						selectedChoice = preferenceManager.explicitContentPlayback,
 						onChoiceSelected = { preferenceManager.explicitContentPlayback = it },
 						content = { Text(stringResource(R.string.option_explicit_playback)) },
 						label = { it.label() },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 4)
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = playbackSettingIndex++,
+							count = playbackSettingsCount
+						)
 					)
 					SettingsNavItem(
 						onClick = dropUnlessResumed { backStack.add(Screen.Settings.Effects) },
 						content = { Text(stringResource(R.string.title_audio_effects)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_audio_effects)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 2,
-							count = 4
+							index = playbackSettingIndex++,
+							count = playbackSettingsCount
 						)
 					)
 					SettingsToggleItem(
@@ -111,8 +129,8 @@ fun SettingsPlaybackScreen() {
 						content = { Text(stringResource(R.string.option_auto_fill_queue)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_auto_fill_queue)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 3,
-							count = 4
+							index = playbackSettingIndex,
+							count = playbackSettingsCount
 						)
 					)
 				}
@@ -189,48 +207,50 @@ fun SettingsPlaybackScreen() {
 					}
 				}
 
-				SettingsGroup(title = { Text(stringResource(R.string.title_behaviour)) }) {
-					val enableScrobbling = preferenceManager.enableScrobbling
-					var count = 1
-					if (enableScrobbling) count += 2
+				if (showScrobbling) {
+					SettingsGroup(title = { Text(stringResource(R.string.title_behaviour)) }) {
+						val enableScrobbling = preferenceManager.enableScrobbling
+						var count = 1
+						if (enableScrobbling) count += 2
 
-					SettingsToggleItem(
-						checked = enableScrobbling,
-						onCheckedChange = { preferenceManager.enableScrobbling = it },
-						content = { Text(stringResource(R.string.option_enable_scrobbling)) },
-						supportingContent = { Text(stringResource(R.string.subtitle_enable_scrobbling)) },
-						shapes = SegmentedListItemDefaults.segmentedShapes(
-							index = 0,
-							count = count
-						)
-					)
-
-					AnimatedVisibility(visible = enableScrobbling) {
-						SettingsSliderItem(
-							value = preferenceManager.scrobblePercentage,
-							valueRange = 0f..1f,
-							onValueChange = { preferenceManager.scrobblePercentage = it },
-							trailingContent = { Text("${(preferenceManager.scrobblePercentage * 100).roundToInt()}%") },
-							content = { Text(stringResource(R.string.option_scrobble_percentage)) },
+						SettingsToggleItem(
+							checked = enableScrobbling,
+							onCheckedChange = { preferenceManager.enableScrobbling = it },
+							content = { Text(stringResource(R.string.option_enable_scrobbling)) },
+							supportingContent = { Text(stringResource(R.string.subtitle_enable_scrobbling)) },
 							shapes = SegmentedListItemDefaults.segmentedShapes(
-								index = 1,
+								index = 0,
 								count = count
 							)
 						)
-					}
 
-					AnimatedVisibility(visible = enableScrobbling) {
-						SettingsSliderItem(
-							value = preferenceManager.minDurationToScrobble,
-							valueRange = 0f..60f,
-							onValueChange = { preferenceManager.minDurationToScrobble = it },
-							trailingContent = { Text("${preferenceManager.minDurationToScrobble.toInt()}s") },
-							content = { Text(stringResource(R.string.option_min_duration_to_scrobble)) },
-							shapes = SegmentedListItemDefaults.segmentedShapes(
-								index = 2,
-								count = count
+						AnimatedVisibility(visible = enableScrobbling) {
+							SettingsSliderItem(
+								value = preferenceManager.scrobblePercentage,
+								valueRange = 0f..1f,
+								onValueChange = { preferenceManager.scrobblePercentage = it },
+								trailingContent = { Text("${(preferenceManager.scrobblePercentage * 100).roundToInt()}%") },
+								content = { Text(stringResource(R.string.option_scrobble_percentage)) },
+								shapes = SegmentedListItemDefaults.segmentedShapes(
+									index = 1,
+									count = count
+								)
 							)
-						)
+						}
+
+						AnimatedVisibility(visible = enableScrobbling) {
+							SettingsSliderItem(
+								value = preferenceManager.minDurationToScrobble,
+								valueRange = 0f..60f,
+								onValueChange = { preferenceManager.minDurationToScrobble = it },
+								trailingContent = { Text("${preferenceManager.minDurationToScrobble.toInt()}s") },
+								content = { Text(stringResource(R.string.option_min_duration_to_scrobble)) },
+								shapes = SegmentedListItemDefaults.segmentedShapes(
+									index = 2,
+									count = count
+								)
+							)
+						}
 					}
 				}
 			}
