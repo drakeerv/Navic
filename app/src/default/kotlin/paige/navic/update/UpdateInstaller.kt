@@ -15,7 +15,7 @@ import android.os.Build
 import androidx.core.content.IntentCompat
 import java.io.File
 import java.net.URL
-import java.util.zip.ZipInputStream
+import java.util.zip.ZipFile
 
 internal object UpdateInstaller {
 	private const val DOWNLOAD_NAME = "navic-update.download"
@@ -31,17 +31,16 @@ internal object UpdateInstaller {
 
 		val apk = File(context.cacheDir, APK_NAME)
 		try {
-			ZipInputStream(raw.inputStream().buffered()).use { stream ->
-				var entry = stream.nextEntry
-				while (entry != null) {
-					if (!entry.isDirectory && entry.name.endsWith(".apk", ignoreCase = true)) {
-						apk.outputStream().use { output -> stream.copyTo(output) }
-						return apk
-					}
-					entry = stream.nextEntry
+			ZipFile(raw).use { zip ->
+				val entry = zip.entries().asSequence().firstOrNull {
+					!it.isDirectory && it.name.endsWith(".apk", ignoreCase = true)
+				} ?: error("no apk found in update archive")
+				zip.getInputStream(entry).use { input ->
+					apk.outputStream().use { output -> input.copyTo(output) }
 				}
 			}
-			error("no apk found in update archive")
+			check(apk.length() > 0) { "extracted apk is empty" }
+			return apk
 		} finally {
 			raw.delete()
 		}
