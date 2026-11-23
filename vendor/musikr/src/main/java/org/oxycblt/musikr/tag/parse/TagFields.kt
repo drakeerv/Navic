@@ -266,6 +266,18 @@ internal fun Metadata.replayGainAlbumAdjustment() =
         ?: mp4["----:COM.APPLE.ITUNES:REPLAYGAIN_ALBUM_GAIN"]?.parseReplayGainAdjustment()
         ?: id3v2["TXXX:REPLAYGAIN_ALBUM_GAIN"]?.parseReplayGainAdjustment())
 
+internal fun Metadata.replayGainTrackPeak() =
+    (xiph["REPLAYGAIN_TRACK_PEAK"]
+        ?: mp4["----:COM.APPLE.ITUNES:REPLAYGAIN_TRACK_PEAK"]
+        ?: id3v2["TXXX:REPLAYGAIN_TRACK_PEAK"])
+        ?.parseReplayGainPeak()
+
+internal fun Metadata.replayGainAlbumPeak() =
+    (xiph["REPLAYGAIN_ALBUM_PEAK"]
+        ?: mp4["----:COM.APPLE.ITUNES:REPLAYGAIN_ALBUM_PEAK"]
+        ?: id3v2["TXXX:REPLAYGAIN_ALBUM_PEAK"])
+        ?.parseReplayGainPeak()
+
 private fun List<String>.parseR128Adjustment() =
     first().replace(REPLAYGAIN_ADJUSTMENT_FILTER_REGEX, "").toFloatOrNull()?.run {
         // Convert to fixed-point and adjust to LUFS 18 to match the ReplayGain scale
@@ -279,6 +291,10 @@ private fun List<String>.parseR128Adjustment() =
  */
 private fun List<String>.parseReplayGainAdjustment() =
     first().replace(REPLAYGAIN_ADJUSTMENT_FILTER_REGEX, "").toFloatOrNull()?.nonZeroOrNull()
+
+private fun List<String>.parseReplayGainPeak() =
+    first().replace(REPLAYGAIN_ADJUSTMENT_FILTER_REGEX, "").toFloatOrNull()
+        ?.takeIf { it >= 0f }
 
 /**
  * Matches non-float information from ReplayGain adjustments. Derived from vanilla music:

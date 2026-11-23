@@ -12,9 +12,9 @@ import androidx.media3.common.Player
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.oxycblt.musikr.Config
+import org.oxycblt.musikr.IndexingProgress
 import org.oxycblt.musikr.Interpretation
-import org.oxycblt.musikr.Library
-import org.oxycblt.musikr.LibraryResult
+import org.oxycblt.musikr.LibraryWriter
 import org.oxycblt.musikr.Musikr
 import org.oxycblt.musikr.Storage
 import org.oxycblt.musikr.cache.MutableCache
@@ -42,69 +42,50 @@ import paige.navic.domain.model.DomainUser
 import paige.navic.domain.model.ServerLyrics
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.LocalSyncServer
+import paige.navic.domain.server.PlayHistoryRecorder
 import paige.navic.domain.server.SyncProgressMessage
-import paige.navic.database.dao.AlbumDao
-import paige.navic.database.dao.ArtistDao
-import paige.navic.database.dao.GenreDao
 import paige.navic.database.dao.SongDao
 import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.LocalNoOpException
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerStatus
+import java.io.File
+import kotlin.time.Clock
 import kotlin.time.Instant
-import paige.navic.domain.server.local.mappers.toEntity
 
 class LocalMusicServer(
 	private val context: Context,
 	folderUris: List<String>,
 	private val mutableCache: MutableCache,
 	private val storedPlaylists: StoredPlaylists,
+	private val libraryWriter: LibraryWriter,
+	private val playHistoryRecorder: PlayHistoryRecorder,
 	private val songDao: SongDao,
-	private val albumDao: AlbumDao,
-	private val artistDao: ArtistDao,
-	private val genreDao: GenreDao
+	private val coverDir: File
 ) : MusicServer, LocalSyncServer {
 	private val folderUris = folderUris.distinct()
-	private var libraryResult: LibraryResult? = null
-	private val library: Library?
-		get() = libraryResult?.library
 
 	override suspend fun sync(onProgress: suspend (Float, SyncProgressMessage) -> Unit) {
-		libraryResult = null
 		onProgress(0.05f, SyncProgressMessage.Indexing)
-		ensureLibrary()
-
-		val library = requireNotNull(libraryResult?.library)
-		val artists = library.artists.map { it.toEntity() }
-		val albums = library.albums.map { it.toEntity() }
-		val genres = library.genres.mapNotNull { it.toEntity() }
-		val songs = library.songs.mapNotNull { it.toEntity() }
-
-		onProgress(0.75f, SyncProgressMessage.Saved)
-		artistDao.insertArtists(artists)
-		albumDao.insertAlbums(albums)
-		genreDao.insertGenres(genres)
-		songDao.insertSongs(songs)
-
+		Musikr.new(context, buildConfig()).run { progress ->
+			if (progress is IndexingProgress.Songs && progress.explored > 0) {
+				val fraction = (progress.loaded.toFloat() / progress.explored).coerceIn(0f, 1f)
+				onProgress(0.05f + fraction * 0.85f, SyncProgressMessage.Indexing)
+			}
+		}
 		onProgress(0.95f, SyncProgressMessage.Saved)
-		artistDao.deleteObsoleteArtists(artists.map { it.artistId }.toSet())
-		albumDao.deleteObsoleteAlbums(albums.map { it.albumId }.toSet())
-		genreDao.deleteObsoleteGenres(genres.map { it.genreName }.toSet())
-		songDao.deleteObsoleteSongs(songs.map { it.songId }.toSet())
 		onProgress(1f, SyncProgressMessage.Finished)
 	}
 
-	private suspend fun ensureLibrary() {
-		if (libraryResult != null) return
-
+	private suspend fun buildConfig(): Config {
 		val locations = folderUris.mapNotNull { uri ->
 			Location.Unopened.from(context, Uri.parse(uri)).open(context)
 		}
 		check(locations.isNotEmpty()) { "No readable local music folders configured" }
 
-		val coverDir = withContext(Dispatchers.IO) {
-			context.filesDir.resolve("musikr-covers").apply { mkdirs() }
+		withContext(Dispatchers.IO) {
+			coverDir.mkdirs()
 		}
 		val coverStorage = CoverStorage.at(coverDir)
 		val embeddedCovers = EmbeddedCovers(CoverIdentifier.md5())
@@ -113,7 +94,7 @@ class LocalMusicServer(
 			coverStorage = coverStorage,
 			transcoding = NoTranscoding
 		)
-		val config = Config(
+		return Config(
 			fs = SAF.from(
 				context,
 				SAF.Query(
@@ -126,15 +107,14 @@ class LocalMusicServer(
 			storage = Storage(
 				cache = mutableCache,
 				covers = covers,
-				storedPlaylists = storedPlaylists
+				storedPlaylists = storedPlaylists,
+				libraryWriter = libraryWriter
 			),
 			interpretation = Interpretation(
 				naming = Naming.simple(),
 				separators = Separators.from(";/,&")
 			)
 		)
-
-		libraryResult = Musikr.new(context, config).run()
 	}
 
 	override suspend fun ping(): ServerStatus = ServerStatus(
@@ -152,7 +132,7 @@ class LocalMusicServer(
 		capabilities = ServerCapabilities(
 			isRemote = false,
 			supportsDownloads = false,
-			supportsScrobbling = false,
+			supportsScrobbleSubmission = true,
 			supportsRatings = false,
 			supportsShares = false,
 			supportsRadio = false,
@@ -214,7 +194,10 @@ class LocalMusicServer(
 	override suspend fun star(id: String) = Unit
 	override suspend fun unstar(id: String) = Unit
 	override suspend fun setRating(id: String, rating: Int) = Unit
-	override suspend fun scrobble(id: String, submission: Boolean, time: Instant?) = Unit
+	override suspend fun scrobble(id: String, submission: Boolean, time: Instant?) {
+		if (!submission) return
+		playHistoryRecorder.recordPlay(id, time ?: Clock.System.now())
+	}
 	override suspend fun reportPlayback(
 		id: String,
 		positionMs: Long,
@@ -251,28 +234,35 @@ class LocalMusicServer(
 		format: String?,
 		skipTranscodeDecisions: Boolean
 	): String {
-		ensureLibrary()
-		val song = library!!.findSong(org.oxycblt.musikr.Music.UID.fromString(id)!!)
+		return songDao.getSongById(id)?.filePath
 			?: throw ServerException("Local song not found: $id")
-		return song.uri.toString()
 	}
 
 	override fun getCoverArtUrl(id: String, size: String?): String =
 		"content://paige.navic.cover-art/$id" + (size?.let { "?size=$it" }.orEmpty())
 
-	override suspend fun getCoverArt(id: String, size: String?): ByteArray {
-		val coverDir = context.filesDir.resolve("musikr-covers")
-		val coverFile = if (id.startsWith("mcs:")) {
-			coverDir.resolve(id.removePrefix("mcs:"))
-		} else {
-			coverDir.listFiles()?.firstOrNull { it.name.startsWith(id) }
+	override suspend fun getCoverArt(id: String, size: String?): ByteArray =
+		withContext(Dispatchers.IO) {
+			val coverFile = if (id.startsWith("mcs:")) {
+				coverDir.resolve(id.removePrefix("mcs:"))
+			} else {
+				coverDir.listFiles()?.firstOrNull { it.name.startsWith(id) }
+			}
+			val bytes = coverFile?.takeIf { it.isFile }?.readBytes() ?: return@withContext ByteArray(0)
+			val maxSize = size?.toIntOrNull()?.coerceIn(MIN_COVER_SIZE, MAX_COVER_SIZE)
+				?: DEFAULT_COVER_SIZE
+			bytes.transcodeCover(maxSize)
 		}
-		return coverFile?.takeIf { it.isFile }?.readBytes() ?: ByteArray(0)
-	}
 
 	override fun getAvatarUrl(username: String): String? = null
 	override fun parseResponseError(contentType: String?, body: String): ServerException? = null
 
 	private fun unsupported(feature: String = "This operation"): LocalNoOpException =
 		LocalNoOpException("$feature is maintained by the local database")
+
+	private companion object {
+		const val DEFAULT_COVER_SIZE = 1024
+		const val MIN_COVER_SIZE = 128
+		const val MAX_COVER_SIZE = 4096
+	}
 }

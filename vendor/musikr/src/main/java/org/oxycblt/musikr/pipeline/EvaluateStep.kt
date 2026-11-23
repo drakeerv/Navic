@@ -15,61 +15,35 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 package org.oxycblt.musikr.pipeline
 
 import android.content.Context
 import kotlinx.coroutines.channels.Channel
-import org.oxycblt.musikr.BuildConfig
 import org.oxycblt.musikr.Config
 import org.oxycblt.musikr.Interpretation
-import org.oxycblt.musikr.MutableLibrary
-import org.oxycblt.musikr.graph.MusicGraph
-import org.oxycblt.musikr.model.LibraryFactory
-import org.oxycblt.musikr.playlist.db.StoredPlaylists
-import org.oxycblt.musikr.playlist.interpret.PlaylistInterpreter
+import org.oxycblt.musikr.LibraryWriter
 import org.oxycblt.musikr.tag.interpret.TagInterpreter
 
 internal interface EvaluateStep {
-    suspend fun evaluate(extractedMusic: Channel<Extracted>): MutableLibrary
+    suspend fun evaluate(extractedMusic: Channel<Extracted>, writer: LibraryWriter)
 
     companion object {
         fun new(context: Context, config: Config, interpretation: Interpretation): EvaluateStep =
-            EvaluateStepImpl(
-                context,
-                TagInterpreter.new(interpretation),
-                PlaylistInterpreter.new(interpretation),
-                config.storage.storedPlaylists,
-                LibraryFactory.new(),
-            )
+            EvaluateStepImpl(TagInterpreter.new(interpretation))
     }
 }
 
-private class EvaluateStepImpl(
-    private val context: Context,
-    private val tagInterpreter: TagInterpreter,
-    private val playlistInterpreter: PlaylistInterpreter,
-    private val storedPlaylists: StoredPlaylists,
-    private val libraryFactory: LibraryFactory,
-) : EvaluateStep {
-    override suspend fun evaluate(extractedMusic: Channel<Extracted>): MutableLibrary {
-        val builder = MusicGraph.builder()
+private class EvaluateStepImpl(private val tagInterpreter: TagInterpreter) : EvaluateStep {
+    override suspend fun evaluate(extractedMusic: Channel<Extracted>, writer: LibraryWriter) {
         for (extracted in extractedMusic) {
             when (extracted) {
-                is RawSong -> builder.add(tagInterpreter.interpret(extracted))
-                is RawPlaylist -> builder.add(playlistInterpreter.interpret(extracted.file))
+                is RawSong -> writer.write(tagInterpreter.interpret(extracted))
+                // Imported playlists are not part of the local library yet.
+                is RawPlaylist -> {}
                 is NotAudio -> {}
                 is InvalidSong -> {}
             }
         }
-        val graph = builder.build()
-
-        // Render graph to Graphviz in debug mode
-        if (BuildConfig.DEBUG) {
-            val fileName = "music_graph_debug.dot"
-            graph.renderToGraphviz(context, fileName)
-        }
-
-        return libraryFactory.create(graph, storedPlaylists, playlistInterpreter)
     }
 }

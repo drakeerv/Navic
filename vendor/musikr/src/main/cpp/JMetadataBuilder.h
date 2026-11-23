@@ -42,6 +42,7 @@ public:
     void setMp4(TagLib::MP4::Tag &tag);
     void setFlacPictures(TagLib::List<TagLib::FLAC::Picture*> &pics);
     void setProperties(TagLib::AudioProperties *properties);
+    void setBitDepth(int bitDepth);
 
     jobject build();
 
@@ -52,6 +53,7 @@ private:
 
     std::optional<TagLib::ByteVector> cover;
     TagLib::AudioProperties *properties;
+    int bitDepth = 0;
 
     JTagMap id3v2;
     JTagMap xiph;

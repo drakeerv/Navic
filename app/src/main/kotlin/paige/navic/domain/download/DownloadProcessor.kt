@@ -29,6 +29,7 @@ import paige.navic.database.mapper.toDomainModel
 import paige.navic.database.mapper.toEntity
 import paige.navic.domain.manager.runtime.StorageManager
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.media.CoverArtCache
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.repository.LyricsRepository
 import paige.navic.preferences.AccountSettings
@@ -45,6 +46,7 @@ class DownloadProcessor(
 	private val albumDao: AlbumDao,
 	private val songDao: SongDao,
 	private val storageManager: StorageManager,
+	private val coverArtCache: CoverArtCache,
 	private val lyricsRepository: LyricsRepository,
 	private val lyricDao: LyricDao,
 	private val sessionManager: SessionManager,
@@ -108,24 +110,12 @@ class DownloadProcessor(
 
 	private suspend fun cacheCoverArt(coverId: String?, seen: MutableSet<String>) {
 		if (coverId == null || !seen.add(coverId)) return
-		// shortcut: an existing file wins, so changing cover-art quality only affects future downloads
-		if (storageManager.getCoverArtFile(coverId) != null) return
 
-		try {
-			Logger.i("DownloadProcessor", "saving cover art for $coverId")
-			val bytes = sessionManager.api.getCoverArt(
-				coverId,
-				size = preferenceManager.coverArtQuality.value.toString()
-			)
-
-			if (!storageManager.saveCoverArt(coverId, bytes)) {
-				Logger.w("DownloadProcessor", "could not save cover art for $coverId")
-			} else {
-				Logger.i("DownloadProcessor", "saved cover art for $coverId")
-			}
-		} catch (e: Exception) {
-			if (e is CancellationException) throw e
-			Logger.e("DownloadProcessor", "Failed to save cover art for $coverId", e)
+		Logger.i("DownloadProcessor", "saving cover art for $coverId")
+		if (coverArtCache.ensure(coverId, preferenceManager.coverArtQuality.value) == null) {
+			Logger.w("DownloadProcessor", "could not save cover art for $coverId")
+		} else {
+			Logger.i("DownloadProcessor", "saved cover art for $coverId")
 		}
 	}
 

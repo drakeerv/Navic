@@ -17,26 +17,32 @@ import org.oxycblt.musikr.tag.parse.ParsedTags
 import paige.navic.database.dao.SongDao
 import paige.navic.database.entity.SongEntity
 import paige.navic.domain.model.DomainExplicitStatus
+import paige.navic.domain.model.DomainReplayGain
 import paige.navic.domain.model.DomainSongArtist
 import paige.navic.util.xxHash32
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
 class NavicMutableCache(
 	private val songDao: SongDao
 ) : MutableCache {
 	override suspend fun read(file: File): CacheResult {
-		val entity = songDao.getSongById(file.uri.toString()) ?: return CacheResult.Miss(file)
+		val entity = songDao.getSongByFilePath(file.uri.toString()) ?: return CacheResult.Miss(file)
 		val durationMs = entity.duration.inWholeMilliseconds
 		val properties = Properties(
 			mimeType = entity.mimeType ?: file.mimeType,
 			durationMs = durationMs,
 			bitrateKbps = entity.bitRate ?: 0,
-			sampleRateHz = entity.sampleRate ?: 0
+			sampleRateHz = entity.sampleRate ?: 0,
+			channelCount = entity.audioChannelCount ?: 0,
+			bitDepth = entity.bitDepth ?: 0
 		)
 		val tags = ParsedTags(
 			durationMs = durationMs,
-			replayGainTrackAdjustment = null,
-			replayGainAlbumAdjustment = null,
+			replayGainTrackAdjustment = entity.replayGain?.trackGain,
+			replayGainAlbumAdjustment = entity.replayGain?.albumGain,
+			replayGainTrackPeak = entity.replayGain?.trackPeak,
+			replayGainAlbumPeak = entity.replayGain?.albumPeak,
 			musicBrainzId = entity.musicBrainzId,
 			name = entity.title,
 			sortName = null,
@@ -58,7 +64,9 @@ class NavicMutableCache(
 		)
 		return CacheResult.Hit(
 			CachedFile(
-				file = file, audio = Audio(properties, tags, entity.coverArtId), addedMs = 0
+				file = file,
+				audio = Audio(properties, tags, entity.coverArtId),
+				addedMs = entity.addedAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
 			)
 		)
 	}
@@ -94,14 +102,20 @@ class NavicMutableCache(
 			userRating = null,
 			averageRating = null,
 			bitRate = audio.properties.bitrateKbps,
-			bitDepth = null,
+			bitDepth = audio.properties.bitDepth.takeIf { it > 0 },
 			sampleRate = audio.properties.sampleRateHz,
-			audioChannelCount = null,
-			replayGain = null,
+			audioChannelCount = audio.properties.channelCount.takeIf { it > 0 },
+			replayGain = DomainReplayGain(
+				albumGain = audio.tags.replayGainAlbumAdjustment,
+				albumPeak = audio.tags.replayGainAlbumPeak,
+				trackGain = audio.tags.replayGainTrackAdjustment,
+				trackPeak = audio.tags.replayGainTrackPeak
+			),
 			fileSize = file.size,
 			fileExtension = null,
 			mimeType = audio.properties.mimeType,
 			filePath = file.uri.toString(),
+			addedAt = Instant.fromEpochMilliseconds(cachedFile.addedMs),
 			starredAt = null,
 			coverArtId = audio.coverId,
 			musicBrainzId = audio.tags.musicBrainzId,
@@ -135,7 +149,13 @@ class NavicMutableCache(
 	}
 
 	override suspend fun cleanup(excluding: List<CachedFile>) {
-		val keep = excluding.map { it.file.uri.toString() }.toSet()
-		songDao.getAllSongIds().filter { it !in keep }.forEach { songDao.deleteSong(it) }
+		val keep = excluding.mapTo(mutableSetOf()) { it.file.uri.toString() }
+		if (keep.isEmpty()) {
+			songDao.clearAllSongs()
+			return
+		}
+		songDao.getAllSongPaths()
+			.filter { it.filePath == null || it.filePath !in keep }
+			.forEach { songDao.deleteSong(it.songId) }
 	}
 }

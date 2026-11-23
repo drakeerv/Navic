@@ -40,6 +40,7 @@ import paige.navic.domain.manager.ui.LinkManager
 import paige.navic.domain.manager.ui.LogManager
 import paige.navic.domain.manager.ui.ShareManager
 import paige.navic.domain.manager.ui.SnackBarManager
+import paige.navic.domain.media.CoverArtCache
 import paige.navic.domain.server.MultipleMusicServerFactory
 import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.jellyfin.JellyfinMusicServerFactory
@@ -81,6 +82,7 @@ val managerModule = module {
 	singleOf(::AppIconManager)
 	singleOf(::AudioGainManager)
 	singleOf(::ConnectivityManager)
+	singleOf(::CoverArtCache)
 	singleOf(::CoverArtUploadManager)
 	singleOf(::DownloadManager)
 	singleOf(::DownloadProcessor)

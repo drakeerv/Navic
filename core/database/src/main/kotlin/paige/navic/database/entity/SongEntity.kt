@@ -22,7 +22,8 @@ import kotlin.time.Instant
 	indices = [
 		Index(value = ["belongsToAlbumId"]),
 		Index(value = ["artistId"]),
-		Index(value = ["starredAt"])
+		Index(value = ["starredAt"]),
+		Index(value = ["filePath"])
 	]
 )
 data class SongEntity(
@@ -56,6 +57,7 @@ data class SongEntity(
 	val fileExtension: String?,
 	val mimeType: String?,
 	val filePath: String?,
+	val addedAt: Instant?,
 	val starredAt: Instant?,
 	val coverArtId: String?,
 	val musicBrainzId: String?,

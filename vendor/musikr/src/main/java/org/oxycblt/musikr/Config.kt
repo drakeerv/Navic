@@ -49,6 +49,12 @@ data class Storage(
      * the library.
      */
     val storedPlaylists: StoredPlaylists,
+
+    /**
+     * The persistence target for scanned songs. Musikr streams interpreted songs here instead of
+     * holding a library graph in memory.
+     */
+    val libraryWriter: LibraryWriter,
 )
 
 data class Interpretation(

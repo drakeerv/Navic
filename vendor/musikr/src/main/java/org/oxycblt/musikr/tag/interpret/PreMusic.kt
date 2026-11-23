@@ -31,7 +31,12 @@ import org.oxycblt.musikr.tag.ReleaseType
 import org.oxycblt.musikr.tag.ReplayGainAdjustment
 import org.oxycblt.musikr.util.update
 
-internal data class PreSong(
+private const val KEY_SEPARATOR = '\u001f'
+
+internal fun buildIdentityKey(vararg parts: Any?): String =
+    parts.joinToString(KEY_SEPARATOR.toString()) { it?.toString() ?: "" }
+
+data class PreSong(
     val v363Uid: Music.UID,
     val v400Uid: Music.UID,
     val v401Uid: Music.UID,
@@ -48,6 +53,8 @@ internal data class PreSong(
     val durationMs: Long,
     val bitrateKbps: Int,
     val sampleRateHz: Int,
+    val bitDepth: Int?,
+    val channelCount: Int?,
     val replayGainAdjustment: ReplayGainAdjustment,
     val modifiedMs: Long,
     val addedMs: Long,
@@ -57,26 +64,54 @@ internal data class PreSong(
     val preGenres: List<PreGenre>,
 )
 
-internal data class PreAlbum(
+data class PreAlbum(
     val musicBrainzId: UUID?,
     val name: Name,
     val rawName: String?,
     val releaseType: ReleaseType,
     val preArtists: PreArtistsFrom,
 ) {
+    val uidNoMbid =
+        Music.UID.auxio(Music.UID.Item.ALBUM) {
+            // Hash based on only names despite the presence of a date to increase stability.
+            // I don't know if there is any situation where an artist will have two albums with
+            // the exact same name, but if there is, I would love to know.
+            update(rawName)
+            update(preArtists.preArtists.mapNotNull { it.rawName })
+        }
+
     val uid =
         // Attempt to use a MusicBrainz ID first before falling back to a hashed UID.
-        musicBrainzId?.let { Music.UID.musicBrainz(Music.UID.Item.ALBUM, it) }
-            ?: Music.UID.auxio(Music.UID.Item.ALBUM) {
-                // Hash based on only names despite the presence of a date to increase stability.
-                // I don't know if there is any situation where an artist will have two albums with
-                // the exact same name, but if there is, I would love to know.
-                update(rawName)
-                update(preArtists.preArtists.mapNotNull { it.rawName })
-            }
+        musicBrainzId?.let { Music.UID.musicBrainz(Music.UID.Item.ALBUM, it) } ?: uidNoMbid
+
+    /** Ordered non-null album artist raw names, matching the [uidNoMbid] hash input. */
+    val albumArtistRawNamesKey =
+        preArtists.preArtists.mapNotNull { it.rawName }.joinToString(KEY_SEPARATOR.toString())
+
+    /** Stable identity for this exact [PreAlbum], used to group occurrences in staging. */
+    val identityKey =
+        buildIdentityKey(
+            musicBrainzId,
+            name,
+            rawName,
+            releaseType,
+            preArtists::class.simpleName,
+            preArtists.preArtists.joinToString(KEY_SEPARATOR.toString()) {
+                buildIdentityKey(it.musicBrainzId, it.name, it.rawName)
+            },
+        )
+
+    /** Identity without the album MBID or artist-source distinction. */
+    val identityKeyNoMbid =
+        buildIdentityKey(
+            name,
+            rawName,
+            releaseType,
+            preArtists.preArtists.joinToString(KEY_SEPARATOR.toString()) { it.identityKey },
+        )
 }
 
-internal sealed interface PreArtistsFrom {
+sealed interface PreArtistsFrom {
     val preArtists: List<PreArtist>
 
     data class Individual(override val preArtists: List<PreArtist>) : PreArtistsFrom
@@ -84,11 +119,14 @@ internal sealed interface PreArtistsFrom {
     data class Album(override val preArtists: List<PreArtist>) : PreArtistsFrom
 }
 
-internal data class PreArtist(val musicBrainzId: UUID?, val name: Name, val rawName: String?) {
+data class PreArtist(val musicBrainzId: UUID?, val name: Name, val rawName: String?) {
+    val uidNoMbid = Music.UID.auxio(Music.UID.Item.ARTIST) { update(rawName) }
+
     val uid =
         // Attempt to use a MusicBrainz ID first before falling back to a hashed UID.
-        musicBrainzId?.let { Music.UID.musicBrainz(Music.UID.Item.ARTIST, it) }
-            ?: Music.UID.auxio(Music.UID.Item.ARTIST) { update(rawName) }
+        musicBrainzId?.let { Music.UID.musicBrainz(Music.UID.Item.ARTIST, it) } ?: uidNoMbid
+
+    val identityKey = buildIdentityKey(musicBrainzId, name, rawName)
 }
 
-internal data class PreGenre(val name: Name, val rawName: String?)
+data class PreGenre(val name: Name, val rawName: String?)

@@ -138,7 +138,7 @@ class SubsonicMusicServer(
 			capabilities = ServerCapabilities(
 				isRemote = true,
 				supportsDownloads = true,
-				supportsScrobbling = true,
+				supportsScrobbleSubmission = true,
 				supportsRatings = true,
 				supportsShares = true,
 				supportsRadio = true,

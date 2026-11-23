@@ -59,6 +59,7 @@ val databaseModule = module {
 	single { get<CacheDatabase>().albumDao() }
 	single { get<CacheDatabase>().artistDao() }
 	single { get<CacheDatabase>().genreDao() }
+	single { get<CacheDatabase>().localScanDao() }
 	single { get<CacheDatabase>().lyricDao() }
 	single { get<CacheDatabase>().playlistDao() }
 	single { get<CacheDatabase>().radioDao() }

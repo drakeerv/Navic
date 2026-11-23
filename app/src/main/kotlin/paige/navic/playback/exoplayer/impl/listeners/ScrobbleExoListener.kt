@@ -20,8 +20,9 @@ import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.manager.session.isJellyfin
+import paige.navic.domain.manager.session.isLocal
 import paige.navic.domain.manager.session.supportsExtension
-import paige.navic.domain.manager.session.supportsScrobbling
+import paige.navic.domain.manager.session.supportsScrobbleSubmission
 import paige.navic.domain.model.DomainPlaybackState
 import paige.navic.domain.server.ServerExtension
 import paige.navic.preferences.PreferenceManager
@@ -38,6 +39,7 @@ class ScrobbleExoListener(
 	private var currentMediaId: String? = null
 	private var hasScrobbledCurrent = false
 	private var hasSentNowPlaying = false
+	private var hasRecordedLocalPlay = false
 	private var progressJob: Job? = null
 	private var accumulatedPlayTime: Long = 0
 	private val scope = CoroutineScope(Dispatchers.IO)
@@ -86,7 +88,8 @@ class ScrobbleExoListener(
 	}
 
 	private fun submitNowPlayingScrobble(songId: String?) {
-		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbling() || songId == null) return
+		if (sessionManager.isLocal()) return
+		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbleSubmission() || songId == null) return
 
 		if (!reachability.isReachable.value) return
 
@@ -97,8 +100,24 @@ class ScrobbleExoListener(
 		}
 	}
 
+	private fun recordLocalPlay(songId: String?) {
+		if (songId == null || hasRecordedLocalPlay || !sessionManager.isLocal()) return
+		if (accumulatedPlayTime < LOCAL_PLAY_MINIMUM_MS) return
+		hasRecordedLocalPlay = true
+		scope.launch {
+			runCatching {
+				sessionManager.api.scrobble(
+					songId,
+					submission = true,
+					time = Clock.System.now()
+				)
+			}
+		}
+	}
+
 	private fun scrobbleSubmission(songId: String?) {
-		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbling() || songId == null) return
+		if (songId == null || sessionManager.isLocal()) return
+		if (!preferenceManager.enableScrobbling || !sessionManager.supportsScrobbleSubmission()) return
 
 		scope.launch {
 			val currentTime = Clock.System.now()
@@ -117,6 +136,7 @@ class ScrobbleExoListener(
 		currentMediaId = mediaItem?.mediaId
 		hasScrobbledCurrent = false
 		hasSentNowPlaying = false
+		hasRecordedLocalPlay = false
 		accumulatedPlayTime = 0
 		progressJob?.cancel()
 
@@ -175,6 +195,11 @@ class ScrobbleExoListener(
 
 	private fun checkProgress() {
 		if (hasScrobbledCurrent) return
+
+		if (sessionManager.isLocal()) {
+			recordLocalPlay(currentMediaId)
+			return
+		}
 
 		val duration = player.duration
 		if (duration <= 0) return
@@ -268,5 +293,9 @@ class ScrobbleExoListener(
 	fun release() {
 		progressJob?.cancel()
 		player.removeListener(this)
+	}
+
+	private companion object {
+		const val LOCAL_PLAY_MINIMUM_MS = 10_000L
 	}
 }

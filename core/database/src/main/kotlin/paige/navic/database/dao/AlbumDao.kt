@@ -87,6 +87,12 @@ interface AlbumDao {
 	@Query("UPDATE AlbumEntity SET userRating = :userRating WHERE albumId = :albumId")
 	suspend fun updateAlbumRating(albumId: String, userRating: Int?)
 
+	@Query("UPDATE AlbumEntity SET playCount = playCount + 1, lastPlayedAt = :playedAt WHERE albumId = :albumId")
+	suspend fun recordPlay(albumId: String, playedAt: Instant)
+
+	@Query("SELECT * FROM AlbumEntity WHERE albumId IN (:ids)")
+	suspend fun getAlbumEntitiesByIds(ids: List<String>): List<AlbumEntity>
+
 	@Transaction
 	@Query("SELECT * FROM AlbumEntity WHERE artistId = :artistId ORDER BY year DESC")
 	fun getAlbumsByArtist(artistId: String): Flow<List<AlbumWithSongs>>

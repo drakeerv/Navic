@@ -67,7 +67,7 @@ fun BaseItemDto.toDomainSong(): DomainSong {
 		mimeType = container?.let { "audio/$it" },
 		filePath = path,
 		starredAt = starredInstant,
-		coverArtId = id.toString(),
+		coverArtId = withCoverVersion(id.toString()),
 		musicBrainzId = providerIds?.get("MusicBrainzTrack"),
 		explicitStatus = DomainExplicitStatus.Clean,
 		artists = songArtists,

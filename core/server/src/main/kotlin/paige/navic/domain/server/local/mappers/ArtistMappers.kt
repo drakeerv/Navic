@@ -6,37 +6,49 @@
 
 package paige.navic.domain.server.local.mappers
 
-import org.oxycblt.musikr.Artist
 import paige.navic.database.entity.ArtistEntity
-import paige.navic.domain.model.DomainSongArtist
-import paige.navic.domain.server.local.getOrNull
+import paige.navic.database.entity.LocalScanArtistMapEntity
+import paige.navic.database.entity.LocalScanArtistRoleMapEntity
 import paige.navic.util.xxHash32
 
-fun Artist.toEntity(): ArtistEntity {
-	val name = this.name.getOrNull()
+fun LocalScanArtistMapEntity.entityId() = displayName?.xxHash32() ?: ""
 
-	return ArtistEntity(
-		artistId = name?.raw?.xxHash32() ?: "",
-		name = name?.raw ?: "",
-		albumCount = this.explicitAlbums.size,
-		coverArtId = null,
-		artistImageUrl = null,
-		starredAt = null,
-		userRating = null,
-		sortName = name?.sort,
-		musicBrainzId = null,
-		lastFmUrl = null,
-		roles = emptyList(),
-		biography = null,
-		similarArtistIds = emptyList()
-	)
-}
+fun LocalScanArtistRoleMapEntity.entityId() = displayName?.xxHash32() ?: ""
 
-fun Artist.toSongArtistEntity(): DomainSongArtist? {
-	val name = this.name.getOrNull() ?: return null
+fun LocalScanArtistMapEntity.toEntity(
+	albumCount: Int,
+	existing: ArtistEntity? = null
+) = ArtistEntity(
+	artistId = entityId(),
+	name = displayName ?: "",
+	albumCount = albumCount,
+	coverArtId = null,
+	artistImageUrl = null,
+	starredAt = existing?.starredAt,
+	userRating = existing?.userRating,
+	sortName = sortName,
+	musicBrainzId = null,
+	lastFmUrl = null,
+	roles = emptyList(),
+	biography = null,
+	similarArtistIds = emptyList()
+)
 
-	return DomainSongArtist(
-		id = name.raw.xxHash32(),
-		name = name.raw
-	)
-}
+fun LocalScanArtistRoleMapEntity.toEntity(
+	albumCount: Int,
+	existing: ArtistEntity? = null
+) = ArtistEntity(
+	artistId = entityId(),
+	name = displayName ?: "",
+	albumCount = albumCount,
+	coverArtId = null,
+	artistImageUrl = null,
+	starredAt = existing?.starredAt,
+	userRating = existing?.userRating,
+	sortName = sortName,
+	musicBrainzId = null,
+	lastFmUrl = null,
+	roles = emptyList(),
+	biography = null,
+	similarArtistIds = emptyList()
+)

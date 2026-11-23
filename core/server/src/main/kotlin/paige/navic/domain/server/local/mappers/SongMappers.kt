@@ -6,78 +6,83 @@
 
 package paige.navic.domain.server.local.mappers
 
-import android.webkit.MimeTypeMap
-import org.oxycblt.musikr.Song
+import paige.navic.database.dao.ScanAlbumArtistRow
+import paige.navic.database.dao.ScanArtistRow
+import paige.navic.database.dao.ScanGenreRow
+import paige.navic.database.dao.ScanSongAlbumRow
+import paige.navic.database.entity.LocalScanSongEntity
 import paige.navic.database.entity.SongEntity
 import paige.navic.domain.model.DomainExplicitStatus
 import paige.navic.domain.model.DomainReplayGain
 import paige.navic.domain.model.DomainSongArtist
-import paige.navic.domain.server.local.getOrNull
 import paige.navic.util.xxHash32
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Instant
 
-fun Song.toEntity(): SongEntity? {
+fun LocalScanSongEntity.toEntity(
+	album: ScanSongAlbumRow,
+	trackArtists: List<ScanArtistRow>,
+	albumArtists: List<ScanAlbumArtistRow>,
+	genres: List<ScanGenreRow>,
+	existing: SongEntity? = null
+): SongEntity? {
+	val firstArtist = trackArtists.firstOrNull() ?: return null
+	val firstName = firstArtist.displayName ?: return null
+	val genreNames = genres.mapNotNull { it.displayName }.distinct()
 	return SongEntity(
-		songId = this.uid.toString(),
-		title = this.name.raw,
-		artistName = this.artists.firstOrNull()
-			?.name?.getOrNull()?.raw,
-		artistId = artists.firstOrNull()
-			?.name
-			?.getOrNull()
-			?.raw
-			?.xxHash32() ?: return null,
-		albumTitle = album.name.getOrNull()?.raw,
-		belongsToAlbumId = album.uid.toString(),
-		parentId = album.uid.toString(),
+		songId = songId,
+		title = title,
+		artistName = firstName,
+		artistId = firstName.xxHash32(),
+		albumTitle = album.displayName,
+		belongsToAlbumId = album.albumId,
+		parentId = album.albumId,
 		comment = null,
 		trackNumber = track,
-		discNumber = disc?.number,
+		discNumber = discNumber,
 		isrc = emptyList(),
-		year = date?.year,
-		genre = genres.firstOrNull()
-			?.let { it.name.getOrNull()?.raw },
-		genres = genres.mapNotNull { it.name.getOrNull()?.raw },
+		year = year,
+		genre = genreNames.firstOrNull(),
+		genres = genreNames,
 		moods = emptyList(),
-		duration = durationMs.milliseconds,
+		duration = duration,
 		bpm = null,
 		contributors = emptyList(),
-		playCount = 0,
-		userRating = null,
+		playCount = existing?.playCount ?: 0,
+		userRating = existing?.userRating,
 		averageRating = null,
 		bitRate = bitrateKbps,
-		bitDepth = null,
+		bitDepth = bitDepth,
 		sampleRate = sampleRateHz,
-		audioChannelCount = null,
+		audioChannelCount = audioChannelCount,
 		replayGain = DomainReplayGain(
-			albumGain = replayGainAdjustment.album,
-			trackGain = replayGainAdjustment.track
+			albumGain = replayGainAlbum,
+			albumPeak = replayGainAlbumPeak,
+			trackGain = replayGainTrack,
+			trackPeak = replayGainTrackPeak
 		),
-		fileSize = size,
-		fileExtension = MimeTypeMap.getSingleton()
-			.getExtensionFromMimeType(format.mimeType),
-		mimeType = format.mimeType,
-		filePath = uri.toString(),
-		starredAt = null,
-		coverArtId = cover?.id,
+		fileSize = fileSize,
+		fileExtension = fileExtension,
+		mimeType = mimeType,
+		filePath = filePath,
+		addedAt = Instant.fromEpochMilliseconds(addedMs),
+		starredAt = existing?.starredAt,
+		coverArtId = coverId,
 		musicBrainzId = null,
 		explicitStatus = DomainExplicitStatus.Unknown,
-		artists = artists.map { artist ->
-			val name = artist.name.getOrNull()?.raw.orEmpty()
-
-			DomainSongArtist(
-				id = name.xxHash32(),
-				name = name
-			)
-		}.filter { it.name.isNotBlank() },
-		albumArtists = album.artists.map { artist ->
-			val name = artist.name.getOrNull()?.raw.orEmpty()
-
-			DomainSongArtist(
-				id = name.xxHash32(),
-				name = name
-			)
-		}.filter { it.name.isNotBlank() },
+		artists = trackArtists.distinctBy { it.artistKey }.mapNotNull { it.toDomainArtist() },
+		albumArtists = albumArtists.distinctBy { it.artistKey }.mapNotNull { it.toDomainArtist() },
 		isExternal = false
 	)
+}
+
+fun ScanArtistRow.toDomainArtist(): DomainSongArtist? {
+	val name = displayName ?: return null
+	if (name.isBlank()) return null
+	return DomainSongArtist(id = name.xxHash32(), name = name)
+}
+
+fun ScanAlbumArtistRow.toDomainArtist(): DomainSongArtist? {
+	val name = displayName ?: return null
+	if (name.isBlank()) return null
+	return DomainSongArtist(id = name.xxHash32(), name = name)
 }

@@ -19,7 +19,7 @@ fun BaseItemDto.toDomainArtist(): DomainArtist {
 		id = artistId,
 		name = name ?: "Unknown Artist",
 		albumCount = albumCount ?: childCount ?: 0,
-		coverArtId = artistId,
+		coverArtId = withCoverVersion(artistId),
 		artistImageUrl = null,
 		starredAt = starredInstant,
 		userRating = userData?.rating?.toInt(),

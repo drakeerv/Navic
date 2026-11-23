@@ -22,7 +22,7 @@ import coil3.serviceLoaderEnabled
 import coil3.size.Dimension
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
-import paige.navic.domain.manager.runtime.StorageManager
+import paige.navic.domain.media.CoverArtCache
 import paige.navic.util.network.NavicAddressHelper
 import paige.navic.util.network.createHttpClientWithPreferences
 import okhttp3.Interceptor as OkHttpInterceptor
@@ -33,7 +33,7 @@ class CoilSingleton(
     preferenceManager: PreferenceManager,
     accountSettings: AccountSettings,
     dnsResolver: NavicAddressHelper,
-    private val storageManager: StorageManager,
+    private val coverArtCache: CoverArtCache,
     cronetInterceptor: OkHttpInterceptor?
 ) {
 	private var sharedDiskCache: DiskCache? = null
@@ -108,8 +108,10 @@ class CoilSingleton(
 				?.getQueryParameter("id")
 				?: request.diskCacheKey?.substringBefore("#size=")
 
-			val file = coverId?.let(storageManager::getCoverArtFile)
+			val requestedSize = (chain.size.width as? Dimension.Pixels)?.px
+			val cached = coverId?.let { coverArtCache.file(it, requestedSize) }
 				?: return chain.proceed()
+			val file = coverArtCache.ensure(coverId, requestedSize) ?: cached
 
 			return chain.withRequest(
 				request.newBuilder()

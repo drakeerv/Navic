@@ -26,12 +26,14 @@
 
 #include "taglib/fileref.h"
 #include "taglib/flacfile.h"
+#include "taglib/flacproperties.h"
 #include "taglib/mp4file.h"
 #include "taglib/mp4properties.h"
 #include "taglib/mpegfile.h"
 #include "taglib/opusfile.h"
 #include "taglib/vorbisfile.h"
 #include "taglib/wavfile.h"
+#include "taglib/wavproperties.h"
 
 bool parseMpeg(const std::string &name, TagLib::MPEG::File *mpegFile,
         JMetadataBuilder &jBuilder) {
@@ -197,6 +199,9 @@ bool dispatchAndParse(const std::string &name, TagLib::File *file,
     }
     if (auto *flacFile = dynamic_cast<TagLib::FLAC::File*>(file)) {
         jBuilder.setMimeType("audio/flac");
+        if (auto *props = flacFile->audioProperties()) {
+            jBuilder.setBitDepth(props->bitsPerSample());
+        }
         return parseFlac(name, flacFile, jBuilder);
     }
     if (auto *opusFile = dynamic_cast<TagLib::Ogg::Opus::File*>(file)) {
@@ -209,6 +214,9 @@ bool dispatchAndParse(const std::string &name, TagLib::File *file,
     }
     if (auto *wavFile = dynamic_cast<TagLib::RIFF::WAV::File*>(file)) {
         jBuilder.setMimeType("audio/wav");
+        if (auto *props = wavFile->audioProperties()) {
+            jBuilder.setBitDepth(props->bitsPerSample());
+        }
         return parseWav(name, wavFile, jBuilder);
     }
     if (auto *mp4File = dynamic_cast<TagLib::MP4::File*>(file)) {
@@ -217,6 +225,7 @@ bool dispatchAndParse(const std::string &name, TagLib::File *file,
         jBuilder.setMimeType("audio/mp4");
         if (auto *props =
                 dynamic_cast<TagLib::MP4::Properties*>(mp4File->audioProperties())) {
+            jBuilder.setBitDepth(props->bitsPerSample());
             using Codec = TagLib::MP4::Properties::Codec;
             switch (props->codec()) {
             case Codec::AAC:

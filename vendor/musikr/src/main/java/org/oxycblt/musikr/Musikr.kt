@@ -15,13 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
- 
+
 package org.oxycblt.musikr
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
+import org.oxycblt.musikr.covers.CoverResult
 import org.oxycblt.musikr.pipeline.EvaluateStep
 import org.oxycblt.musikr.pipeline.ExploreStep
 import org.oxycblt.musikr.pipeline.Explored
@@ -33,7 +34,8 @@ import org.oxycblt.musikr.util.tryAsyncWith
 /**
  * A highly opinionated, multi-threaded device music library.
  *
- * Use this to load music with [run].
+ * Use this to load music with [run]. Scanned songs are streamed to
+ * [Storage.libraryWriter][Config.storage] instead of being retained in memory.
  *
  * Note the following:
  * 1. Musikr's API surface is intended to be primarily "stateless", with side-effects mostly
@@ -49,18 +51,16 @@ interface Musikr {
      *
      * @param onProgress Optional callback to receive progress on the current status of the music
      *   pipeline. Warning: These events will be rapid-fire.
-     * @return A handle to the newly created library alongside further cleanup.
      */
-    suspend fun run(onProgress: suspend (IndexingProgress) -> Unit = {}): LibraryResult
+    suspend fun run(onProgress: suspend (IndexingProgress) -> Unit = {})
 
     companion object {
         /**
          * Create a new instance from the given configuration.
          *
          * @param context The context to use for loading resources.
-         * @param config Side-effect laden storage for use within the music loader **and** when
-         *   mutating [MutableLibrary]. You should take responsibility for managing their long-term
-         *   state.
+         * @param config Side-effect laden storage for use within the music loader. You should take
+         *   responsibility for managing their long-term state.
          * @param interpretation The configuration to use for interpreting certain vague tags. This
          *   should be configured by the user, if possible.
          */
@@ -74,20 +74,6 @@ interface Musikr {
     }
 }
 
-/** Simple library handle returned by [Musikr.run]. */
-interface LibraryResult {
-    val library: MutableLibrary
-
-    /**
-     * Clean up expired resources. This should be done as soon as possible after music loading to
-     * reduce storage use.
-     *
-     * This may have unexpected results if previous [Library]s are in circulation across your app,
-     * so use it once you've fully updated your state.
-     */
-    suspend fun cleanup()
-}
-
 /** Music loading progress as reported by the music pipeline. */
 sealed interface IndexingProgress {
     /**
@@ -99,7 +85,7 @@ sealed interface IndexingProgress {
     data class Songs(val loaded: Int, val explored: Int) : IndexingProgress
 
     /**
-     * Currently creating the music graph alongside I/O finalization.
+     * Currently finalizing the library.
      *
      * There is no way to measure progress on these events.
      */
@@ -116,6 +102,8 @@ private class MusikrImpl(
         onProgress(IndexingProgress.Songs(0, 0))
         var explored = 0
         var loaded = 0
+        val writer = config.storage.libraryWriter
+        writer.begin()
         val exploredChannel = Channel<Explored>(Channel.UNLIMITED)
         val exploredTask = exploreStep.explore(this, exploredChannel)
         val trackedExploredChannel = Channel<Explored>(Channel.UNLIMITED)
@@ -139,15 +127,14 @@ private class MusikrImpl(
                 }
                 onProgress(IndexingProgress.Indeterminate)
             }
-        val library = evaluateStep.evaluate(trackedExtractedChannel)
-        merge(exploredTask, extractedTask, trackedExploredTask, trackedExtractedTask).await()
-        LibraryResultImpl(config, library)
-    }
-}
-
-private class LibraryResultImpl(private val config: Config, override val library: MutableLibrary) :
-    LibraryResult {
-    override suspend fun cleanup() {
-        config.storage.covers.cleanup(library.songs.mapNotNull { it.cover })
+        evaluateStep.evaluate(trackedExtractedChannel, writer)
+        merge(exploredTask, extractedTask, trackedExploredTask, trackedExtractedTask)
+            .await()
+            .getOrThrow()
+        val usedCovers =
+            writer.finish().mapNotNull { id ->
+                (config.storage.covers.obtain(id) as? CoverResult.Hit<*>)?.cover
+            }
+        config.storage.covers.cleanup(usedCovers)
     }
 }

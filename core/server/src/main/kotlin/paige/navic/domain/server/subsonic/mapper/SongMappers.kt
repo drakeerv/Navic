@@ -36,6 +36,7 @@ fun ApiSong.toEntity(
 	mimeType = this.mimeType,
 	fileExtension = this.fileExtension,
 	filePath = this.filePath,
+	addedAt = null,
 	starredAt = this.starredAt,
 	parentId = this.parentId,
 	genres = this.genres,

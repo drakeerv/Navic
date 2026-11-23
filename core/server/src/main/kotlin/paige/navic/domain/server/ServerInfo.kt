@@ -47,7 +47,7 @@ data class ServerStatus(
 data class ServerCapabilities(
 	val isRemote: Boolean = true,
 	val supportsDownloads: Boolean = true,
-	val supportsScrobbling: Boolean = true,
+	val supportsScrobbleSubmission: Boolean = true,
 	val supportsRatings: Boolean = true,
 	val supportsShares: Boolean = true,
 	val supportsRadio: Boolean = true,

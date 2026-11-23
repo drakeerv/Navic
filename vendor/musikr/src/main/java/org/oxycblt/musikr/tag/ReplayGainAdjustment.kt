@@ -25,4 +25,9 @@ package org.oxycblt.musikr.tag
  * @param album A more general album-specific adjustment that should be applied. Null if not
  *   available.
  */
-data class ReplayGainAdjustment(val track: Float?, val album: Float?)
+data class ReplayGainAdjustment(
+    val track: Float?,
+    val album: Float?,
+    val trackPeak: Float? = null,
+    val albumPeak: Float? = null,
+)

@@ -126,7 +126,7 @@ class ExoControllerHandler(
 
 					scope.launch(Dispatchers.IO) {
 						val currentSong = state.value.currentSong
-						val isOriginalFormat = currentItem.requestMetadata
+						val isTranscoded = currentItem.requestMetadata
 							.mediaUri
 							?.getQueryParameter(
 								NavicDataSource.PARAM_TRANSCODE
@@ -135,19 +135,19 @@ class ExoControllerHandler(
 						state.update { current ->
 							current.copy(
 								playbackBitrate = format.bitrate.takeIf { it != Format.NO_VALUE }
-									?: if (isOriginalFormat) {
-										currentSong?.bitRate?.times(1000)
-									} else {
+									?: if (isTranscoded) {
 										getEstimateBitrate()
+									} else {
+										currentSong?.bitRate?.times(1000)
 									},
-								playbackSampleRate = format.sampleRate.takeIf { it != Format.NO_VALUE },
+								playbackSampleRate = format.sampleRate
+									.takeIf { it != Format.NO_VALUE }
+									?: currentSong?.sampleRate,
 								playbackMimeType = format.sampleMimeType,
-								playbackBitDepth = when (format.pcmEncoding) {
-									C.ENCODING_PCM_8BIT -> 8
-									C.ENCODING_PCM_16BIT -> 16
-									C.ENCODING_PCM_24BIT -> 24
-									C.ENCODING_PCM_32BIT, C.ENCODING_PCM_FLOAT -> 32
-									else -> -1
+								playbackBitDepth = if (isTranscoded) {
+									format.pcmEncoding.toBitDepth()
+								} else {
+									currentSong?.bitDepth ?: format.pcmEncoding.toBitDepth()
 								}
 							)
 						}
@@ -632,6 +632,14 @@ class ExoControllerHandler(
 	}
 
 	private fun String.toFile() = File(this)
+
+	private fun Int.toBitDepth() = when (this) {
+		C.ENCODING_PCM_8BIT -> 8
+		C.ENCODING_PCM_16BIT -> 16
+		C.ENCODING_PCM_24BIT -> 24
+		C.ENCODING_PCM_32BIT, C.ENCODING_PCM_FLOAT -> 32
+		else -> -1
+	}
 
 	fun setPlaybackSpeed(value: Float) {
 		controller.playbackParameters = PlaybackParameters(

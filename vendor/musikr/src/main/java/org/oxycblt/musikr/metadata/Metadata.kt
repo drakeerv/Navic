@@ -58,4 +58,8 @@ data class Properties(
     val durationMs: Long,
     val bitrateKbps: Int,
     val sampleRateHz: Int,
+    /** Number of audio channels, or 0 if unknown. */
+    val channelCount: Int = 0,
+    /** Source bit depth, or 0 if unknown/not applicable. */
+    val bitDepth: Int = 0,
 )

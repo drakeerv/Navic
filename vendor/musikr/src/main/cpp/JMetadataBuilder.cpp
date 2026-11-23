@@ -190,16 +190,20 @@ void JMetadataBuilder::setProperties(TagLib::AudioProperties *properties) {
     this->properties = properties;
 }
 
+void JMetadataBuilder::setBitDepth(int bitDepth) {
+    this->bitDepth = bitDepth;
+}
+
 jobject JMetadataBuilder::build() {
     JClassRef jPropertiesClass { env, "org/oxycblt/musikr/metadata/Properties" };
     jmethodID jPropertiesInitMethod = jPropertiesClass.method("<init>",
-            "(Ljava/lang/String;JII)V");
+            "(Ljava/lang/String;JIIII)V");
     JStringRef jMimeType { env, this->mimeType };
 
     JObjectRef jProperties { env, env->NewObject(*jPropertiesClass,
             jPropertiesInitMethod, *jMimeType,
             (jlong) properties->lengthInMilliseconds(), properties->bitrate(),
-            properties->sampleRate()) };
+            properties->sampleRate(), properties->channels(), bitDepth) };
 
     JClassRef jMetadataClass { env, "org/oxycblt/musikr/metadata/Metadata" };
     jmethodID jMetadataInitMethod = jMetadataClass.method("<init>",

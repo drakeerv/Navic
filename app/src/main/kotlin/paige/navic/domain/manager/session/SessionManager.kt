@@ -317,6 +317,10 @@ fun SessionManager.isJellyfin(): Boolean {
 	return this.getServerInfo()?.type.equals("jellyfin", ignoreCase = true)
 }
 
+fun SessionManager.isLocal(): Boolean {
+	return this.getServerInfo()?.capabilities?.isRemote == false
+}
+
 fun SessionManager.supportsExtension(extension: ServerExtension): Boolean {
 	return this.getServerInfo()?.extensions?.contains(extension) == true
 }
@@ -325,8 +329,8 @@ fun SessionManager.supportsDownloads(): Boolean {
 	return this.getServerInfo()?.capabilities?.supportsDownloads != false
 }
 
-fun SessionManager.supportsScrobbling(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsScrobbling != false
+fun SessionManager.supportsScrobbleSubmission(): Boolean {
+	return this.getServerInfo()?.capabilities?.supportsScrobbleSubmission != false
 }
 
 fun SessionManager.supportsRatings(): Boolean {

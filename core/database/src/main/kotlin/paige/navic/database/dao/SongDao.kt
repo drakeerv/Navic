@@ -21,6 +21,11 @@ import paige.navic.database.entity.SongEntity
 import paige.navic.util.Logger
 import kotlin.time.Instant
 
+data class SongPathRow(
+	val songId: String,
+	val filePath: String?
+)
+
 @Dao
 interface SongDao {
 	@RawQuery
@@ -39,6 +44,12 @@ interface SongDao {
 
 	@Query("SELECT * FROM SongEntity WHERE songId = :songId LIMIT 1")
 	suspend fun getSongById(songId: String): SongEntity?
+
+	@Query("SELECT * FROM SongEntity WHERE filePath = :filePath LIMIT 1")
+	suspend fun getSongByFilePath(filePath: String): SongEntity?
+
+	@Query("SELECT songId, filePath FROM SongEntity")
+	suspend fun getAllSongPaths(): List<SongPathRow>
 
 	@Query("SELECT songId, title, artistName, albumTitle, belongsToAlbumId AS albumId, coverArtId, duration, filePath, artists, albumArtists FROM SongEntity WHERE songId = :songId LIMIT 1")
 	suspend fun getPlayableSongById(songId: String): PlayableSongRow?
@@ -147,6 +158,9 @@ interface SongDao {
 
 	@Query("UPDATE SongEntity SET userRating = :userRating WHERE songId = :songId")
 	suspend fun updateSongRating(songId: String, userRating: Int?)
+
+	@Query("UPDATE SongEntity SET playCount = playCount + 1 WHERE songId = :songId")
+	suspend fun incrementPlayCount(songId: String)
 
 	@Query("DELETE FROM SongEntity")
 	suspend fun clearAllSongs()

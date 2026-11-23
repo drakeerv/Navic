@@ -176,7 +176,7 @@ class JellyfinMusicServer(
 			capabilities = ServerCapabilities(
 				isRemote = true,
 				supportsDownloads = true,
-				supportsScrobbling = false,
+				supportsScrobbleSubmission = false,
 				supportsRatings = true,
 				supportsShares = false,
 				supportsRadio = false,
@@ -660,9 +660,26 @@ class JellyfinMusicServer(
 	}
 
 	override fun getCoverArtUrl(id: String, size: String?): String {
-		val query = size?.let { "?fillWidth=$it&fillHeight=$it&quality=90&ApiKey=$accessToken" }
-			?: "?ApiKey=$accessToken"
-		return "$baseUrl/Items/$id/Images/Primary$query"
+		val (itemId, tag) = id.withCoverTarget()
+		val params = buildList {
+			size?.let {
+				add("fillWidth=$it")
+				add("fillHeight=$it")
+				add("quality=90")
+			}
+			tag?.let { add("tag=$it") }
+			add("ApiKey=$accessToken")
+		}
+		return "$baseUrl/Items/$itemId/Images/Primary?${params.joinToString("&")}"
+	}
+
+	private fun String.withCoverTarget(): Pair<String, String?> {
+		val separator = indexOf('#')
+		return if (separator < 0) {
+			this to null
+		} else {
+			substring(0, separator) to substring(separator + 1)
+		}
 	}
 
 	override suspend fun getCoverArt(id: String, size: String?): ByteArray =

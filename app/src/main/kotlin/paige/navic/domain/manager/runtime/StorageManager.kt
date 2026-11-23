@@ -10,6 +10,8 @@ import android.content.Context
 import android.os.Environment
 import android.os.StatFs
 import android.os.storage.StorageManager
+import android.system.ErrnoException
+import android.system.Os
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.jvm.javaio.copyTo
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +31,7 @@ class StorageManager(
 ) {
 	private companion object {
 		const val ANONYMOUS_ACCOUNT = "anonymous"
+		val COVER_ART_SIZES = intArrayOf(4096, 1024, 512)
 	}
 
 	private data class HashResult(
@@ -55,8 +58,8 @@ class StorageManager(
 
 	private fun coverArtDir(): File = accountDir(coverArtBase())
 
-	private fun coverArtPath(coverArtId: String): File {
-		val hash = coverArtId.xxHash32() + ("$coverArtId|cover").xxHash32() // Yeh
+	private fun coverArtPath(coverArtId: String, size: Int): File {
+		val hash = coverArtId.xxHash32() + ("$coverArtId|cover|$size").xxHash32()
 		return File(
 			File(
 				coverArtDir(), hash.take(2)
@@ -64,30 +67,42 @@ class StorageManager(
 		)
 	}
 
-	fun getCoverArtFile(coverArtId: String): File? =
-		coverArtPath(coverArtId).takeIf { it.isFile && it.length() > 0 }
+	fun getCoverArtFile(coverArtId: String, size: Int): File? =
+		coverArtPath(coverArtId, size).takeIf { it.isFile && it.length() > 0 }
 
-	fun saveCoverArt(coverArtId: String, bytes: ByteArray): Boolean {
+	fun getCoverArtFile(coverArtId: String): File? {
+		for (size in COVER_ART_SIZES) {
+			getCoverArtFile(coverArtId, size)?.let { return it }
+		}
+		return null
+	}
+
+	fun musikrCoverDir(): File = File(coverArtDir(), "musikr")
+
+	fun saveCoverArt(coverArtId: String, bytes: ByteArray, size: Int): Boolean {
 		if (bytes.isEmpty()) return false
 
-		val file = coverArtPath(coverArtId)
+		val file = coverArtPath(coverArtId, size)
 		val directory = file.parentFile ?: return false
 		directory.mkdirs()
 
 		return try {
 			val temp = File.createTempFile(file.name, ".part", directory)
 			temp.writeBytes(bytes)
-			if (file.exists()) file.delete()
-			val renamed = temp.renameTo(file)
-			if (!renamed) temp.delete()
-			renamed
+			try {
+				Os.rename(temp.absolutePath, file.absolutePath)
+				true
+			} catch (_: ErrnoException) {
+				temp.delete()
+				false
+			}
 		} catch (_: Exception) {
 			false
 		}
 	}
 
 	fun deleteCoverArt(coverArtId: String) {
-		coverArtPath(coverArtId).delete()
+		COVER_ART_SIZES.forEach { size -> coverArtPath(coverArtId, size).delete() }
 	}
 
 	fun clearCoverArts() {
@@ -258,6 +273,7 @@ class StorageManager(
 
 	private fun clearAccountEntries(base: File) {
 		deleteAccountEntries(base, accountName(), usesLegacyDirs)
+		if (usesLegacyDirs) File(base, "musikr").deleteRecursively()
 	}
 
 	private fun deleteAccountEntries(base: File, accountId: String, legacy: Boolean) {

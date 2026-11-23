@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -9,81 +9,29 @@ package paige.navic.domain.media
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.ParcelFileDescriptor
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import coil3.request.allowHardware
-import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.koin.android.ext.android.inject
-import paige.navic.domain.manager.session.SessionManager
-import paige.navic.domain.manager.session.getServerInfo
-import paige.navic.domain.manager.session.supportsDownloads
-import java.io.File
 
 class CoverArtProvider : ContentProvider() {
-	private val imageLoader: ImageLoader by inject()
-	private val sessionManager: SessionManager by inject()
+	private val coverArtCache: CoverArtCache by inject()
 
 	override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor {
 		require(mode == "r") { "Cover art is read-only" }
 		val coverId = uri.pathSegments.singleOrNull()
 			?: error("Invalid cover art URI")
-		val file = renderCover(coverId, uri.artworkSize())
-		return try {
-			ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
-		} finally {
-			file.delete()
-		}
+		val file = runBlocking(Dispatchers.IO) {
+			coverArtCache.ensure(coverId, uri.artworkSize())
+		} ?: error("Could not load cover art $coverId")
+		return ParcelFileDescriptor.open(file, ParcelFileDescriptor.MODE_READ_ONLY)
 	}
 
 	private fun Uri.artworkSize(): Int = getQueryParameter("size")
 		?.toIntOrNull()
 		?.coerceIn(MIN_ARTWORK_SIZE, MAX_ARTWORK_SIZE)
 		?: DEFAULT_ARTWORK_SIZE
-
-	private fun renderCover(coverId: String, size: Int): File = runBlocking(Dispatchers.IO) {
-		val context = requireNotNull(context)
-		val localBytes = if (!sessionManager.supportsDownloads() && sessionManager.getServerInfo()?.type == "local") {
-			runCatching { sessionManager.api.getCoverArt(coverId, size.toString()) }.getOrNull()
-		} else null
-
-		if (localBytes != null && localBytes.isNotEmpty()) {
-			val file = File.createTempFile("cover-", ".img", context.cacheDir)
-			file.writeBytes(localBytes)
-			return@runBlocking file
-		}
-
-		val request = ImageRequest.Builder(context)
-			.data(sessionManager.getCoverArtUrl(coverId))
-			.diskCacheKey(coverId)
-			.size(size)
-			.allowHardware(false)
-			.build()
-
-		val bitmap = checkNotNull(imageLoader.execute(request).image?.toBitmap()) {
-			"Could not load cover art $coverId"
-		}
-
-		val quality =
-			if (size > DEFAULT_ARTWORK_SIZE) HIGH_ARTWORK_QUALITY else DEFAULT_ARTWORK_QUALITY
-
-		val file = File.createTempFile("cover-", ".jpg", context.cacheDir)
-		try {
-			file.outputStream().use { output ->
-				check(bitmap.compress(Bitmap.CompressFormat.JPEG, quality, output)) {
-					"Could not encode cover art $coverId"
-				}
-			}
-			file
-		} catch (e: Exception) {
-			file.delete()
-			throw e
-		}
-	}
 
 	override fun onCreate() = true
 	override fun getType(uri: Uri) = "image/*"
@@ -106,8 +54,6 @@ class CoverArtProvider : ContentProvider() {
 	private companion object {
 		const val DEFAULT_ARTWORK_SIZE = 512
 		const val MIN_ARTWORK_SIZE = 128
-		const val MAX_ARTWORK_SIZE = 1024
-		const val DEFAULT_ARTWORK_QUALITY = 80
-		const val HIGH_ARTWORK_QUALITY = 90
+		const val MAX_ARTWORK_SIZE = 4096
 	}
 }
