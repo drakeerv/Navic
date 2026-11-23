@@ -1,19 +1,20 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
 package paige.navic.domain.server.subsonic.mapper
 
-import dev.zt64.subsonic.api.model.Album as ApiAlbum
-import dev.zt64.subsonic.api.model.AlbumInfo as ApiAlbumInfo
-import dev.zt64.subsonic.api.model.AlbumListType as ApiAlbumListType
 import paige.navic.database.entity.AlbumEntity
 import paige.navic.database.mapper.toDomainModel
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumInfo
 import paige.navic.domain.model.DomainAlbumListType
+import paige.navic.domain.model.DomainDiscTitle
+import dev.zt64.subsonic.api.model.Album as ApiAlbum
+import dev.zt64.subsonic.api.model.AlbumInfo as ApiAlbumInfo
+import dev.zt64.subsonic.api.model.AlbumListType as ApiAlbumListType
 
 fun ApiAlbum.toEntity(
 	artistIdOverride: String? = null,
@@ -37,7 +38,8 @@ fun ApiAlbum.toEntity(
 	genres = this.genres,
 	version = this.version,
 	isExternal = this.isExternal,
-	displayArtist = this.displayArtist
+	displayArtist = this.displayArtist,
+	discTitles = this.discs.map { DomainDiscTitle(it.disc, it.title, it.coverArtId) }
 )
 
 fun ApiAlbum.toDomainModel(includeSongs: Boolean = false): DomainAlbum =

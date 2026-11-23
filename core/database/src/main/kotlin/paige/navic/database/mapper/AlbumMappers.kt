@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -31,7 +31,8 @@ fun AlbumEntity.toDomainModel(songs: List<DomainSong> = emptyList()) = DomainAlb
 	genres = this.genres,
 	version = this.version,
 	songs = songs,
-	isExternal = this.isExternal
+	isExternal = this.isExternal,
+	discTitles = this.discTitles
 )
 
 fun AlbumWithSongs.toDomainModel() = album.toDomainModel(
@@ -62,5 +63,6 @@ fun DomainAlbum.toEntity(
 	genres = this.genres,
 	version = this.version,
 	isExternal = this.isExternal,
-	displayArtist = this.displayArtist
+	displayArtist = this.displayArtist,
+	discTitles = this.discTitles
 )

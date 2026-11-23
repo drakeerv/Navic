@@ -12,21 +12,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -40,8 +32,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -67,8 +57,6 @@ import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.settings.BottomBarVisibilityMode
-import paige.navic.icons.Icons
-import paige.navic.icons.outlined.Album
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.ContentUnavailable
@@ -88,6 +76,7 @@ import paige.navic.ui.screen.collection.component.CollectionDetailScreenHeadingR
 import paige.navic.ui.screen.collection.component.CollectionDetailScreenSongRow
 import paige.navic.ui.screen.collection.component.CollectionDetailScreenSongRowDropdown
 import paige.navic.ui.screen.collection.component.CollectionDetailScreenTopBar
+import paige.navic.ui.screen.collection.component.DiscTitleHeading
 import paige.navic.ui.screen.collection.viewmodel.CollectionDetailViewModel
 import paige.navic.ui.screen.playlist.dialog.PlaylistUpdateDialog
 import paige.navic.ui.util.rememberColorSchemeFromCoverArt
@@ -244,39 +233,16 @@ fun CollectionDetailScreen(
 								))
 						).let { album ->
 							album.songs.groupBy { it.discNumber }.forEach { group ->
+								val discTitle =
+									album.discTitles.firstOrNull { it.disc == group.key }
 								val multipleDiscs = album.songs.groupBy { it.discNumber }.size > 1
 								if (group.key != null && multipleDiscs) {
 									item {
-										Row(
-											modifier = Modifier
-												.fillMaxWidth()
-												.padding(horizontal = 16.dp)
-												.padding(
-													top = if (group.key == 1) 0.dp else 12.dp,
-													bottom = 4.dp
-												)
-												.heightIn(min = 32.dp),
-											verticalAlignment = Alignment.CenterVertically
-										) {
-											Icon(
-												imageVector = Icons.Outlined.Album,
-												contentDescription = null,
-												tint = MaterialTheme.colorScheme.onSurfaceVariant,
-												modifier = Modifier.size(20.dp)
-											)
-
-											Spacer(modifier = Modifier.width(8.dp))
-
-											Text(
-												text = stringResource(
-													R.string.title_disc_number,
-													group.key as Int
-												),
-												style = MaterialTheme.typography.titleMediumEmphasized,
-												fontWeight = FontWeight(600),
-												color = MaterialTheme.colorScheme.onSurfaceVariant
-											)
-										}
+										DiscTitleHeading(
+											disc = group.key as Int,
+											coverArtId = discTitle?.coverArtId,
+											title = discTitle?.title
+										)
 									}
 								}
 								itemsIndexed(group.value) { index, song ->

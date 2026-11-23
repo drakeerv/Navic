@@ -1,14 +1,16 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
 package paige.navic.database.entity
 
+import androidx.room3.ColumnInfo
 import androidx.room3.Entity
 import androidx.room3.Index
 import androidx.room3.PrimaryKey
+import paige.navic.domain.model.DomainDiscTitle
 import kotlin.time.Duration
 import kotlin.time.Instant
 
@@ -37,5 +39,6 @@ data class AlbumEntity(
 	val userRating: Int?,
 	val version: String?,
 	val musicBrainzId: String?,
-	val isExternal: Boolean
+	val isExternal: Boolean,
+	@ColumnInfo(defaultValue = "") val discTitles: List<DomainDiscTitle>
 )

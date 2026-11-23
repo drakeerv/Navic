@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -8,6 +8,7 @@ package paige.navic.database
 
 import androidx.room3.ColumnTypeConverter
 import paige.navic.domain.model.DomainContributor
+import paige.navic.domain.model.DomainDiscTitle
 import paige.navic.domain.model.DomainExplicitStatus
 import paige.navic.domain.model.DomainReplayGain
 import paige.navic.domain.model.DomainSongArtist
@@ -89,6 +90,28 @@ class Converters {
 			DomainSongArtist(
 				id = parts.getOrNull(0)?.ifEmpty { null } ?: "",
 				name = parts.getOrNull(1)?.ifEmpty { null } ?: ""
+			)
+		}
+	}
+
+	// List<DomainDiscTitle>
+	@ColumnTypeConverter
+	fun fromDomainDiscTitleList(list: List<DomainDiscTitle>?): String? {
+		return list?.joinToString(separator = ";") { c ->
+			"${c.title}^${c.disc}^${c.coverArtId ?: ""}"
+		}
+	}
+
+	@ColumnTypeConverter
+	fun toDomainDiscTitleList(data: String?): List<DomainDiscTitle>? {
+		if (data.isNullOrEmpty()) return if (data == null) null else emptyList()
+
+		return data.split(";").filter { it.isNotEmpty() }.map { item ->
+			val parts = item.split("^")
+			DomainDiscTitle(
+				title = parts.getOrNull(0)?.ifEmpty { null } ?: "",
+				disc = parts.getOrNull(1)?.ifEmpty { null }?.toIntOrNull() ?: 0,
+				coverArtId = parts.getOrNull(2)?.ifEmpty { null } ?: ""
 			)
 		}
 	}

@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -44,7 +44,7 @@ import paige.navic.database.entity.SongEntity
 import paige.navic.database.entity.SyncActionEntity
 
 @Database(
-	version = 33,
+	version = 34,
 	entities = [
 		AlbumEntity::class,
 		ArtistEntity::class,
@@ -75,7 +75,8 @@ import paige.navic.database.entity.SyncActionEntity
 		AutoMigration(from = 29, to = 30),
 		AutoMigration(from = 30, to = 31),
 		AutoMigration(from = 31, to = 32),
-		AutoMigration(from = 32, to = 33)
+		AutoMigration(from = 32, to = 33),
+		AutoMigration(from = 33, to = 34)
 	]
 )
 @ColumnTypeConverters(Converters::class)

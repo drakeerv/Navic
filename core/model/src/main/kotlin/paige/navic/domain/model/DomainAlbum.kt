@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -33,5 +33,6 @@ data class DomainAlbum(
 	val version: String?,
 	val musicBrainzId: String?,
 	override val songs: List<DomainSong>,
-	val isExternal: Boolean = false
+	val isExternal: Boolean = false,
+	val discTitles: List<DomainDiscTitle>
 ) : DomainSongCollection

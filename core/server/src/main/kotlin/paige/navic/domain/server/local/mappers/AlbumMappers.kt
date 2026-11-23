@@ -40,6 +40,7 @@ fun ScanAlbumAggregate.toEntity(
 		userRating = existing?.userRating,
 		version = null,
 		musicBrainzId = null,
-		isExternal = false
+		isExternal = false,
+		discTitles = listOf()
 	)
 }
