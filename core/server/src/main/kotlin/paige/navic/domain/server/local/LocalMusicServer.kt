@@ -18,6 +18,8 @@ import org.oxycblt.musikr.LibraryWriter
 import org.oxycblt.musikr.Musikr
 import org.oxycblt.musikr.Storage
 import org.oxycblt.musikr.cache.MutableCache
+import org.oxycblt.musikr.covers.MemoryCover
+import org.oxycblt.musikr.covers.chained.MutableChainedCovers
 import org.oxycblt.musikr.covers.embedded.CoverIdentifier
 import org.oxycblt.musikr.covers.embedded.EmbeddedCovers
 import org.oxycblt.musikr.covers.stored.CoverStorage
@@ -89,8 +91,9 @@ class LocalMusicServer(
 		}
 		val coverStorage = CoverStorage.at(coverDir)
 		val embeddedCovers = EmbeddedCovers(CoverIdentifier.md5())
+		val folderCovers = FolderCovers(context)
 		val covers = MutableStoredCovers(
-			src = embeddedCovers,
+			src = MutableChainedCovers<MemoryCover, MemoryCover>(embeddedCovers, folderCovers),
 			coverStorage = coverStorage,
 			transcoding = NoTranscoding
 		)
