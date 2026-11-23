@@ -38,7 +38,7 @@ class LocalMusicServerFactory(
 		return LocalMusicServer(
 			context = context,
 			folderUris = folders.folderUris,
-			mutableCache = NavicMutableCache(songDao),
+			mutableCache = NavicMutableCache(context, songDao),
 			storedPlaylists = NavicStoredPlaylists(playlistDao),
 			playHistoryRecorder = LocalPlayHistoryRecorder(songDao, albumDao),
 			libraryWriter = NavicLibraryWriter(

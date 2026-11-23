@@ -25,6 +25,8 @@ internal class FolderCovers(context: Context) : MutableCovers<MemoryCover> {
 
 	override suspend fun obtain(id: String): CoverResult<MemoryCover> = CoverResult.Miss()
 
+	suspend fun hasCover(file: File) = source.hasCover(file)
+
 	override suspend fun create(file: File, metadata: Metadata): CoverResult<MemoryCover> {
 		val cover = when (val result = source.create(file, metadata)) {
 			is CoverResult.Hit -> result.cover

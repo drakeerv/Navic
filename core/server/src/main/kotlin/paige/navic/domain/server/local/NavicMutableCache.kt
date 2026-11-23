@@ -6,6 +6,7 @@
 
 package paige.navic.domain.server.local
 
+import android.content.Context
 import org.oxycblt.musikr.cache.Audio
 import org.oxycblt.musikr.cache.CacheResult
 import org.oxycblt.musikr.cache.CachedFile
@@ -24,10 +25,20 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
 class NavicMutableCache(
+	context: Context,
 	private val songDao: SongDao
 ) : MutableCache {
+	private val folderCovers = FolderCovers(context)
+
 	override suspend fun read(file: File): CacheResult {
 		val entity = songDao.getSongByFilePath(file.uri.toString()) ?: return CacheResult.Miss(file)
+		// attempt to re-extract cover(s) if there's at least one present now
+		if (entity.coverArtId == null && folderCovers.hasCover(file)) {
+			return CacheResult.Stale(
+				file,
+				entity.addedAt?.toEpochMilliseconds() ?: System.currentTimeMillis()
+			)
+		}
 		val durationMs = entity.duration.inWholeMilliseconds
 		val properties = Properties(
 			mimeType = entity.mimeType ?: file.mimeType,

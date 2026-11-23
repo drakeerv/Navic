@@ -94,18 +94,25 @@ class MutableFSCovers(private val context: Context) : MutableCovers<FDCover> {
 
     override suspend fun obtain(id: String): CoverResult<FDCover> = inner.obtain(id)
 
+    /** Check whether a usable cover image exists alongside [file]. */
+    suspend fun hasCover(file: File): Boolean = findCover(file) != null
+
     override suspend fun create(file: File, metadata: Metadata): CoverResult<FDCover> {
+        val cover = findCover(file) ?: return CoverResult.Miss()
+        return CoverResult.Hit(FolderCoverImpl(context, cover.uri))
+    }
+
+    private suspend fun findCover(file: File): File? {
         // Since DeviceFiles is a streaming API, we have to wait for the current recursive
         // query to finally finish to be able to have a complete list of siblings to search for.
-        val parent = (file.parent ?: return CoverResult.Miss()).await()
-        val bestCover = parent.children.map { it to coverArtScore(it) }.maxBy { it.second }
-        if (bestCover.second > 0) {
-            return CoverResult.Hit(FolderCoverImpl(context, bestCover.first.uri))
-        }
-        // No useful cover art was found.
-        // Well, technically we might have found a cover image, but it might be some unrelated
-        // jpeg from poor file organization.
-        return CoverResult.Miss()
+        val parent = (file.parent ?: return null).await()
+        // No useful cover art was found. Well, technically we might have found a cover image,
+        // but it might be some unrelated jpeg from poor file organization.
+        return parent.children
+            .map { it to coverArtScore(it) }
+            .maxByOrNull { it.second }
+            ?.takeIf { it.second > 0 }
+            ?.first
     }
 
     override suspend fun cleanup(excluding: Collection<Cover>) {
