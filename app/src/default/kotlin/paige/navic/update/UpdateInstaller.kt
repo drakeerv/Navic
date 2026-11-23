@@ -6,6 +6,7 @@
 
 package paige.navic.update
 
+import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -46,6 +47,7 @@ internal object UpdateInstaller {
 		}
 	}
 
+	@SuppressLint("RequestInstallPackagesPolicy")
 	fun install(context: Context, apk: File) {
 		val installer = context.packageManager.packageInstaller
 		val params = PackageInstaller.SessionParams(
