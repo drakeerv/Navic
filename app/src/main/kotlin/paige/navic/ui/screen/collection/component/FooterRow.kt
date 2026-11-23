@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import paige.navic.R
 import paige.navic.designsystem.theme.defaultFont
 import paige.navic.domain.model.DomainSongCollection
+import paige.navic.util.toSummaryString
 
 @Composable
 fun CollectionDetailScreenFooterRow(
@@ -31,15 +32,21 @@ fun CollectionDetailScreenFooterRow(
 					collection.songCount
 				)
 			)
-			append(" • ")
-			append(collection.duration.toString())
+			collection.duration
+				?.toSummaryString()
+				?.let { computed ->
+					append(" • ")
+					append(computed)
+				}
 		},
 		style = MaterialTheme.typography.titleSmall,
 		fontFamily = defaultFont(round = 100f),
 		color = MaterialTheme.colorScheme.onSurfaceVariant,
-		modifier = Modifier.fillMaxWidth().padding(
-			horizontal = 16.dp,
-			vertical = 8.dp
-		)
+		modifier = Modifier
+			.fillMaxWidth()
+			.padding(
+				horizontal = 16.dp,
+				vertical = 8.dp
+			)
 	)
 }
