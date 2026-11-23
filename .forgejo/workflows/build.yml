@@ -215,9 +215,11 @@ jobs:
 
           run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_number }}"
 
-          payload=$(jq -n --arg content "Builds for [${GITHUB_SHA::7}](<$run_url>)\n\n(${REF_NAME}) - `${COMMIT_TITLE}`" '{$content}')
+          content=$(printf 'Builds for [%s](<%s>)\n\n(%s) - `%s`' \
+            "${GITHUB_SHA:0:7}" "$run_url" "$REF_NAME" "$COMMIT_TITLE")
+          payload=$(jq -n --arg content "$content" '{content: $content}')
 
-          curl -XPOST "$WEBHOOK_URL" -F "payload_json=$payload" "${files[@]}"
+          curl --fail -XPOST "$WEBHOOK_URL" -F "payload_json=$payload" "${files[@]}"
 
   create-release:
     name: Create release
