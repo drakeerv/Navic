@@ -132,6 +132,7 @@ private fun AccountRow(
 	index: Int = 0,
 	count: Int = 1,
 	onClick: () -> Unit,
+	editable: Boolean = true,
 	onRemove: (() -> Unit)? = null
 ) {
 	val accountName = account.username?.ifBlank { account.baseUrl } ?: account.baseUrl
@@ -157,7 +158,8 @@ private fun AccountRow(
 		Surface(
 			color = MaterialTheme.colorScheme.surfaceContainer,
 			shape = MaterialTheme.shapes.large,
-			onClick = onClick
+			onClick = onClick,
+			enabled = editable
 		) {
 			Row(
 				modifier = Modifier
@@ -192,11 +194,13 @@ private fun AccountRow(
 						)
 					}
 				}
-				Icon(
-					imageVector = Icons.Outlined.Edit,
-					contentDescription = stringResource(R.string.action_edit),
-					tint = MaterialTheme.colorScheme.onSurfaceVariant
-				)
+				if (editable) {
+					Icon(
+						imageVector = Icons.Outlined.Edit,
+						contentDescription = stringResource(R.string.action_edit),
+						tint = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
 			}
 		}
 	} else {
@@ -314,6 +318,7 @@ fun AccountSheet(
 					avatarUrl = profilePictureUrl,
 					imageLoader = imageLoader,
 					coilPlatformContext = coilPlatformContext,
+					editable = activeAccount.serverType != ServerType.LOCAL,
 					onClick = {
 						animateToDismiss()
 						backStack.add(Screen.Settings.ConnectionOptions)

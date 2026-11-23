@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.serialization.json.Json
+import paige.navic.domain.server.ServerType
 import paige.navic.util.Logger
 import paige.navic.util.getEncryptedString
 import paige.navic.util.insertEncryptedString
@@ -54,10 +55,14 @@ class AccountStore(
 		if (id == null) "" else "$id/"
 
 	fun upsert(account: Account): Account {
-		val existing = _accounts.value.firstOrNull {
-			it.baseUrl == account.baseUrl &&
-				it.authMethod == account.authMethod &&
-				it.username == account.username
+		val existing = if (account.serverType == ServerType.LOCAL) {
+			_accounts.value.firstOrNull { it.isLocal() }
+		} else {
+			_accounts.value.firstOrNull {
+				it.baseUrl == account.baseUrl &&
+					it.authMethod == account.authMethod &&
+					it.username == account.username
+			}
 		}
 		val stored = account.copy(id = existing?.id ?: account.id)
 		val updated = if (existing == null) {
@@ -105,6 +110,9 @@ class AccountStore(
 		settings.getString(PENDING_DELETIONS, "")
 			.split(",")
 			.filter { it.isNotBlank() }
+
+	private fun Account.isLocal() =
+		serverType == ServerType.LOCAL || (serverType == null && baseUrl == "local")
 
 	private fun readAccounts(): List<Account> {
 		val raw = settings.getEncryptedString(ACCOUNTS, "")
