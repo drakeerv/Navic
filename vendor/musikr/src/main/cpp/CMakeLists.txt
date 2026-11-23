@@ -53,13 +53,23 @@ add_library(${CMAKE_PROJECT_NAME} SHARED
         JStringRef.cpp
         JByteArrayRef.cpp
 )
+target_compile_options(${CMAKE_PROJECT_NAME}
+        PRIVATE
+        "-Os"
+        "-ffunction-sections"
+        "-fdata-sections"
+        "-fvisibility=hidden"
+        "-fvisibility-inlines-hidden")
+
 target_link_options(${CMAKE_PROJECT_NAME}
         # @Tolriq found that these flags can reduce the size of the linked
         # taglib + jni shim shared library. Kudos to them.
         # https://github.com/taglib/taglib/issues/1212#issuecomment-2326456903
         # Additionally, enable 16kb page size. I believe taglib can support this fine,
         # as a cursory glance indicates that it doesn't hardcode any page sizes.
-        PRIVATE "-Wl,--exclude-libs,ALL,-z,max-page-size=16384")
+        PRIVATE "-Wl,--exclude-libs,ALL"
+        PRIVATE "-Wl,--gc-sections"
+        PRIVATE "-Wl,-z,max-page-size=16384")
 
 # Specifies libraries CMake should link to your target library. You
 # can link libraries from various origins, such as libraries defined in this

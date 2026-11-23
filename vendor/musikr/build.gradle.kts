@@ -65,13 +65,14 @@ val assembleTaglib = tasks.register<Exec>("assembleTaglib") {
 	val taglibDir = jniDir.resolve("taglib")
 	val packageDir = taglibDir.resolve("pkg")
 
-	inputs.dir(taglibDir).ignoreEmptyDirectories()
 	inputs.files(
+		project.fileTree(taglibDir) {
+			exclude("build/**", "pkg/**", ".git", ".git/**")
+		},
 		jniDir.resolve("build_taglib.sh"),
 		jniDir.resolve("android.toolchain.cmake")
 	)
 	outputs.dir(packageDir)
-	outputs.dir(taglibDir.resolve("build"))
 
 	outputs.cacheIf { true }
 

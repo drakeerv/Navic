@@ -48,19 +48,32 @@ jobs:
         uses: actions/cache/restore@v6
         with:
           path: ~/.android/sdk
-          key: ${{ runner.os }}-v2-sdk-${{ hashFiles('gradle/libs.versions.toml', 'vendor/androidx-media/libraries/decoder_ffmpeg/build.gradle.kts') }}
+          key: ${{ runner.os }}-v3-sdk-cmake-3.30.5-${{ hashFiles('gradle/libs.versions.toml', 'vendor/androidx-media/libraries/decoder_ffmpeg/build.gradle.kts') }}
+
+      - name: Resolve TagLib cache key
+        id: taglib-key
+        shell: bash
+        run: |
+          revision=$(git -C vendor/musikr/src/main/cpp/taglib rev-parse HEAD)
+          inputs_hash=$(sha256sum \
+            vendor/musikr/src/main/cpp/build_taglib.sh \
+            vendor/musikr/src/main/cpp/CMakeLists.txt \
+            vendor/musikr/src/main/cpp/android.toolchain.cmake \
+            vendor/musikr/build.gradle.kts \
+            gradle/libs.versions.toml | sha256sum | cut -c1-16)
+          echo "key=${{ runner.os }}-v3-taglib-${revision}-${inputs_hash}" >> "$GITHUB_OUTPUT"
 
       - name: Restore TagLib cache
         id: taglib
         uses: actions/cache/restore@v6
         with:
           path: vendor/musikr/src/main/cpp/taglib/pkg
-          key: ${{ runner.os }}-taglib-${{ hashFiles('vendor/musikr/src/main/cpp/taglib/pkg/**') }}
+          key: ${{ steps.taglib-key.outputs.key }}
 
       - name: Resolve FFmpeg cache key
         id: ffmpeg-key
         run: |
-          echo "key=ffmpeg-v2-$(git -C vendor/androidx-media rev-parse HEAD)-$(git -C vendor/androidx-media/libraries/decoder_ffmpeg/src/main/jni/ffmpeg rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "key=ffmpeg-v3-$(git -C vendor/androidx-media rev-parse HEAD)-$(git -C vendor/androidx-media/libraries/decoder_ffmpeg/src/main/jni/ffmpeg rev-parse HEAD)-${{ hashFiles('gradle/libs.versions.toml') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore FFmpeg build
         id: ffmpeg
@@ -141,7 +154,7 @@ jobs:
         if: steps.taglib.outputs.cache-hit != 'true'
         with:
           path: vendor/musikr/src/main/cpp/taglib/pkg
-          key: ${{ steps.cache.outputs.cache-primary-key }}
+          key: ${{ steps.taglib-key.outputs.key }}
 
       - name: Save FFmpeg build
         uses: actions/cache/save@v6
