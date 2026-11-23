@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -34,7 +34,7 @@ android {
 	externalNativeBuild {
 		cmake {
 			path = file("src/main/cpp/CMakeLists.txt")
-			version = "3.22.1"
+			version = "3.22.1+"
 		}
 	}
 
@@ -84,6 +84,16 @@ val assembleTaglib = tasks.register<Exec>("assembleTaglib") {
 
 tasks.matching { it.name == "preDebugBuild" || it.name == "preReleaseBuild" }.configureEach {
 	dependsOn(assembleTaglib)
+}
+
+tasks.matching { it.name.startsWith("buildCMake") }.configureEach {
+	dependsOn(assembleTaglib)
+}
+
+gradle.taskGraph.whenReady {
+	if (allTasks.any { it.name == assembleTaglib.name }) {
+		gradle.startParameter.isParallelProjectExecutionEnabled = false
+	}
 }
 
 tasks.named("clean") {

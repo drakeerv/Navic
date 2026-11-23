@@ -50,6 +50,13 @@ jobs:
           path: ~/.android/sdk
           key: ${{ runner.os }}-v2-sdk-${{ hashFiles('gradle/libs.versions.toml', 'vendor/androidx-media/libraries/decoder_ffmpeg/build.gradle.kts') }}
 
+      - name: Restore TagLib cache
+        id: taglib
+        uses: actions/cache/restore@v6
+        with:
+          path: vendor/musikr/src/main/cpp/taglib/pkg
+          key: ${{ runner.os }}-taglib-${{ hashFiles('vendor/musikr/src/main/cpp/taglib/pkg/**') }}
+
       - name: Resolve FFmpeg cache key
         id: ffmpeg-key
         run: |
@@ -74,9 +81,9 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
+          key: ${{ runner.os }}-v2-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/libs.versions.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            ${{ runner.os }}-v2-gradle-
 
       - name: Setup JDK
         uses: actions/setup-java@v6
@@ -88,6 +95,9 @@ jobs:
       # this only seems to accept the licenses and nothing else, Gradle will download the SDK anyway (afaik)
       - name: Setup Android SDK
         uses: https://github.com/android-actions/setup-android@v4
+
+      - name: Install CMake
+        run: sdkmanager "cmake;3.30.5"
 
       - name: Build with Gradle (release)
         id: build_release
@@ -126,6 +136,13 @@ jobs:
             ~/.gradle/wrapper
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
+      - name: Save TagLib cache
+        uses: actions/cache/save@v6
+        if: steps.taglib.outputs.cache-hit != 'true'
+        with:
+          path: vendor/musikr/src/main/cpp/taglib/pkg
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
       - name: Save FFmpeg build
         uses: actions/cache/save@v6
         if: steps.ffmpeg.outputs.cache-hit != 'true'
@@ -147,7 +164,7 @@ jobs:
 
   upload-artifacts-to-discord:
     name: Upload Artifacts to Discord
-    if: forgejo.event_name == 'push' && (forgejo.ref == 'refs/heads/master' || forgejo.ref == 'refs/heads/bleeding-edge')
+    if: forgejo.event_name == 'push' && (forgejo.ref == 'refs/heads/master' || forgejo.ref == 'refs/heads/bleeding-edge' || forgejo.ref == 'refs/heads/local')
     needs: [ build-android ]
     runs-on: ubuntu-latest
     steps:
@@ -157,6 +174,7 @@ jobs:
       - name: Post artifacts to Discord webhook
         shell: bash
         env:
+          FULL_MSG: ${{ forgejo.event.head_commit.message }}
           CI_BUILD_WEBHOOK: ${{ secrets.CI_BUILD_WEBHOOK }}
           BLEEDING_EDGE_CI_WEBHOOK: ${{ secrets.BLEEDING_EDGE_CI_WEBHOOK }}
           REF_NAME: ${{ forgejo.ref_name }}
@@ -168,6 +186,7 @@ jobs:
           else
             WEBHOOK_URL="$CI_BUILD_WEBHOOK"
           fi
+          COMMIT_TITLE=$(printf '%s\n' "$FULL_MSG" | head -n 1 | sed 's/`/\\`/g')
 
           files=()
           i=1
@@ -181,9 +200,9 @@ jobs:
             exit 0
           fi
 
-          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_id }}"
+          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_number }}"
 
-          payload=$(jq -n --arg content "Builds for [${GITHUB_SHA::7}](<$run_url>)" '{$content}')
+          payload=$(jq -n --arg content "Builds for [${GITHUB_SHA::7}](<$run_url>)\n\n(${REF_NAME}) - `${COMMIT_TITLE}`" '{$content}')
 
           curl -XPOST "$WEBHOOK_URL" -F "payload_json=$payload" "${files[@]}"
 
