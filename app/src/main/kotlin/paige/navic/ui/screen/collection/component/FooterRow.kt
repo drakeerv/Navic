@@ -33,7 +33,7 @@ fun CollectionDetailScreenFooterRow(
 				)
 			)
 			collection.duration
-				?.toSummaryString()
+				?.toSummaryString(showSeconds = true)
 				?.let { computed ->
 					append(" • ")
 					append(computed)

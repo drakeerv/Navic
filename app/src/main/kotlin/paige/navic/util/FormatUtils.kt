@@ -34,13 +34,23 @@ fun Duration.toHoursMinutesSeconds(): String {
 /**
  * Formats a `Duration` as a summary string, ex. 12h 30m
  */
-fun Duration.toSummaryString(): String {
+// TODO: localization?
+fun Duration.toSummaryString(showSeconds: Boolean = false): String {
 	val hours = inWholeHours
 	val minutes = inWholeMinutes % 60
+	val seconds = inWholeSeconds % 60
 	return if (hours > 0) {
-		"${hours}h ${minutes}m"
+		if (showSeconds) {
+			"${hours}h ${minutes}m ${seconds}s"
+		} else {
+			"${hours}h ${minutes}m"
+		}
 	} else {
-		"${minutes}m"
+		if (showSeconds) {
+			"${minutes}m ${seconds}s"
+		} else {
+			"${minutes}m"
+		}
 	}
 }
 
