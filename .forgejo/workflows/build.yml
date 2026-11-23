@@ -175,16 +175,13 @@ jobs:
           path: ~/.android/sdk
           key: ${{ steps.sdk.outputs.cache-primary-key }}
 
-  upload-artifacts-to-discord:
-    name: Upload Artifacts to Discord
-    if: forgejo.event_name == 'push' && (forgejo.ref == 'refs/heads/master' || forgejo.ref == 'refs/heads/bleeding-edge' || forgejo.ref == 'refs/heads/local')
+  notify-discord:
+    name: Notify Discord
+    if: forgejo.event_name == 'push' && (forgejo.ref == 'refs/heads/master' || forgejo.ref == 'refs/heads/bleeding-edge')
     needs: [ build-android ]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Artifacts
-        uses: https://data.forgejo.org/forgejo/download-artifact@v4
-
-      - name: Post artifacts to Discord webhook
+      - name: Post build link to Discord
         shell: bash
         env:
           FULL_MSG: ${{ forgejo.event.head_commit.message }}
@@ -192,8 +189,6 @@ jobs:
           BLEEDING_EDGE_CI_WEBHOOK: ${{ secrets.BLEEDING_EDGE_CI_WEBHOOK }}
           REF_NAME: ${{ forgejo.ref_name }}
         run: |
-          shopt -s nullglob globstar
-          
           if [ "$REF_NAME" = "bleeding-edge" ] && [ -n "$BLEEDING_EDGE_CI_WEBHOOK" ]; then
             WEBHOOK_URL="$BLEEDING_EDGE_CI_WEBHOOK"
           else
@@ -201,25 +196,15 @@ jobs:
           fi
           COMMIT_TITLE=$(printf '%s\n' "$FULL_MSG" | head -n 1 | sed 's/`/\\`/g')
 
-          files=()
-          i=1
-          for file in **/*.apk; do
-            files+=("-F file${i}=@${file}")
-            ((i++))
-          done
+          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_id }}"
+          artifact_url="$run_url/artifacts/navic-release-android"
 
-          if (( ${#files[@]} == 0 )); then
-            echo "No files to upload"
-            exit 0
-          fi
-
-          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_number }}"
-
-          content=$(printf 'Builds for [%s](<%s>)\n\n(%s) - `%s`' \
-            "${GITHUB_SHA:0:7}" "$run_url" "$REF_NAME" "$COMMIT_TITLE")
+          # artifacts are public on codeberg, everyone can download them. even logged out. :)
+          content=$(printf 'Builds for [%s](<%s>)\n\n(%s) - `%s`\n%s' \
+            "${GITHUB_SHA:0:7}" "$run_url" "$REF_NAME" "$COMMIT_TITLE" "$artifact_url")
           payload=$(jq -n --arg content "$content" '{content: $content}')
 
-          curl --fail -XPOST "$WEBHOOK_URL" -F "payload_json=$payload" "${files[@]}"
+          curl --fail -XPOST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d "$payload"
 
   create-release:
     name: Create release
