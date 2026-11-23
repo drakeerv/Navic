@@ -10,7 +10,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -96,7 +96,7 @@ fun CollectionDetailScreenHeadingRowButtons(
 		Button(
 			modifier = Modifier
 				.weight(1f)
-				.heightIn(min = buttonHeight),
+				.fillMaxWidth(),
 			onClick = {
 				player.setShuffle(false)
 				player.playNow(collection)
@@ -126,7 +126,7 @@ fun CollectionDetailScreenHeadingRowButtons(
 			OutlinedButton(
 				modifier = Modifier
 					.weight(1f)
-					.heightIn(min = buttonHeight),
+					.fillMaxWidth(),
 				onClick = {
 					player.setShuffle(true)
 					player.playNow(collection, collection.songs.indices.random())

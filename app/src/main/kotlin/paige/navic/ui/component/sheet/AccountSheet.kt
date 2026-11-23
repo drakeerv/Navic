@@ -218,19 +218,24 @@ private fun AccountRow(
 			},
 			supportingContent = {
 				Text(
-					text = account.baseUrl,
+					text = if (serverType != ServerType.LOCAL) {
+						account.baseUrl
+					} else {
+						stringResource(R.string.subtitle_local_library)
+					},
 					style = MaterialTheme.typography.labelSmall,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			},
 			content = {
-				Row(
-					horizontalArrangement = Arrangement.spacedBy(4.dp),
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Text(accountName)
-					account.serverType?.let {
-						ServerTypeIcon(serverType = it, modifier = Modifier.size(16.dp))
+				if (serverType != null && serverType != ServerType.LOCAL) {
+					Row(
+						horizontalArrangement = Arrangement.spacedBy(4.dp),
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						Text(accountName)
+
+						ServerTypeIcon(serverType = serverType, modifier = Modifier.size(16.dp))
 					}
 				}
 			}
