@@ -66,14 +66,22 @@ class LoginManager(
 	var localFolderUris by mutableStateOf<List<String>>(emptyList())
 		private set
 
+	val hasLocalAccount: Boolean
+		get() = accountStore.accounts.value.any { it.serverType == ServerType.LOCAL }
+
 	fun setLocalFolders(uris: List<String>) {
 		localFolderUris = uris.distinct()
 	}
 
-
 	fun selectServerType(type: ServerType) {
 		if (serverType != type) {
 			passwordState.clearText()
+		}
+		if (type == ServerType.LOCAL) {
+			localFolderUris = accountStore.accounts.value
+				.firstOrNull { it.serverType == ServerType.LOCAL }
+				?.localFolderUris
+				.orEmpty()
 		}
 		serverType = type
 	}
@@ -91,16 +99,17 @@ class LoginManager(
 		snapshotFlow { instanceState.text.isBlank() },
 		snapshotFlow { usernameState.text.isBlank() },
 		snapshotFlow { passwordState.text.isBlank() },
-		snapshotFlow { serverType to authMethod },
+		snapshotFlow { Triple(serverType, authMethod, localFolderUris.isEmpty()) },
 		validationShown
 	) { instanceBlank, usernameBlank, secretBlank, method, shown ->
-		val (type, auth) = method
+		val (type, auth, localFoldersEmpty) = method
 		val needsUsername = type == ServerType.JELLYFIN ||
 			(type != null && auth == AuthMethod.Token)
 		LoginFormState(
 			instanceError = shown && instanceBlank,
 			usernameError = shown && needsUsername && usernameBlank,
-			passwordError = shown && secretBlank
+			passwordError = shown && secretBlank,
+			localFoldersError = shown && type == ServerType.LOCAL && localFoldersEmpty
 		)
 	}.stateIn(
 		scope = mainScope,
@@ -157,7 +166,7 @@ class LoginManager(
 		val requiresUsername = type != ServerType.LOCAL &&
 			(type == ServerType.JELLYFIN || method == AuthMethod.Token)
 		val invalidField = when {
-			type == ServerType.LOCAL && localFolderUris.isEmpty() -> LoginField.Instance
+			type == ServerType.LOCAL && localFolderUris.isEmpty() -> LoginField.LocalFolders
 			type != ServerType.LOCAL && url.isBlank() -> LoginField.Instance
 			requiresUsername && username.isBlank() -> LoginField.Username
 			type != ServerType.LOCAL && secret.isBlank() -> LoginField.Password

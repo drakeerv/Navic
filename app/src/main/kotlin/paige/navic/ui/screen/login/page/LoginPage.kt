@@ -13,8 +13,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -74,6 +72,7 @@ import paige.navic.ui.component.common.ErrorBox
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.dialog.FormDialog
 import paige.navic.ui.component.layout.TopBarButton
+import paige.navic.ui.component.local.LocalFolderSelection
 import paige.navic.ui.core.LoginEvent
 import paige.navic.ui.core.LoginField
 import paige.navic.ui.core.UiState
@@ -118,18 +117,6 @@ fun LoginPage(
 
 	val permissionManager = koinInject<PermissionManager>()
 	val loginScope = rememberCoroutineScope()
-	val context = androidx.compose.ui.platform.LocalContext.current
-	val folderPicker = rememberLauncherForActivityResult(
-		ActivityResultContracts.OpenDocumentTree()
-	) { uri ->
-		if (uri == null) return@rememberLauncherForActivityResult
-		context.contentResolver.takePersistableUriPermission(
-			uri,
-			android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
-				android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-		)
-		viewModel.setLocalFolders(viewModel.localFolderUris + uri.toString())
-	}
 	var localNetworkDenied by rememberSaveable { mutableStateOf(false) }
 	var notificationsDenied by rememberSaveable { mutableStateOf(false) }
 
@@ -173,6 +160,7 @@ fun LoginPage(
 						LoginField.Instance -> instanceFocusRequester.requestFocus()
 						LoginField.Username -> usernameFocusRequester.requestFocus()
 						LoginField.Password -> passwordFocusRequester.requestFocus()
+						LoginField.LocalFolders -> Unit
 					}
 				}
 
@@ -190,7 +178,13 @@ fun LoginPage(
 			LargeFlexibleTopAppBar(
 				title = {
 					Text(
-						text = stringResource(R.string.action_log_in),
+						text = stringResource(
+							if (viewModel.serverType == ServerType.LOCAL) {
+								R.string.subtitle_local_library
+							} else {
+								R.string.action_log_in
+							}
+						),
 						style = MaterialTheme.typography.headlineMedium,
 						fontFamily = defaultFont(round = 100f)
 					)
@@ -199,6 +193,7 @@ fun LoginPage(
 					Crossfade(targetState = viewModel.serverType) { state ->
 						val label = when (state) {
 							ServerType.JELLYFIN -> stringResource(R.string.info_login_description_jellyfin)
+							ServerType.LOCAL -> stringResource(R.string.info_local_library_short)
 							else -> stringResource(R.string.info_login_description)
 						}
 						Text(label)
@@ -268,25 +263,27 @@ fun LoginPage(
 				if (viewModel.serverType == ServerType.LOCAL) {
 					Column(
 						modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-						verticalArrangement = Arrangement.spacedBy(8.dp)
+						verticalArrangement = Arrangement.spacedBy(12.dp)
 					) {
-						Button(
+						Text(
+							text = stringResource(R.string.info_local_library_onboarding),
+							style = MaterialTheme.typography.bodyMedium,
+							color = MaterialTheme.colorScheme.onSurfaceVariant
+						)
+						LocalFolderSelection(
 							modifier = Modifier.fillMaxWidth(),
-							onClick = { folderPicker.launch(null) },
-							enabled = !isBusy
-						) {
-							Text(if (viewModel.localFolderUris.isEmpty()) "Choose music folders" else "Add music folder")
-						}
-						viewModel.localFolderUris.forEachIndexed { index, uri ->
-							SegmentedListButton(
-								modifier = Modifier.fillMaxWidth(),
-								 onClick = {
-									viewModel.setLocalFolders(viewModel.localFolderUris.filterIndexed { i, _ -> i != index })
+							folderUris = viewModel.localFolderUris,
+							enabled = !isBusy,
+							showError = formState.localFoldersError,
+							onFoldersChanged = viewModel::setLocalFolders,
+							onPermissionError = {
+								loginScope.launch {
+									snackBarState.showSnackbar(
+										resources.getString(R.string.info_local_folder_permission_denied)
+									)
 								}
-							) {
-								Text(uri)
 							}
-						}
+						)
 					}
 				} else {
 				LoginScreenFields(
@@ -341,7 +338,13 @@ fun LoginPage(
 					shape = CircleShape
 				) {
 					Text(
-						text = stringResource(R.string.action_log_in),
+						text = stringResource(
+							when {
+								viewModel.serverType != ServerType.LOCAL -> R.string.action_log_in
+								viewModel.hasLocalAccount -> R.string.action_save_local_folders
+								else -> R.string.action_create_local_library
+							}
+						),
 						fontFamily = defaultFont(100)
 					)
 				}

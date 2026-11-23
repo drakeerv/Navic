@@ -15,13 +15,15 @@ sealed class SyncUiState {
 data class LoginFormState(
 	val instanceError: Boolean = false,
 	val usernameError: Boolean = false,
-	val passwordError: Boolean = false
+	val passwordError: Boolean = false,
+	val localFoldersError: Boolean = false
 )
 
 enum class LoginField {
 	Instance,
 	Username,
-	Password
+	Password,
+	LocalFolders
 }
 
 sealed class LoginEvent {

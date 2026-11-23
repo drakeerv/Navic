@@ -181,6 +181,10 @@ sealed interface Screen : NavKey {
 
 		@Immutable
 		@Serializable
+		data object LocalLibrary : Settings
+
+		@Immutable
+		@Serializable
 		data object Fonts : Settings
 
 		@Immutable

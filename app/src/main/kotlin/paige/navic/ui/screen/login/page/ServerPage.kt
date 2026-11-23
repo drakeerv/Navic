@@ -43,6 +43,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -148,8 +149,25 @@ private fun SavedServers(
 					account.serverType?.let { ServerTypeIcon(it) }
 				},
 				trailingContent = { Icon(Icons.Outlined.ChevronForward, null) },
-				supportingContent = { Text(account.baseUrl) },
-				content = { Text(account.username?.ifBlank { account.baseUrl } ?: account.baseUrl) }
+				supportingContent = {
+					if (account.serverType == ServerType.LOCAL) {
+						val folders = pluralStringResource(
+							R.plurals.count_folders,
+							account.localFolderUris.size,
+							account.localFolderUris.size
+						)
+						Text("$folders ${stringResource(R.string.info_on_this_device)}")
+					} else {
+						Text(account.baseUrl)
+					}
+				},
+				content = {
+					if (account.serverType == ServerType.LOCAL) {
+						Text(stringResource(R.string.subtitle_local_library))
+					} else {
+						Text(account.username?.ifBlank { account.baseUrl } ?: account.baseUrl)
+					}
+				}
 			)
 		}
 	}
@@ -235,7 +253,20 @@ private fun ServerChoices(
 					ServerTypeIcon(type)
 				},
 				trailingContent = { Icon(Icons.Outlined.ChevronForward, null) },
-				content = { Text(type.prettyName) },
+				supportingContent = if (type == ServerType.LOCAL) {
+					{ Text(stringResource(R.string.info_local_library_short)) }
+				} else {
+					null
+				},
+				content = {
+					Text(
+						if (type == ServerType.LOCAL) {
+							stringResource(R.string.subtitle_local_library)
+						} else {
+							type.prettyName
+						}
+					)
+				},
 				onClick = { onServerTypeChanged(type) },
 				shapes = SegmentedListItemDefaults.segmentedShapes(
 					index = index,

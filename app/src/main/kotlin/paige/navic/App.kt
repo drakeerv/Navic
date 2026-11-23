@@ -123,6 +123,7 @@ import paige.navic.ui.screen.settings.SettingsAppearanceScreen
 import paige.navic.ui.screen.settings.SettingsConnectionOptionsScreen
 import paige.navic.ui.screen.settings.SettingsCustomHeadersScreen
 import paige.navic.ui.screen.settings.SettingsDataStorageScreen
+import paige.navic.ui.screen.settings.SettingsLocalLibraryScreen
 import paige.navic.ui.screen.settings.SettingsDeveloperScreen
 import paige.navic.ui.screen.settings.SettingsDownloadQualityScreen
 import paige.navic.ui.screen.settings.SettingsEqualizerScreen
@@ -489,6 +490,9 @@ private fun entryProvider(
 		}
 		entry<Screen.Settings.DataStorage>(metadata = detailPane("settings")) {
 			SettingsDataStorageScreen()
+		}
+		entry<Screen.Settings.LocalLibrary> {
+			SettingsLocalLibraryScreen()
 		}
 		entry<Screen.Settings.Fonts> {
 			FontsScreen()

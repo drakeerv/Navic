@@ -577,12 +577,32 @@
 	<string name="theme_mode_light">Light</string>
 	<string name="alt_addresses_base_path">Base path (optional)</string>
 	<string name="subtitle_local_library">Local library</string>
+	<string name="title_music_folders">Music folders</string>
+	<string name="subtitle_music_folders">Folders indexed for your local library</string>
+	<string name="action_choose_music_folders">Choose music folders</string>
+	<string name="action_add_music_folder">Add music folder</string>
+	<string name="action_remove_folder">Remove folder</string>
+	<string name="action_create_local_library">Create local library</string>
+	<string name="action_save_local_folders">Save local folders</string>
+	<string name="info_local_library_onboarding">Audio files stay on this device; Navic stores their metadata locally.</string>
+	<string name="info_local_library_short">Use music stored on this device.</string>
+	<string name="info_local_library_settings">Navic indexes music from these folders. Audio files stay on this device.</string>
+	<string name="info_local_folders_empty">No folders selected. Add at least one folder containing music.</string>
+	<string name="info_local_folders_required">Select at least one music folder.</string>
+	<string name="info_local_folder_permission_denied">Navic could not keep access to that folder. Try selecting it again.</string>
+	<string name="info_local_folders_saved">Local folders saved. Syncing your library…</string>
+	<string name="info_on_this_device">on this device</string>
 
 	<!-- Plurals -->
 
 	<plurals name="count_songs">
 		<item quantity="one">%1$d song</item>
 		<item quantity="other">%1$d songs</item>
+	</plurals>
+
+	<plurals name="count_folders">
+		<item quantity="one">%1$d folder</item>
+		<item quantity="other">%1$d folders</item>
 	</plurals>
 
 	<plurals name="count_remaining_songs">

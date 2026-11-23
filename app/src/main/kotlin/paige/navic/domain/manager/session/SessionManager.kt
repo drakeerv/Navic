@@ -252,6 +252,13 @@ class SessionManager(
 		api = createClient(accountStore.activeAccount)
 	}
 
+	fun updateLocalFolders(folderUris: List<String>) {
+		val account = accountStore.activeAccount ?: return
+		if (account.serverType != ServerType.LOCAL) return
+		accountStore.updateLocalFolders(account.id, folderUris)
+		refreshClient()
+	}
+
 	fun getAvatarUrl(account: Account): String? {
 		val username = account.username?.takeIf(String::isNotBlank) ?: return null
 		val authorization = account.authorization() ?: return null

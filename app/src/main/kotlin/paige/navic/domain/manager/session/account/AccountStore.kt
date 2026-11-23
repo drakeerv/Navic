@@ -88,6 +88,16 @@ class AccountStore(
 		})
 	}
 
+	fun updateLocalFolders(id: String, folderUris: List<String>) {
+		writeAccounts(_accounts.value.map {
+			if (it.id == id && it.serverType == ServerType.LOCAL) {
+				it.copy(localFolderUris = folderUris.distinct())
+			} else {
+				it
+			}
+		})
+	}
+
 	fun remove(id: String) {
 		writeAccounts(_accounts.value.filterNot { it.id == id })
 		if (activeAccountId == id) {

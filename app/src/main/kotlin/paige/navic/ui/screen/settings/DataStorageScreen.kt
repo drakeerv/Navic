@@ -295,6 +295,22 @@ fun SettingsDataStorageScreen() {
 					)
 				}
 
+				if (sessionManager.isLocal()) {
+					SettingsGroup(title = { Text(stringResource(R.string.subtitle_local_library)) }) {
+						SettingsNavItem(
+							onClick = dropUnlessResumed {
+								backStack.add(Screen.Settings.LocalLibrary)
+							},
+							content = { Text(stringResource(R.string.title_music_folders)) },
+							supportingContent = { Text(stringResource(R.string.subtitle_music_folders)) },
+							shapes = SegmentedListItemDefaults.segmentedShapes(
+								index = 0,
+								count = 1
+							)
+						)
+					}
+				}
+
 				SettingsGroup(title = { Text(stringResource(R.string.title_sync_control)) }) {
 					SegmentedListItem(
 						content = { Text(stringResource(R.string.option_live_status)) },
