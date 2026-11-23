@@ -223,7 +223,10 @@ private fun AccountRow(
 					} else {
 						stringResource(R.string.subtitle_local_library)
 					},
-					style = MaterialTheme.typography.labelSmall,
+					style = if (serverType != ServerType.LOCAL)
+						MaterialTheme.typography.labelSmall
+					else
+						MaterialTheme.typography.bodyLargeEmphasized,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			},
@@ -336,7 +339,8 @@ fun AccountSheet(
 			Column(
 				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
-				val alternateAccounts = accounts.filterNot { it.id == sessionManager.activeAccountId }
+				val alternateAccounts =
+					accounts.filterNot { it.id == sessionManager.activeAccountId }
 
 				alternateAccounts.forEachIndexed { index, account ->
 					AccountRow(
@@ -541,9 +545,23 @@ fun AccountSheet(
 	accountToRemove?.let { account ->
 		AlertDialog(
 			onDismissRequest = { accountToRemove = null },
-			title = { Text(stringResource(R.string.title_remove_account)) },
+			title = {
+				Text(
+					stringResource(
+						if (account.serverType != ServerType.LOCAL)
+							R.string.title_remove_account else R.string.title_delete_local_library_database
+					)
+				)
+			},
 			text = {
-				Text(stringResource(R.string.notice_remove_server, account.baseUrl))
+				Text(
+					stringResource(
+						if (account.serverType != ServerType.LOCAL)
+							R.string.notice_remove_server
+						else
+							R.string.notice_remove_local_account, account.baseUrl
+					)
+				)
 			},
 			confirmButton = {
 				TextButton(
@@ -552,7 +570,14 @@ fun AccountSheet(
 						accountToRemove = null
 					}
 				) {
-					Text(stringResource(R.string.action_remove_account))
+					Text(
+						stringResource(
+							if (account.serverType != ServerType.LOCAL)
+								R.string.action_remove_account
+							else
+								R.string.action_ok
+						)
+					)
 				}
 			},
 			dismissButton = {
