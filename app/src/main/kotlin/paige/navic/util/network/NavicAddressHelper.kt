@@ -133,8 +133,14 @@ class NavicAddressHelper(
 				.ifEmpty { "/" }
 			val alternateBasePath = alternate.basePath.orEmpty().trimEnd('/')
 
+			val targetScheme = if (request.isHttps && !accountSettings.allowInsecureConnections) {
+				"https"
+			} else {
+				alternate.scheme.name.lowercase()
+			}
+
 			val newUrl = request.url.newBuilder()
-				.scheme(alternate.scheme.name.lowercase())
+				.scheme(targetScheme)
 				.host(alternate.host)
 				.port(alternate.port)
 				.encodedPath(alternateBasePath + remainingPath)
