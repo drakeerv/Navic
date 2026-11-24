@@ -24,7 +24,7 @@ data class QueueSong(
 	override val albumTitle: String?,
 	val albumId: String?,
 	override val artists: List<DomainSongArtist>,
-	val albumArtists: List<DomainSongArtist>,
+	override val albumArtists: List<DomainSongArtist>,
 	val duration: Duration,
 	val coverArtId: String?,
 	val filePath: String?,

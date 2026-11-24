@@ -225,6 +225,7 @@ class DbRepository(
 			launch(Dispatchers.IO) {
 				val albumBatch = mutableListOf<AlbumEntity>()
 				val songBatch = mutableListOf<SongEntity>()
+				val artistBatch = mutableMapOf<String, ArtistEntity>()
 				val summariesMap = allAlbumSummaries.associateBy { it.id }
 
 				for (album in albumChannel) {
@@ -236,6 +237,14 @@ class DbRepository(
 					albumBatch.add(albumEntity)
 					allValidAlbumIds.add(albumEntity.albumId)
 
+					if (albumEntity.artistId.isNotBlank()) {
+						artistBatch[albumEntity.artistId] = ArtistEntity(
+							artistId = albumEntity.artistId,
+							name = albumEntity.artistName ?: albumEntity.artistId,
+							coverArtId = albumEntity.coverArtId
+						)
+					}
+
 					album.songs.forEach { song ->
 						val songEntity = song.toEntity(
 							artistIdOverride = albumEntity.artistId.takeIf { song.artistId.isBlank() },
@@ -243,11 +252,44 @@ class DbRepository(
 						)
 						songBatch.add(songEntity)
 						allValidSongIds.add(songEntity.songId)
+
+						if (songEntity.artistId.isNotBlank()) {
+							artistBatch[songEntity.artistId] = ArtistEntity(
+								artistId = songEntity.artistId,
+								name = songEntity.artistName ?: songEntity.artistId,
+								albumCount = 0,
+								coverArtId = songEntity.coverArtId
+							)
+						}
+						songEntity.artists.forEach { artist ->
+							if (artist.id.isNotBlank()) {
+								artistBatch[artist.id] = ArtistEntity(
+									artistId = artist.id,
+									name = artist.name,
+									albumCount = 0,
+									coverArtId = songEntity.coverArtId
+								)
+							}
+						}
+						songEntity.albumArtists.forEach { artist ->
+							if (artist.id.isNotBlank()) {
+								artistBatch[artist.id] = ArtistEntity(
+									artistId = artist.id,
+									name = artist.name,
+									albumCount = 0,
+									coverArtId = songEntity.coverArtId
+								)
+							}
+						}
 					}
 
 					if (albumBatch.size >= dbChunkSize || songBatch.size >= 1500) {
 						albumDao.insertAlbums(albumBatch)
 						songDao.insertSongs(songBatch)
+						if (artistBatch.isNotEmpty()) {
+							artistDao.insertArtistsIgnoringConflicts(artistBatch.values.toList())
+							artistBatch.clear()
+						}
 
 						finalSongsSynced += songBatch.size
 						albumBatch.clear()
@@ -255,9 +297,12 @@ class DbRepository(
 					}
 				}
 
-				if (albumBatch.isNotEmpty() || songBatch.isNotEmpty()) {
+				if (albumBatch.isNotEmpty() || songBatch.isNotEmpty() || artistBatch.isNotEmpty()) {
 					if (albumBatch.isNotEmpty()) albumDao.insertAlbums(albumBatch)
 					if (songBatch.isNotEmpty()) songDao.insertSongs(songBatch)
+					if (artistBatch.isNotEmpty()) {
+						artistDao.insertArtistsIgnoringConflicts(artistBatch.values.toList())
+					}
 					finalSongsSynced += songBatch.size
 				}
 			}

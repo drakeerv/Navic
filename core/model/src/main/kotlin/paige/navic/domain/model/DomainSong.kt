@@ -18,6 +18,8 @@ interface SongInfo {
 	val playCount: Int
 	val isExternal: Boolean
 	val artists: List<DomainSongArtist>
+	val albumArtists: List<DomainSongArtist>
+		get() = emptyList()
 }
 
 @Immutable
@@ -58,6 +60,6 @@ data class DomainSong(
 	val musicBrainzId: String?,
 	val explicitStatus: DomainExplicitStatus,
 	override val artists: List<DomainSongArtist>,
-	val albumArtists: List<DomainSongArtist>,
+	override val albumArtists: List<DomainSongArtist>,
 	override val isExternal: Boolean = false
 ) : SongInfo

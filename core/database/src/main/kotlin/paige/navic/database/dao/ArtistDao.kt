@@ -87,8 +87,11 @@ interface ArtistDao {
 	suspend fun deleteObsoleteArtists(remoteIds: Set<String>) {
 		getAllArtistIds().forEach { localId ->
 			if (localId !in remoteIds) {
-				Logger.w("ArtistDao", "artist $localId no longer exists remotely")
-				deleteArtist(localId)
+				val artist = getArtistById(localId)
+				if (artist != null && artist.albumCount > 0) {
+					Logger.w("ArtistDao", "artist $localId no longer exists remotely")
+					deleteArtist(localId)
+				}
 			}
 		}
 	}

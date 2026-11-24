@@ -18,6 +18,8 @@ fun DomainArtistListType.toSqlQuery(
 	val whereClauses = mutableListOf<String>()
 	val args = mutableListOf<Any>()
 
+	whereClauses.add("albumCount > 0")
+
 	when (this) {
 		DomainArtistListType.AlphabeticalByName,
 		DomainArtistListType.Random,
@@ -69,6 +71,8 @@ fun getArtistLetterCountsQuery(
 ): RoomRawQuery {
 	val whereClauses = mutableListOf<String>()
 	val args = mutableListOf<Any>()
+
+	whereClauses.add("albumCount > 0")
 
 	if (filters.contains(DomainFilter.Starred)) {
 		whereClauses.add("starredAt IS NOT NULL")
