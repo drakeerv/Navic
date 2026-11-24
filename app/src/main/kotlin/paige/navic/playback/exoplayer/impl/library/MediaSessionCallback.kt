@@ -67,15 +67,45 @@ internal class MediaSessionCallback(
 		controller: MediaSession.ControllerInfo,
 		isForPlayback: Boolean
 	): ListenableFuture<MediaSession.MediaItemsWithStartPosition> = scope.future {
-		val state = stateRepository.getState()
+		val (currentItems, currentIndex, currentPosition) = withContext(Dispatchers.Main) {
+			val count = instance.mediaItemCount
+			if (count > 0) {
+				Triple(
+					(0 until count).map { instance.getMediaItemAt(it) },
+					instance.currentMediaItemIndex,
+					instance.currentPosition
+				)
+			} else {
+				Triple(emptyList(), -1, 0L)
+			}
+		}
 
-		MediaSession.MediaItemsWithStartPosition(
-			/* mediaItems = */ withContext(Dispatchers.Default) {
+		if (currentItems.isNotEmpty()) {
+			val safeIndex = currentIndex.coerceIn(0, currentItems.size - 1)
+			MediaSession.MediaItemsWithStartPosition(
+				currentItems,
+				safeIndex,
+				currentPosition.coerceAtLeast(0L)
+			)
+		} else {
+			val state = stateRepository.getState()
+			val items = withContext(Dispatchers.Default) {
 				state.queue.map { it.toMediaItem() }
-			},
-			/* startIndex = */ state.currentIndex,
-			/* startPositionMs = */ 0
-		)
+			}
+			val index = state.currentIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
+			val durationMs = state.queue.getOrNull(index)?.duration?.inWholeMilliseconds ?: 0L
+			val positionMs = if (durationMs > 0) {
+				(state.progress * durationMs).toLong().coerceIn(0L, durationMs)
+			} else {
+				0L
+			}
+
+			MediaSession.MediaItemsWithStartPosition(
+				items,
+				index,
+				positionMs
+			)
+		}
 	}
 
 	override fun onCustomCommand(
@@ -174,7 +204,7 @@ internal class MediaSessionCallback(
 		startIndex: Int,
 		startPositionMs: Long
 	): ListenableFuture<MediaSession.MediaItemsWithStartPosition> {
-		if (!controller.isAndroidAuto() || mediaItems.size != 1) {
+		if (!controller.isAndroidAuto() || mediaItems.isEmpty()) {
 			return super.onSetMediaItems(
 				mediaSession,
 				controller,
@@ -187,16 +217,72 @@ internal class MediaSessionCallback(
 		return scope.future {
 			val requestedItem = mediaItems.first()
 			val expandedItems = library.expand(requestedItem.mediaId)
-			val requestedSongId = requestedItem.mediaId.substringAfterLast(":")
-			val expandedIndex = expandedItems.indexOfFirst {
-				it.mediaId == requestedSongId
-			}
 
-			MediaSession.MediaItemsWithStartPosition(
-				expandedItems,
-				expandedIndex.takeIf { it >= 0 } ?: startIndex,
-				startPositionMs
-			)
+			if (expandedItems.isNotEmpty()) {
+				val requestedSongId = requestedItem.mediaId.substringAfterLast(":")
+				val expandedIndex = expandedItems.indexOfFirst {
+					it.mediaId == requestedSongId || it.mediaId.substringAfterLast(":") == requestedSongId
+				}
+				MediaSession.MediaItemsWithStartPosition(
+					expandedItems,
+					expandedIndex.takeIf { it >= 0 } ?: startIndex,
+					startPositionMs
+				)
+			} else {
+				val (currentItems, currentIndex, currentPosition) = withContext(Dispatchers.Main) {
+					val count = instance.mediaItemCount
+					if (count > 0) {
+						Triple(
+							(0 until count).map { instance.getMediaItemAt(it) },
+							instance.currentMediaItemIndex,
+							instance.currentPosition
+						)
+					} else {
+						Triple(emptyList(), -1, 0L)
+					}
+				}
+
+				if (currentItems.isNotEmpty()) {
+					val safeIndex = currentIndex.coerceIn(0, currentItems.size - 1)
+					MediaSession.MediaItemsWithStartPosition(
+						currentItems,
+						safeIndex,
+						currentPosition.coerceAtLeast(0L)
+					)
+				} else {
+					val state = stateRepository.getState()
+					if (state.queue.isNotEmpty()) {
+						val savedItems = withContext(Dispatchers.Default) {
+							state.queue.map { it.toMediaItem() }
+						}
+						val savedIndex = state.currentIndex.coerceIn(0, (savedItems.size - 1).coerceAtLeast(0))
+						val durationMs = state.queue.getOrNull(savedIndex)?.duration?.inWholeMilliseconds ?: 0L
+						val savedPosition = if (durationMs > 0) {
+							(state.progress * durationMs).toLong().coerceIn(0L, durationMs)
+						} else {
+							0L
+						}
+						MediaSession.MediaItemsWithStartPosition(
+							savedItems,
+							savedIndex,
+							savedPosition
+						)
+					} else {
+						val future = withContext(Dispatchers.Main) {
+							super.onSetMediaItems(
+								mediaSession,
+								controller,
+								mediaItems,
+								startIndex,
+								startPositionMs
+							)
+						}
+						withContext(Dispatchers.IO) {
+							future.get()
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -236,5 +322,7 @@ internal class MediaSessionCallback(
 
 	private fun MediaSession.ControllerInfo.isAndroidAuto(): Boolean =
 		packageName == "com.google.android.projection.gearhead" ||
-			packageName == "com.google.android.car.media"
+			packageName == "com.google.android.car.media" ||
+			packageName.contains("gearhead") ||
+			packageName.contains("car.media")
 }

@@ -221,25 +221,66 @@ class AndroidAutoLibrary(
 	}
 
 	suspend fun expand(mediaId: String): List<MediaItem> {
-		val songs = if (!mediaId.startsWith("$PLAYABLE_PREFIX:")) {
-			listOfNotNull(songDao.getPlayableSongById(mediaId))
-		} else {
-			val parsedEntity = mediaId.parseEntityIndex()
+		if (mediaId.isBlank() || mediaId == ROOT_ID || mediaId.startsWith("androidx.media3.session.recent")) {
+			return emptyList()
+		}
 
-			when (parsedEntity.entityType) {
-				ALBUM_PREFIX -> songDao.getAlbumPlayableSongs(
-					albumId = parsedEntity.parentEntityId,
+		val songs = when {
+			mediaId.startsWith("$PLAYABLE_PREFIX:") -> {
+				val parsedEntity = mediaId.parseEntityIndex()
+
+				when (parsedEntity.entityType) {
+					ALBUM_PREFIX -> songDao.getAlbumPlayableSongs(
+						albumId = parsedEntity.parentEntityId,
+						limit = maxQueueSize,
+						offset = parsedEntity.windowOffset()
+					)
+
+					PLAYLIST_PREFIX -> playlistDao.getPlaylistPlayableSongs(
+						playlistId = parsedEntity.parentEntityId,
+						limit = maxQueueSize,
+						offset = parsedEntity.windowOffset()
+					)
+
+					else -> listOfNotNull(songDao.getPlayableSongById(parsedEntity.entityId))
+				}
+			}
+
+			mediaId.hasPrefix(ALBUM_PREFIX) -> {
+				songDao.getAlbumPlayableSongs(
+					albumId = mediaId.stripPrefix(ALBUM_PREFIX),
 					limit = maxQueueSize,
-					offset = parsedEntity.windowOffset()
+					offset = 0
 				)
+			}
 
-				PLAYLIST_PREFIX -> playlistDao.getPlaylistPlayableSongs(
-					playlistId = parsedEntity.parentEntityId,
+			mediaId.hasPrefix(PLAYLIST_PREFIX) -> {
+				playlistDao.getPlaylistPlayableSongs(
+					playlistId = mediaId.stripPrefix(PLAYLIST_PREFIX),
 					limit = maxQueueSize,
-					offset = parsedEntity.windowOffset()
+					offset = 0
 				)
+			}
 
-				else -> listOfNotNull(songDao.getPlayableSongById(parsedEntity.entityId))
+			mediaId.hasPrefix(ARTIST_PREFIX) -> {
+				val artistId = mediaId.stripPrefix(ARTIST_PREFIX)
+				val albums = albumDao.getAlbumsByArtistId(artistId, maxQueueSize, 0)
+				albums.flatMap { album ->
+					songDao.getAlbumPlayableSongs(album.albumId, maxQueueSize, 0)
+				}
+			}
+
+			mediaId == STARRED_SONGS_ID -> {
+				songDao.getStarredPlayableSongsPage(maxQueueSize, 0)
+			}
+
+			mediaId == SONGS_ID -> {
+				songDao.getPlayableSongsPage(maxQueueSize, 0)
+			}
+
+			else -> {
+				val songId = mediaId.substringAfterLast(":")
+				listOfNotNull(songDao.getPlayableSongById(songId))
 			}
 		}
 
