@@ -207,12 +207,12 @@ jobs:
           fi
           COMMIT_TITLE=$(printf '%s\n' "$FULL_MSG" | head -n 1 | sed 's/`/\\`/g')
 
-          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_number }}"
-          artifact_url="$run_url/artifacts/navic-release-android"
+          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs"
+          artifact_url="$run_url/${{ forgejo.run_id }}/artifacts/navic-release-android"
 
           # artifacts are public on codeberg, everyone can download them. even logged out. :)
-          content=$(printf 'Builds for [%s](<%s>)\n\n(%s) - `%s`\n%s' \
-            "${GITHUB_SHA:0:7}" "$run_url" "$REF_NAME" "$COMMIT_TITLE" "$artifact_url")
+          content=$(printf 'Builds for [`%s`](<%s>)\n\n(`%s`) - `%s`\n%s' \
+            "${GITHUB_SHA:0:7}" "$run_url/${{ forgejo.run_number }}" "$REF_NAME" "$COMMIT_TITLE" "$artifact_url")
           payload=$(jq -n --arg content "$content" '{content: $content}')
 
           curl --fail -XPOST "$WEBHOOK_URL" -H 'Content-Type: application/json' -d "$payload"
