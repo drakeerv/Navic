@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,6 +25,7 @@ import paige.navic.R
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Album
 import paige.navic.ui.component.common.CoverArt
+import paige.navic.ui.component.common.MarqueeText
 
 @Composable
 fun DiscTitleHeading(
@@ -61,12 +61,13 @@ fun DiscTitleHeading(
 
 		Spacer(modifier = Modifier.width(8.dp))
 
-		Text(
+		MarqueeText(
 			text = title?.takeIf { it.isNotBlank() }
 				?: stringResource(R.string.title_disc_number, disc),
-			style = MaterialTheme.typography.titleMediumEmphasized,
-			fontWeight = FontWeight(600),
-			color = MaterialTheme.colorScheme.onSurfaceVariant
+			style = MaterialTheme.typography.titleMediumEmphasized.copy(
+				color = MaterialTheme.colorScheme.onSurfaceVariant,
+				fontWeight = FontWeight(600)
+			)
 		)
 	}
 }
