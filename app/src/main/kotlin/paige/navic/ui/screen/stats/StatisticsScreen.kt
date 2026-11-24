@@ -16,9 +16,13 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -31,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +64,8 @@ import paige.navic.domain.model.settings.StatsCalculationMode
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.Headphones
 import paige.navic.icons.filled.Star
+import paige.navic.icons.outlined.Check
+import paige.navic.icons.outlined.MoreVert
 import paige.navic.icons.outlined.Note
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.layout.ArtCarousel
@@ -87,16 +94,64 @@ fun StatisticsScreen(
 
 	var selectedArtist by remember { mutableStateOf<DomainArtist?>(null) }
 
+	val topBarActions: @Composable RowScope.() -> Unit = {
+		Box {
+			var menuExpanded by rememberSaveable { mutableStateOf(false) }
+			IconButton(onClick = { menuExpanded = true }) {
+				Icon(
+					imageVector = Icons.Outlined.MoreVert,
+					contentDescription = stringResource(R.string.option_stats_calculation)
+				)
+			}
+			DropdownMenu(
+				expanded = menuExpanded,
+				onDismissRequest = { menuExpanded = false }
+			) {
+				StatsCalculationMode.entries.forEach { mode ->
+					val isSelected = preferenceManager.statsCalculationMode == mode
+					DropdownMenuItem(
+						text = {
+							val text = when (mode) {
+								StatsCalculationMode.Duration -> stringResource(R.string.option_stats_duration)
+								StatsCalculationMode.PlayCount -> stringResource(R.string.option_stats_play_count)
+							}
+							Text(
+								text = text,
+								fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+							)
+						},
+						trailingIcon = {
+							if (isSelected) {
+								Icon(
+									imageVector = Icons.Outlined.Check,
+									contentDescription = null
+								)
+							}
+						},
+						onClick = {
+							preferenceManager.statsCalculationMode = mode
+							menuExpanded = false
+						}
+					)
+				}
+			}
+		}
+	}
+
 	NavicTheme {
 		Scaffold(
 			topBar = {
 				if (!nested) {
 					RootTopBar(
 						title = { Text(stringResource(R.string.title_statistics)) },
-						scrollBehavior = scrollBehavior
+						scrollBehavior = scrollBehavior,
+						actions = topBarActions
 					)
 				} else {
-					NestedTopBar(title = { Text(stringResource(R.string.title_statistics)) })
+					NestedTopBar(
+						title = { Text(stringResource(R.string.title_statistics)) },
+						actions = topBarActions
+					)
 				}
 			},
 			bottomBar = {

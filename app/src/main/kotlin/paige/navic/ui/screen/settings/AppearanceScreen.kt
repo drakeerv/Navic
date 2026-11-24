@@ -40,7 +40,6 @@ import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
 import paige.navic.domain.model.settings.AnimationStyle
 import paige.navic.domain.model.settings.MarqueeSpeed
-import paige.navic.domain.model.settings.StatsCalculationMode
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
@@ -228,26 +227,26 @@ fun SettingsAppearanceScreen() {
 						supportingContent = { Text(stringResource(R.string.subtitle_dynamic_theming)) },
 						checked = preferenceManager.dynamicTheming,
 						onCheckedChange = { preferenceManager.dynamicTheming = it },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 0, count = 6)
 					)
 					SettingsToggleItem(
 						content = { Text(stringResource(R.string.option_alphabetical_scroll)) },
 						checked = preferenceManager.alphabeticalScroll,
 						onCheckedChange = { preferenceManager.alphabeticalScroll = it },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 1, count = 6)
 					)
 					SettingsToggleItem(
 						content = { Text(stringResource(R.string.option_enable_predictive_back_animations)) },
 						checked = preferenceManager.enablePredictiveBackAnimations,
 						onCheckedChange = { preferenceManager.enablePredictiveBackAnimations = it },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 6)
 					)
 					SettingsToggleItem(
 						content = { Text(stringResource(R.string.option_enable_ratings)) },
 						supportingContent = { Text(stringResource(R.string.subtitle_enable_ratings)) },
 						checked = preferenceManager.enableRatings,
 						onCheckedChange = { preferenceManager.enableRatings = it },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 3, count = 6)
 					)
 					SettingsChoiceItem(
 						content = { Text(stringResource(R.string.option_use_marquee_text)) },
@@ -255,7 +254,7 @@ fun SettingsAppearanceScreen() {
 						selectedChoice = preferenceManager.marqueeSpeed,
 						onChoiceSelected = { preferenceManager.marqueeSpeed = it },
 						label = { it.name },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 4, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 4, count = 6)
 					)
 					SettingsChoiceItem(
 						content = { Text(stringResource(R.string.option_animation_style)) },
@@ -263,21 +262,7 @@ fun SettingsAppearanceScreen() {
 						selectedChoice = preferenceManager.animationStyle,
 						onChoiceSelected = { preferenceManager.animationStyle = it },
 						label = { it.name },
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 5, count = 7)
-					)
-					SettingsChoiceItem(
-						content = { Text(stringResource(R.string.option_stats_calculation)) },
-						choices = StatsCalculationMode.entries.toImmutableList(),
-						selectedChoice = preferenceManager.statsCalculationMode,
-						onChoiceSelected = { preferenceManager.statsCalculationMode = it },
-						label = {
-							when (it) {
-								StatsCalculationMode.Duration -> stringResource(R.string.option_stats_duration)
-								StatsCalculationMode.PlayCount -> stringResource(R.string.option_stats_play_count)
-							}
-						},
-						description = stringResource(R.string.subtitle_stats_calculation),
-						shapes = SegmentedListItemDefaults.segmentedShapes(index = 6, count = 7)
+						shapes = SegmentedListItemDefaults.segmentedShapes(index = 5, count = 6)
 					)
 				}
 			}
