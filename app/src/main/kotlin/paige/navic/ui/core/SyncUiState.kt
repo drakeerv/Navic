@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -15,8 +15,7 @@ sealed class SyncUiState {
 data class LoginFormState(
 	val instanceError: Boolean = false,
 	val usernameError: Boolean = false,
-	val passwordError: Boolean = false,
-	val localFoldersError: Boolean = false
+	val passwordError: Boolean = false
 )
 
 enum class LoginField {

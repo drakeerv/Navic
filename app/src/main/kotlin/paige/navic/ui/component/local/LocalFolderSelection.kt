@@ -11,14 +11,13 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import paige.navic.R
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Delete
+import paige.navic.icons.outlined.Folder
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 
@@ -36,7 +36,6 @@ fun LocalFolderSelection(
 	modifier: Modifier = Modifier,
 	folderUris: List<String>,
 	enabled: Boolean = true,
-	showError: Boolean = false,
 	onFoldersChanged: (List<String>) -> Unit,
 	onPermissionError: () -> Unit
 ) {
@@ -65,30 +64,12 @@ fun LocalFolderSelection(
 		modifier = modifier,
 		verticalArrangement = Arrangement.spacedBy(8.dp)
 	) {
-		Button(
-			modifier = Modifier.fillMaxWidth(),
-			onClick = { picker.launch(null) },
-			enabled = enabled
+		Column(
+			modifier = Modifier
+				.fillMaxWidth()
+				.animateContentSize(),
+			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 		) {
-			Text(
-				stringResource(
-					if (folderUris.isEmpty()) {
-						R.string.action_choose_music_folders
-					} else {
-						R.string.action_add_music_folder
-					}
-				)
-			)
-		}
-
-		if (folderUris.isEmpty()) {
-			Text(
-				text = stringResource(R.string.info_local_folders_empty),
-				style = MaterialTheme.typography.bodyMedium,
-				color = MaterialTheme.colorScheme.onSurfaceVariant,
-				modifier = Modifier.padding(horizontal = 4.dp)
-			)
-		} else {
 			folderUris.forEachIndexed { index, uri ->
 				SegmentedListItem(
 					shapes = SegmentedListItemDefaults.segmentedShapes(
@@ -96,6 +77,12 @@ fun LocalFolderSelection(
 						count = folderUris.size
 					),
 					enabled = enabled,
+					leadingContent = {
+						Icon(
+							imageVector = Icons.Outlined.Folder,
+							contentDescription = null
+						)
+					},
 					trailingContent = {
 						IconButton(
 							onClick = {
@@ -109,19 +96,24 @@ fun LocalFolderSelection(
 							)
 						}
 					},
-					supportingContent = null,
 					content = { Text(uri.toFolderName()) }
 				)
 			}
 		}
 
-		if (showError) {
-			Text(
-				text = stringResource(R.string.info_local_folders_required),
-				style = MaterialTheme.typography.bodySmall,
-				color = MaterialTheme.colorScheme.error,
-				modifier = Modifier.padding(horizontal = 4.dp)
+		Button(
+			modifier = Modifier.fillMaxWidth(),
+			onClick = { picker.launch(null) },
+			enabled = enabled
+		) {
+			val label = stringResource(
+				if (folderUris.isEmpty()) {
+					R.string.action_choose_music_folders
+				} else {
+					R.string.action_add_music_folder
+				}
 			)
+			Text(text = label)
 		}
 	}
 }

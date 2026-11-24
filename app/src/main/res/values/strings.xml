@@ -101,7 +101,7 @@
 
 	<!-- Subtitles -->
 
-	<string name="subtitle_welcome">Select your server type</string>
+	<string name="subtitle_welcome">Select your music source</string>
 	<string name="subtitle_appearance">Themes, colors, layout, app icon</string>
 	<string name="subtitle_now_playing">Customize the now playing &amp; lyrics views</string>
 	<string name="subtitle_bottom_app_bar">Customize the bottom bar &amp; mini player</string>
@@ -514,8 +514,8 @@
 	<string name="info_syncing_genres">Syncing genres…</string>
 	<string name="info_syncing_artists">Syncing artists…</string>
 	<string name="info_syncing_radios">Syncing radios…</string>
-	<string name="info_login_description">Log into a Subsonic compatible music server.</string>
-	<string name="info_login_description_jellyfin">Log into a Jellyfin server.</string>
+	<string name="info_login_description">Log into a Subsonic compatible music server</string>
+	<string name="info_login_description_jellyfin">Log into a Jellyfin server</string>
 	<string name="info_exception_handler">This will immediately crash the application. Are you sure?</string>
 	<string name="info_streaming_quality">Higher quality presets will use more data. Transcoding can severely impact load times and cause lyrics to become unsynced. Select Lossless if you encounter any issues.</string>
 	<string name="info_transcode_streaming_unsupported">Your server does not support the "transcodeOffset" server extension for transcode streaming, so these options are unavailable.</string>
@@ -590,11 +590,9 @@
 	<string name="action_remove_folder">Remove folder</string>
 	<string name="action_create_local_library">Create local library</string>
 	<string name="action_save_local_folders">Save local folders</string>
-	<string name="info_local_library_onboarding">Audio files stay on this device; Navic stores their metadata locally.</string>
-	<string name="info_local_library_short">Use music stored on this device.</string>
-	<string name="info_local_library_settings">Navic indexes music from these folders. Audio files stay on this device.</string>
-	<string name="info_local_folders_empty">No folders selected. Add at least one folder containing music.</string>
-	<string name="info_local_folders_required">Select at least one music folder.</string>
+	<string name="info_local_library_onboarding">Music files from folders you select remain on your device. Navic indexes and stores their metadata locally.</string>
+	<string name="info_local_library_short">Use music stored on your device</string>
+	<string name="info_local_library_settings">Navic indexes music from these folders.</string>
 	<string name="info_local_folder_permission_denied">Navic could not keep access to that folder. Try selecting it again.</string>
 	<string name="info_local_folders_saved">Local folders saved. Syncing your library…</string>
 	<string name="info_on_this_device">on this device</string>

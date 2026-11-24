@@ -81,7 +81,6 @@ fun SettingsLocalLibraryScreen() {
 			LocalFolderSelection(
 				modifier = Modifier.fillMaxWidth(),
 				folderUris = folders,
-				showError = folders.isEmpty(),
 				onFoldersChanged = { folders = it },
 				onPermissionError = {
 					scope.launch {

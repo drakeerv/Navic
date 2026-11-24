@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -99,17 +99,16 @@ class LoginManager(
 		snapshotFlow { instanceState.text.isBlank() },
 		snapshotFlow { usernameState.text.isBlank() },
 		snapshotFlow { passwordState.text.isBlank() },
-		snapshotFlow { Triple(serverType, authMethod, localFolderUris.isEmpty()) },
+		snapshotFlow { Pair(serverType, authMethod) },
 		validationShown
 	) { instanceBlank, usernameBlank, secretBlank, method, shown ->
-		val (type, auth, localFoldersEmpty) = method
+		val (type, auth) = method
 		val needsUsername = type == ServerType.JELLYFIN ||
 			(type != null && auth == AuthMethod.Token)
 		LoginFormState(
 			instanceError = shown && instanceBlank,
 			usernameError = shown && needsUsername && usernameBlank,
-			passwordError = shown && secretBlank,
-			localFoldersError = shown && type == ServerType.LOCAL && localFoldersEmpty
+			passwordError = shown && secretBlank
 		)
 	}.stateIn(
 		scope = mainScope,

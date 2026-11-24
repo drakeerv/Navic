@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -17,6 +17,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -68,6 +69,7 @@ import paige.navic.domain.server.ServerType
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.ArrowBack
 import paige.navic.icons.outlined.Error
+import paige.navic.icons.outlined.Info
 import paige.navic.ui.component.common.ErrorBox
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.dialog.FormDialog
@@ -268,16 +270,10 @@ fun LoginPage(
 							.padding(horizontal = 16.dp),
 						verticalArrangement = Arrangement.spacedBy(12.dp)
 					) {
-						Text(
-							text = stringResource(R.string.info_local_library_onboarding),
-							style = MaterialTheme.typography.bodyMedium,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
 						LocalFolderSelection(
 							modifier = Modifier.fillMaxWidth(),
 							folderUris = viewModel.localFolderUris,
 							enabled = !isBusy,
-							showError = formState.localFoldersError,
 							onFoldersChanged = viewModel::setLocalFolders,
 							onPermissionError = {
 								loginScope.launch {
@@ -287,6 +283,22 @@ fun LoginPage(
 								}
 							}
 						)
+
+						Row(
+							modifier = Modifier.padding(horizontal = 8.dp),
+							horizontalArrangement = Arrangement.spacedBy(16.dp)
+						) {
+							Icon(
+								imageVector = Icons.Outlined.Info,
+								contentDescription = null,
+								tint = MaterialTheme.colorScheme.onSurfaceVariant
+							)
+							Text(
+								text = stringResource(R.string.info_local_library_onboarding),
+								color = MaterialTheme.colorScheme.onSurfaceVariant,
+								style = MaterialTheme.typography.bodyMedium
+							)
+						}
 					}
 				} else {
 					LoginScreenFields(
@@ -334,20 +346,19 @@ fun LoginPage(
 			) {
 				Button(
 					modifier = Modifier.fillMaxWidth(),
-					onClick = {
-						login()
-					},
-					enabled = !isBusy,
+					onClick = login,
+					enabled = !isBusy && (viewModel.serverType != ServerType.LOCAL || viewModel.localFolderUris.isNotEmpty()),
 					shape = CircleShape
 				) {
+					val label = stringResource(
+						when {
+							viewModel.serverType != ServerType.LOCAL -> R.string.action_log_in
+							viewModel.hasLocalAccount -> R.string.action_save_local_folders
+							else -> R.string.action_create_local_library
+						}
+					)
 					Text(
-						text = stringResource(
-							when {
-								viewModel.serverType != ServerType.LOCAL -> R.string.action_log_in
-								viewModel.hasLocalAccount -> R.string.action_save_local_folders
-								else -> R.string.action_create_local_library
-							}
-						),
+						text = label,
 						fontFamily = defaultFont(100)
 					)
 				}
