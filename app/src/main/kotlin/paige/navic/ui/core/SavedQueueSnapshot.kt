@@ -15,7 +15,6 @@ data class SavedQueueSnapshot(
 	val activeIndex: Int,
 	val progress: Float,
 	val isPaused: Boolean,
-	val shuffleOrder: List<Int>,
 	val isShuffleEnabled: Boolean,
 	val currentSong: DomainSong?
 )

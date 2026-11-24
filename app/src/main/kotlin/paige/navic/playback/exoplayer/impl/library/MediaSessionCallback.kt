@@ -41,11 +41,7 @@ internal class MediaSessionCallback(
 
 	companion object {
 		// commands
-		const val COMMAND_SHUFFLE_STATE = "COMMAND_SHUFFLE_STATE"
-
-		// keys
 		const val SHUFFLE_ORDER_KEY = "shuffle_order"
-		const val SHUFFLE_ENABLED_KEY = "shuffle_enabled"
 	}
 
 	override fun onConnect(
@@ -56,7 +52,6 @@ internal class MediaSessionCallback(
 			.buildUpon()
 			.apply {
 				add(SessionCommand(COMMAND_SHUFFLE, Bundle.EMPTY))
-				add(SessionCommand(COMMAND_SHUFFLE_STATE, Bundle.EMPTY))
 				add(SessionCommand(COMMAND_REPEAT, Bundle.EMPTY))
 			}
 			.build()
@@ -93,23 +88,13 @@ internal class MediaSessionCallback(
 
 		when (customCommand.customAction) {
 			COMMAND_SHUFFLE -> {
-				val enabled = args.getBoolean(
-					SHUFFLE_ENABLED_KEY, !instance.shuffleModeEnabled
-				)
-
-				args.getIntArray(SHUFFLE_ORDER_KEY)
-					?.takeIf { it.size == instance.mediaItemCount }
-					?.let { instance.shuffleOrder = BetterShuffleOrder(it) }
-
-				instance.shuffleModeEnabled = enabled
-
-				session.broadcastCustomCommand(
-					SessionCommand(COMMAND_SHUFFLE_STATE, Bundle.EMPTY),
-					Bundle().apply {
-						putBoolean(SHUFFLE_ENABLED_KEY, enabled)
-						putIntArray(SHUFFLE_ORDER_KEY, instance.shuffleOrder.toIntArray())
-					}
-				)
+				val order = args.getIntArray(SHUFFLE_ORDER_KEY)
+				if (order == null) {
+					// no order means the notification button, toggle the mode
+					instance.shuffleModeEnabled = !instance.shuffleModeEnabled
+				} else if (order.size == instance.mediaItemCount) {
+					instance.shuffleOrder = BetterShuffleOrder(order)
+				}
 			}
 
 			COMMAND_REPEAT -> {
@@ -252,14 +237,4 @@ internal class MediaSessionCallback(
 	private fun MediaSession.ControllerInfo.isAndroidAuto(): Boolean =
 		packageName == "com.google.android.projection.gearhead" ||
 			packageName == "com.google.android.car.media"
-
-	private fun androidx.media3.exoplayer.source.ShuffleOrder.toIntArray(): IntArray {
-		val order = IntArray(length)
-		var index = firstIndex
-		for (position in order.indices) {
-			order[position] = index
-			index = getNextIndex(index)
-		}
-		return order
-	}
 }

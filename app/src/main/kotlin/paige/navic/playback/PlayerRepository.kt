@@ -152,14 +152,11 @@ class PlayerRepository(
 				currentSongsById.clear()
 			}
 
-			controllerHandler?.startOrder(songs.size, index)
-
 			controller?.let { player ->
 				if (songs.isEmpty()) {
 					player.clearMediaItems()
 				} else {
 					player.setMediaItems(items, index, 0L)
-					controllerHandler?.pushOrder()
 					player.prepare()
 					player.play()
 				}
@@ -221,16 +218,14 @@ class PlayerRepository(
 		val index =
 			if (savedState.currentIndex in mediaItems.indices) savedState.currentIndex else 0
 
-		controllerHandler?.startOrder(mediaItems.size, index)
-
 		controller.apply {
-			setMediaItems(mediaItems)
+			// anchor the restored song at the head of the generated shuffle order
+			setMediaItems(mediaItems, index, 0L)
 
 			this.shuffleModeEnabled = savedState.isShuffleEnabled
 			this.repeatMode = savedState.repeatMode
 			this.playbackParameters = PlaybackParameters(savedState.playbackSpeed)
 		}
-		controllerHandler?.pushOrder()
 
 		val songDurationMs =
 			savedState.queue.getOrNull(index)?.duration?.inWholeMilliseconds ?: 0L
@@ -305,9 +300,7 @@ class PlayerRepository(
 	fun addToQueueSingle(song: DomainSong, notify: Boolean = true) {
 		rememberSongs(listOf(song))
 		if (uiState.value.queue.isEmpty()) rememberCurrentSong(song)
-		controllerHandler?.appendOrder(1)
 		controller?.addMediaItem(song.toMediaItem())
-		controllerHandler?.pushOrder()
 		if (notify) snackBarManager.notifyAddedToQueue()
 	}
 
@@ -327,17 +320,13 @@ class PlayerRepository(
 		val items = songs.map { it.toMediaItem() }
 		rememberSongs(songs)
 		if (uiState.value.queue.isEmpty()) songs.firstOrNull()?.let(::rememberCurrentSong)
-		controllerHandler?.appendOrder(songs.size)
 		controller?.addMediaItems(items)
-		controllerHandler?.pushOrder()
 		if (notify) snackBarManager.notifyAddedToQueue()
 	}
 
 	fun removeFromQueue(index: Int) {
 		val normalIndex = uiState.value.normalIndex(index)
-		controllerHandler?.removeOrder(index)
 		controller?.removeMediaItem(normalIndex)
-		controllerHandler?.pushOrder()
 	}
 
 	fun moveQueueItem(fromIndex: Int, toIndex: Int) {
@@ -349,10 +338,8 @@ class PlayerRepository(
 
 		if (state.isShuffled) {
 			controllerHandler?.moveOrder(fromIndex, toIndex)
-			controllerHandler?.pushOrder()
 		} else {
 			controller?.moveMediaItem(fromIndex, toIndex)
-			controllerHandler?.clearOrder()
 		}
 	}
 
@@ -369,7 +356,6 @@ class PlayerRepository(
 			activeIndex = cappedIndex,
 			progress = currentState.progress,
 			isPaused = currentState.isPaused,
-			shuffleOrder = currentState.shuffleOrder,
 			isShuffleEnabled = currentState.isShuffleEnabled,
 			currentSong = currentState.currentSong
 		)
@@ -388,18 +374,15 @@ class PlayerRepository(
 				val currentMediaIdx = player.currentMediaItemIndex
 				val totalCount = player.mediaItemCount
 				if (totalCount > 1 && currentMediaIdx in 0 until totalCount) {
-					controllerHandler?.clearOrder()
 					if (currentMediaIdx + 1 < totalCount) {
 						player.removeMediaItems(currentMediaIdx + 1, totalCount)
 					}
 					if (currentMediaIdx > 0) {
 						player.removeMediaItems(0, currentMediaIdx)
 					}
-					controllerHandler?.pushOrder()
 				}
 			}
 		} else {
-			controllerHandler?.clearOrder()
 			controller?.clearMediaItems()
 			queueSongsById.clear()
 			currentSongsById.clear()
@@ -427,14 +410,10 @@ class PlayerRepository(
 
 		val index = snapshot.activeIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
 
-		controllerHandler?.startOrder(items.size, index)
-
 		player.apply {
 			setMediaItems(items, index, 0L)
 			this.shuffleModeEnabled = snapshot.isShuffleEnabled
 		}
-
-		controllerHandler?.pushOrder()
 
 		val songDurationMs = snapshot.songs.getOrNull(index)?.duration?.inWholeMilliseconds ?: 0L
 		val positionMs = if (songDurationMs > 0) {
@@ -451,8 +430,16 @@ class PlayerRepository(
 		checkAndAutoFillQueue()
 	}
 
-	fun playAt(index: Int) {
+	/**
+	 * play song at specified timeline index
+	 *
+	 * @param index timeline index (that means the normal queue)
+	 * @param restart whether playback should restart from the beginning,
+	 * if the provided index doesn't differ from the current index
+	 */
+	fun playAt(index: Int, restart: Boolean = false) {
 		val controller = controller ?: return
+		if (controller.currentMediaItemIndex == index && !restart) return
 
 		if (index in 0 until controller.mediaItemCount) {
 			controller.seekTo(index, 0L)
@@ -467,9 +454,9 @@ class PlayerRepository(
 		val insertAt = player.nextInsertIndex()
 		rememberSongs(listOf(song))
 
-		controllerHandler?.insertOrder(insertAt, 1)
+		val order = controllerHandler?.insertOrder(insertAt, 1)
 		player.addMediaItem(insertAt, item)
-		controllerHandler?.pushOrder()
+		order?.let { controllerHandler?.pushOrder(it) }
 		snackBarManager.notifyPlayNext()
 	}
 
@@ -487,9 +474,9 @@ class PlayerRepository(
 		val insertAt = player.nextInsertIndex()
 		rememberSongs(newCollection)
 
-		controllerHandler?.insertOrder(insertAt, items.size)
+		val order = controllerHandler?.insertOrder(insertAt, items.size)
 		player.addMediaItems(insertAt, items)
-		controllerHandler?.pushOrder()
+		order?.let { controllerHandler?.pushOrder(it) }
 		snackBarManager.notifyPlayNext()
 	}
 
@@ -577,13 +564,10 @@ class PlayerRepository(
 		rememberSongs(listOf(dummyRadioSong))
 		rememberCurrentSong(dummyRadioSong)
 
-		controllerHandler?.startOrder(1, 0)
-
 		controller?.let { player ->
 			player.stop()
 			player.clearMediaItems()
 			player.setMediaItem(mediaItem)
-			controllerHandler?.pushOrder()
 			player.prepare()
 			player.play()
 		}
@@ -617,13 +601,11 @@ class PlayerRepository(
 
 	fun toggleShuffle() {
 		val controller = controller ?: return
-		controllerHandler?.startOrder(controller.mediaItemCount, controller.currentMediaItemIndex)
 		controller.shuffleModeEnabled = !controller.shuffleModeEnabled
 	}
 
 	fun setShuffle(mode: Boolean) {
 		val controller = controller ?: return
-		controllerHandler?.startOrder(controller.mediaItemCount, controller.currentMediaItemIndex)
 		controller.shuffleModeEnabled = mode
 	}
 

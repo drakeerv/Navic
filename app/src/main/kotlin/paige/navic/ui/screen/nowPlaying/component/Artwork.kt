@@ -39,7 +39,7 @@ fun NowPlayingArtwork(
 	val playerState by player.uiState.collectAsStateWithLifecycle()
 
 	val padding by animateDpAsState(
-		targetValue = if (playerState.isPaused || playerState.currentSong?.id != song.id)
+		targetValue = if (playerState.isPaused)
 			48.dp
 		else 16.dp
 	)

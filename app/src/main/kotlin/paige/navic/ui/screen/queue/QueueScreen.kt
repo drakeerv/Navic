@@ -261,7 +261,10 @@ fun QueueScreen() {
 						downloadedSongs = downloadedSongs,
 						onPlay = { index ->
 							if (playerState.activeIndex != index) {
-								player.playAt(playerState.normalIndex(index))
+								player.playAt(
+									index = playerState.normalIndex(index),
+									restart = true
+								)
 							}
 						},
 						onRemove = { index ->

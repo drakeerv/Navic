@@ -348,6 +348,12 @@ class ExoStateHolder(
 				player.addListener(object : Player.Listener {
 					override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
 						shuffleEnabled = shuffleModeEnabled
+						if (shuffleModeEnabled) {
+							player.shuffleOrder = BetterShuffleOrder(
+								player.mediaItemCount,
+								player.currentMediaItemIndex
+							)
+						}
 						mediaSession.setCustomLayout(makeButtons(player))
 					}
 
@@ -431,7 +437,7 @@ class ExoStateHolder(
 		val savedState = stateRepository.getState()
 		player.shuffleModeEnabled = savedState.isShuffleEnabled
 		player.repeatMode = savedState.repeatMode
-		// auto builds the queue before any order is pushed, so seed ours to keep the chosen song first
+		// seed our order so later playlist changes clone it instead of the default one
 		player.shuffleOrder = BetterShuffleOrder(
 			player.mediaItemCount,
 			player.currentMediaItemIndex
