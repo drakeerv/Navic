@@ -6,6 +6,7 @@
 
 package paige.navic.ui.component.sheet
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,10 +20,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -43,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -136,7 +140,7 @@ private fun AccountRow(
 	onRemove: (() -> Unit)? = null
 ) {
 	val accountName = account.username?.ifBlank { account.baseUrl } ?: account.baseUrl
-	val avatarSize = if (active) 56.dp else 40.dp
+	val avatarSize = 46.dp
 	val serverType = account.serverType
 
 	val leadingContent: @Composable () -> Unit = {
@@ -150,7 +154,10 @@ private fun AccountRow(
 				coilPlatformContext = coilPlatformContext
 			)
 		} else {
-			ServerTypeIcon(serverType = serverType, modifier = Modifier.size(42.dp))
+			ServerTypeIcon(
+				serverType = serverType,
+				modifier = Modifier.size(36.dp)
+			)
 		}
 	}
 
@@ -166,7 +173,7 @@ private fun AccountRow(
 					.padding(12.dp)
 					.fillMaxWidth(),
 				verticalAlignment = Alignment.CenterVertically,
-				horizontalArrangement = Arrangement.spacedBy(12.dp)
+				horizontalArrangement = Arrangement.spacedBy(8.dp)
 			) {
 				leadingContent()
 				Column(modifier = Modifier.weight(1f)) {
@@ -174,6 +181,10 @@ private fun AccountRow(
 						horizontalArrangement = Arrangement.spacedBy(4.dp),
 						verticalAlignment = Alignment.CenterVertically
 					) {
+						if (serverType != null && serverType != ServerType.LOCAL) {
+							ServerTypeIcon(serverType = serverType, modifier = Modifier.size(16.dp))
+						}
+
 						Text(
 							if (serverType != ServerType.LOCAL) {
 								accountName
@@ -182,23 +193,44 @@ private fun AccountRow(
 							}
 						)
 
-						if (serverType != null && serverType != ServerType.LOCAL) {
-							ServerTypeIcon(serverType = serverType, modifier = Modifier.size(16.dp))
+						if (active) {
+							Text(
+								text = stringResource(R.string.subtitle_active_account),
+								color = MaterialTheme.colorScheme.onSecondary,
+								style = MaterialTheme.typography.labelSmall,
+								modifier = Modifier
+									.background(
+										color = MaterialTheme.colorScheme.secondary,
+										shape = CircleShape
+									)
+									.padding(horizontal = 8.dp, vertical = 2.dp)
+							)
 						}
 					}
-					if (serverType != ServerType.LOCAL) {
-						Text(
-							text = account.baseUrl,
-							style = MaterialTheme.typography.labelSmall,
-							color = MaterialTheme.colorScheme.onSurfaceVariant
-						)
-					}
+					Text(
+						text = if (serverType != ServerType.LOCAL)
+							account.baseUrl
+						else
+							pluralStringResource(
+								R.plurals.count_folders,
+								account.localFolderUris.size,
+								account.localFolderUris.size
+							),
+						style = MaterialTheme.typography.labelSmall,
+						color = MaterialTheme.colorScheme.onSurfaceVariant
+					)
 				}
 				if (editable) {
 					Icon(
 						imageVector = Icons.Outlined.Edit,
 						contentDescription = stringResource(R.string.action_edit),
 						tint = MaterialTheme.colorScheme.onSurfaceVariant
+					)
+				}
+				IconButton(onClick = { onRemove?.invoke() }) {
+					Icon(
+						imageVector = Icons.Outlined.Delete,
+						contentDescription = stringResource(R.string.action_remove_account)
 					)
 				}
 			}
@@ -221,12 +253,13 @@ private fun AccountRow(
 					text = if (serverType != ServerType.LOCAL) {
 						account.baseUrl
 					} else {
-						stringResource(R.string.subtitle_local_library)
+						pluralStringResource(
+							R.plurals.count_folders,
+							account.localFolderUris.size,
+							account.localFolderUris.size
+						)
 					},
-					style = if (serverType != ServerType.LOCAL)
-						MaterialTheme.typography.labelSmall
-					else
-						MaterialTheme.typography.bodyLargeEmphasized,
+					style = MaterialTheme.typography.labelSmall,
 					color = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			},
@@ -240,6 +273,10 @@ private fun AccountRow(
 
 						ServerTypeIcon(serverType = serverType, modifier = Modifier.size(16.dp))
 					}
+				} else {
+					Text(
+						stringResource(R.string.subtitle_local_library)
+					)
 				}
 			}
 		)
@@ -330,7 +367,8 @@ fun AccountSheet(
 					onClick = {
 						animateToDismiss()
 						backStack.add(Screen.Settings.ConnectionOptions)
-					}
+					},
+					onRemove = { accountToRemove = activeAccount }
 				)
 			}
 
@@ -372,7 +410,11 @@ fun AccountSheet(
 				)
 			}
 
-			Spacer(Modifier.height(4.dp))
+			HorizontalDivider(
+				modifier = Modifier.padding(vertical = 8.dp),
+				thickness = 1.dp,
+				color = MaterialTheme.colorScheme.outlineVariant
+			)
 
 			Column(
 				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
@@ -462,7 +504,11 @@ fun AccountSheet(
 				)
 			}
 
-			Spacer(Modifier.height(4.dp))
+			HorizontalDivider(
+				modifier = Modifier.padding(vertical = 8.dp),
+				thickness = 1.dp,
+				color = MaterialTheme.colorScheme.outlineVariant
+			)
 
 			Column(
 				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
@@ -470,7 +516,7 @@ fun AccountSheet(
 				SegmentedListItem(
 					shapes = SegmentedListItemDefaults.segmentedShapes(
 						index = 0,
-						count = 3
+						count = 2
 					),
 					onClick = {
 						if (!syncState.isSyncing) {
@@ -505,7 +551,7 @@ fun AccountSheet(
 				SegmentedListItem(
 					shapes = SegmentedListItemDefaults.segmentedShapes(
 						index = 1,
-						count = 3
+						count = 2
 					),
 					onClick = {
 						animateToDismiss()
@@ -513,26 +559,6 @@ fun AccountSheet(
 					},
 					leadingContent = { Icon(Icons.Filled.Settings, null) },
 					content = { Text(stringResource(R.string.title_settings)) }
-				)
-
-				SegmentedListItem(
-					shapes = SegmentedListItemDefaults.segmentedShapes(
-						index = 2,
-						count = 3
-					),
-					onClick = {
-						accounts.firstOrNull { it.id == sessionManager.activeAccountId }
-							?.let { accountToRemove = it }
-					},
-					colors = SegmentedListItemDefaults.segmentedErrorColors(),
-					leadingContent = {
-						Icon(
-							imageVector = Icons.Outlined.Delete,
-							contentDescription = null,
-							tint = MaterialTheme.colorScheme.error
-						)
-					},
-					content = { Text(stringResource(R.string.action_remove_account)) }
 				)
 			}
 		}

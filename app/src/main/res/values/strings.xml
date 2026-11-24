@@ -595,8 +595,9 @@
 	<string name="notice_remove_local_account">This will delete the indexed database of your local music library, playlists and starred songs.</string>
 	<string name="title_delete_local_library_database">Delete local database?</string>
     <string name="info_update_failed">Update failed.</string>
+	<string name="subtitle_active_account">Active</string>
 
-    <!-- Plurals -->
+	<!-- Plurals -->
 
 	<plurals name="count_songs">
 		<item quantity="one">%1$d song</item>

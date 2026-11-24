@@ -167,6 +167,7 @@ fun LoginPage(
 				is LoginEvent.Error -> {
 					errorState = event.error
 				}
+
 				else -> {}
 			}
 		}
@@ -262,7 +263,9 @@ fun LoginPage(
 
 				if (viewModel.serverType == ServerType.LOCAL) {
 					Column(
-						modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(horizontal = 16.dp),
 						verticalArrangement = Arrangement.spacedBy(12.dp)
 					) {
 						Text(
@@ -286,24 +289,24 @@ fun LoginPage(
 						)
 					}
 				} else {
-				LoginScreenFields(
-					isBusy = isBusy,
-					instanceState = instanceState,
-					instanceError = formState.instanceError,
-					instanceFocusRequester = instanceFocusRequester,
-					authMethod = viewModel.authMethod,
-					serverType = viewModel.serverType,
-					onAuthMethodChange = viewModel::selectAuthMethod,
-					usernameState = usernameState,
-					usernameError = formState.usernameError,
-					usernameFocusRequester = usernameFocusRequester,
-					passwordState = passwordState,
-					passwordError = formState.passwordError,
-					passwordFocusRequester = passwordFocusRequester,
-					onLogin = login
-				)
+					LoginScreenFields(
+						isBusy = isBusy,
+						instanceState = instanceState,
+						instanceError = formState.instanceError,
+						instanceFocusRequester = instanceFocusRequester,
+						authMethod = viewModel.authMethod,
+						serverType = viewModel.serverType,
+						onAuthMethodChange = viewModel::selectAuthMethod,
+						usernameState = usernameState,
+						usernameError = formState.usernameError,
+						usernameFocusRequester = usernameFocusRequester,
+						passwordState = passwordState,
+						passwordError = formState.passwordError,
+						passwordFocusRequester = passwordFocusRequester,
+						onLogin = login
+					)
 
-				Spacer(Modifier.height(12.dp))
+					Spacer(Modifier.height(12.dp))
 
 					Text(
 						text = stringResource(R.string.option_connection_options),
