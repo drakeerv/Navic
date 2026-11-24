@@ -255,6 +255,5 @@ dependencies {
 	implementation(libs.jellyfin.core)
 	implementation(libs.jellyfin.model)
 	"defaultImplementation"(libs.antisocialcord)
-	implementation(libs.mimetypes)
 	implementation(libs.kotlinx.coroutines.guava)
 }
