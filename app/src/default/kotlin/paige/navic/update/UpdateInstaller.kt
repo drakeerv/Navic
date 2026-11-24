@@ -86,14 +86,39 @@ internal object UpdateInstaller {
 
 class UpdateInstallReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
-		if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+		val action = intent.action ?: return
+		if (action != Intent.ACTION_MY_PACKAGE_REPLACED) return
 
-		val launchIntent = context.packageManager
-			.getLaunchIntentForPackage(context.packageName)
-			?.apply {
-				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-			} ?: return
+		val status = intent.getIntExtra(
+			PackageInstaller.EXTRA_STATUS,
+			PackageInstaller.STATUS_FAILURE
+		)
 
-		context.startActivity(launchIntent)
+		when (status) {
+			PackageInstaller.STATUS_PENDING_USER_ACTION -> {
+				val confirmationIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+					intent.getParcelableExtra(Intent.EXTRA_INTENT, Intent::class.java)
+				} else {
+					@Suppress("DEPRECATION")
+					intent.getParcelableExtra(Intent.EXTRA_INTENT)
+				}
+				confirmationIntent?.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+				confirmationIntent?.let(context::startActivity)
+			}
+
+			PackageInstaller.STATUS_SUCCESS -> {
+				val launchIntent = context.packageManager
+					.getLaunchIntentForPackage(context.packageName)
+					?.apply {
+						addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+					} ?: return
+
+				try {
+					context.startActivity(launchIntent)
+				} catch (_: Exception) {
+					// blocked by the OS, maybe should post a notification instead?
+				}
+			}
+		}
 	}
 }
