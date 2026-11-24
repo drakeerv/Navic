@@ -207,7 +207,7 @@ jobs:
           fi
           COMMIT_TITLE=$(printf '%s\n' "$FULL_MSG" | head -n 1 | sed 's/`/\\`/g')
 
-          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_id }}"
+          run_url="${{ forgejo.server_url }}/${{ forgejo.repository }}/actions/runs/${{ forgejo.run_number }}"
           artifact_url="$run_url/artifacts/navic-release-android"
 
           # artifacts are public on codeberg, everyone can download them. even logged out. :)
