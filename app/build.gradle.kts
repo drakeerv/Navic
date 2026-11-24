@@ -82,7 +82,7 @@ android {
 			initWith(getByName("release"))
 			applicationIdSuffix = ".ci"
 			matchingFallbacks += "release"
-			resValue("string", "app_name", "Navic CI")
+			resValue("string", "app_name", "Navic (CI)")
 			buildConfigField("boolean", "CI_BUILD", "true")
 		}
 	}
