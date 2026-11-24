@@ -18,7 +18,6 @@ import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongListType
-import paige.navic.domain.server.LocalNoOpException
 import kotlin.time.Clock
 
 class SongRepository(
@@ -40,7 +39,7 @@ class SongRepository(
 
 	suspend fun getSimilarSongs(songId: String, count: Int = 50): Result<List<DomainSong>> =
 		runCatching {
-			sessionManager.api.getSimilarSongs(songId, count)
+			sessionManager.server?.getSimilarSongs(songId, count).orEmpty()
 		}
 
 	suspend fun getSongsByIds(ids: List<String>) = ids.chunked(500)
@@ -76,11 +75,8 @@ class SongRepository(
 		reversed: Boolean = false,
 		filters: Set<DomainFilter> = emptySet()
 	): Flow<PagingData<DomainSong>> {
-		try {
-			dbRepository.syncLibrarySongs().getOrThrow()
-		} catch (_: LocalNoOpException) {
-			// local library is already maintained by Musikr
-		}
+		if (sessionManager.server == null) return getLocalData(listType, reversed, filters)
+		dbRepository.syncLibrarySongs().getOrThrow()
 		return getLocalData(listType, reversed, filters)
 	}
 

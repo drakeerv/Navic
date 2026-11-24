@@ -41,10 +41,11 @@ import paige.navic.domain.manager.ui.LogManager
 import paige.navic.domain.manager.ui.ShareManager
 import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.media.CoverArtCache
-import paige.navic.domain.server.MultipleMusicServerFactory
-import paige.navic.domain.server.MusicServerFactory
+import paige.navic.domain.server.MultipleMusicProviderFactory
+import paige.navic.domain.server.MusicProviderFactory
+import paige.navic.domain.server.RemoteMusicServerFactory
 import paige.navic.domain.server.jellyfin.JellyfinMusicServerFactory
-import paige.navic.domain.server.local.LocalMusicServerFactory
+import paige.navic.domain.server.local.LocalMusicLibraryFactory
 import paige.navic.domain.server.navidrome.NavidromeMusicServerFactory
 import paige.navic.domain.server.subsonic.SubsonicMusicServerFactory
 import paige.navic.domain.sync.SyncActionProcessor
@@ -103,15 +104,17 @@ val managerModule = module {
 	singleOf(::JellyfinMusicServerFactory)
 	singleOf(::NavidromeMusicServerFactory)
 	singleOf(::SubsonicMusicServerFactory)
-	singleOf(::LocalMusicServerFactory)
-	single<MusicServerFactory> {
-		MultipleMusicServerFactory(
+	singleOf(::LocalMusicLibraryFactory)
+	single {
+		MultipleMusicProviderFactory(
 			navidromeFactory = get(),
 			subsonicFactory = get(),
 			jellyfinFactory = get(),
 			localFactory = get()
 		)
 	}
+	single<MusicProviderFactory> { get<MultipleMusicProviderFactory>() }
+	single<RemoteMusicServerFactory> { get<MultipleMusicProviderFactory>() }
 	singleOf(::SyncActionProcessor)
 	singleOf(::SyncCoordinator)
 	single(createdAtStart = true) {

@@ -41,7 +41,7 @@ fun ChatMessageItem(
 			accountSettings.customHeadersMap().forEach { (key, value) -> add(key, value) }
 		}.build()
 		ImageRequest.Builder(coilPlatformContext)
-			.data(sessionManager.api.getAvatarUrl(message.username))
+			.data(sessionManager.provider.getAvatarUrl(message.username))
 			.httpHeaders(networkHeaders)
 			.build()
 	}

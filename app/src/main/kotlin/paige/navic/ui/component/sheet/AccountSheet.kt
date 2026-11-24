@@ -276,7 +276,7 @@ fun AccountSheet(
 			sessionManager.username
 				.takeIf { it.isNotBlank() }
 				?.let { username ->
-					profilePictureUrl = sessionManager.api.getAvatarUrl(username)
+					profilePictureUrl = sessionManager.provider.getAvatarUrl(username)
 				}
 		} catch (_: Exception) {
 			profilePictureUrl = null

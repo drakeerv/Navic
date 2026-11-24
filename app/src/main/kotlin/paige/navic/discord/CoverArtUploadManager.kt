@@ -65,7 +65,7 @@ class CoverArtUploadManager(
 
 			val uploader = uploaderFor(host) ?: continue
 			val url = try {
-				val bytes = sessionManager.api.getCoverArt(coverArtId, size = "512")
+				val bytes = sessionManager.provider.getCoverArt(coverArtId, size = "512")
 				val image = bytes.toCoverArtImage()
 					?: error("cover art is not an image")
 				withTimeoutOrNull(15.seconds) { uploader.upload(image) }

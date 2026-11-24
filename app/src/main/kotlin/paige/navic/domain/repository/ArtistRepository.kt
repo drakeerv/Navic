@@ -15,6 +15,7 @@ import paige.navic.database.mapper.toDomainModel
 import paige.navic.database.paging.createPagedFlow
 import paige.navic.database.query.getArtistLetterCountsQuery
 import paige.navic.database.query.toSqlQuery
+import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.model.DomainArtist
 import paige.navic.domain.model.DomainArtistListType
@@ -24,7 +25,8 @@ import kotlin.time.Clock
 class ArtistRepository(
 	private val artistDao: ArtistDao,
 	private val syncManager: SyncManager,
-	private val dbRepository: DbRepository
+	private val dbRepository: DbRepository,
+	private val sessionManager: SessionManager
 ) {
 	private fun getLocalData(
 		listType: DomainArtistListType,
@@ -50,7 +52,7 @@ class ArtistRepository(
 		listType: DomainArtistListType,
 		filters: Set<DomainFilter> = emptySet()
 	): Flow<PagingData<DomainArtist>> {
-		dbRepository.syncArtists().getOrThrow()
+		if (sessionManager.server != null) dbRepository.syncArtists().getOrThrow()
 		return getLocalData(listType, filters)
 	}
 

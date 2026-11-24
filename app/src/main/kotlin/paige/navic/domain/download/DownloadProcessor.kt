@@ -32,6 +32,7 @@ import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.media.CoverArtCache
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.repository.LyricsRepository
+import paige.navic.domain.server.ServerException
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import paige.navic.util.Logger
@@ -72,8 +73,8 @@ class DownloadProcessor(
 					}
 
 					val contentType = response.headers["content-type"]
-					sessionManager.api
-						.parseResponseError(contentType, response.bodyAsText())
+					sessionManager.server
+						?.parseResponseError(contentType, response.bodyAsText())
 						?.let { throw it }
 				}
 			}
@@ -95,7 +96,8 @@ class DownloadProcessor(
 	private suspend fun resolveSong(songId: String): DomainSong {
 		songDao.getSongById(songId)?.let { return it.toDomainModel() }
 
-		val remote = sessionManager.api.getSong(songId)
+		val remote = sessionManager.server?.getSong(songId)
+			?: throw ServerException("This operation requires a remote music server")
 		songDao.insertSong(remote.toEntity())
 		return remote
 	}
@@ -193,7 +195,7 @@ class DownloadProcessor(
 		storageManager.deleteTempFile(finalPath)
 
 		val request = client.prepareRequest(
-			sessionManager.api.getPlaybackStreamUrl(
+			sessionManager.provider.getPlaybackStreamUrl(
 				id = song.id,
 				bitrateKbps = bitrate,
 				format = container?.takeIf { it.isNotBlank() },

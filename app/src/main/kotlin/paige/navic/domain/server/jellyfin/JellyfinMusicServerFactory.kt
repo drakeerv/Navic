@@ -18,7 +18,7 @@ import paige.navic.BuildConfig
 import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.MusicServer
-import paige.navic.domain.server.MusicServerFactory
+import paige.navic.domain.server.RemoteMusicServerFactory
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.UserCredentials
 import paige.navic.preferences.AccountSettings
@@ -35,7 +35,7 @@ class JellyfinMusicServerFactory(
 	private val accountSettings: AccountSettings,
 	private val dnsResolver: NavicAddressHelper,
 	private val cronetInterceptor: Interceptor?
-) : MusicServerFactory {
+) : RemoteMusicServerFactory {
 
 	private val jellyfin by lazy {
 		createJellyfin {

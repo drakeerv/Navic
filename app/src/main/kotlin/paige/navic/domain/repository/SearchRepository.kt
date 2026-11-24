@@ -28,9 +28,10 @@ class SearchRepository(
 	val isReachable = reachability.isReachable
 
 	suspend fun search(query: String): List<Any> {
-		return if (isReachable.value) {
+		val server = sessionManager.server
+		return if (server != null && isReachable.value) {
 			try {
-				val data = sessionManager.api.search(query)
+				val data = server.search(query)
 
 				albumDao.insertAlbumsIgnoringConflicts(data.albums.map { it.toEntity() })
 				artistDao.insertArtistsIgnoringConflicts(data.artists.map { it.toEntity() })

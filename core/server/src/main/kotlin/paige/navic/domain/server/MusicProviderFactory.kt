@@ -6,9 +6,11 @@
 
 package paige.navic.domain.server
 
-interface MusicServerFactory {
-	fun create(baseUrl: String, authorization: AuthorizationData): MusicServer
+interface MusicProviderFactory {
+	fun create(baseUrl: String, authorization: AuthorizationData): MusicProvider
+}
 
+interface RemoteMusicServerFactory : MusicProviderFactory {
 	suspend fun authenticate(
 		baseUrl: String,
 		credentials: UserCredentials

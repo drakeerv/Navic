@@ -209,11 +209,11 @@ class NavicDataSource(
 		}
 
 		val streamUrl = try {
-			sessionManager.api.getPlaybackStreamUrl(id, bitrateKbps, format)
+			sessionManager.provider.getPlaybackStreamUrl(id, bitrateKbps, format)
 		} catch (e: Exception) {
 			if (e is CancellationException) throw e
 			Logger.w(TAG, "stream url resolution failed for $id, skipping transcode decisions", e)
-			sessionManager.api.getPlaybackStreamUrl(id, bitrateKbps, format, true)
+			sessionManager.provider.getPlaybackStreamUrl(id, bitrateKbps, format, true)
 		}
 
 		ttlLruCache.put(cacheKey, streamUrl)

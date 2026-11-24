@@ -33,7 +33,6 @@ import paige.navic.R
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.session.SessionManager
-import paige.navic.domain.manager.session.isLocal
 import paige.navic.domain.manager.session.supportsPlaySubmission
 import paige.navic.domain.manager.session.supportsTranscoding
 import paige.navic.domain.model.settings.DiscordStatusType
@@ -64,7 +63,7 @@ fun SettingsPlaybackScreen() {
 	val sessionManager = koinInject<SessionManager>()
 	val showStreamingQuality = sessionManager.supportsTranscoding()
 	val showScrobbling =
-		!sessionManager.isLocal() && sessionManager.supportsPlaySubmission()
+		sessionManager.supportsPlaySubmission()
 	var coverArtProvidersSheetOpen by rememberSaveable { mutableStateOf(false) }
 
 	Scaffold(

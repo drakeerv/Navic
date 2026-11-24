@@ -12,6 +12,7 @@ import paige.navic.database.dao.PlaylistDao
 import paige.navic.database.mapper.toDomainModel
 import paige.navic.database.paging.createPagedFlow
 import paige.navic.database.query.toSqlQuery
+import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainPlaylistListType
@@ -19,6 +20,7 @@ import paige.navic.domain.model.DomainPlaylistListType
 class PlaylistRepository(
 	private val playlistDao: PlaylistDao,
 	private val dbRepository: DbRepository,
+	private val sessionManager: SessionManager,
 ) {
 	private suspend fun getLocalData(
 		listType: DomainPlaylistListType,
@@ -38,6 +40,7 @@ class PlaylistRepository(
 		reversed: Boolean,
 		filters: Set<DomainFilter> = emptySet()
 	): Flow<PagingData<DomainPlaylist>> {
+		if (sessionManager.server == null) return getLocalData(listType, reversed, filters)
 		dbRepository.syncPlaylists().getOrThrow().forEach { playlist ->
 			dbRepository.syncPlaylistSongs(playlist.playlistId).getOrThrow()
 		}

@@ -22,8 +22,9 @@ import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.manager.session.isJellyfin
 import paige.navic.domain.manager.session.isLocal
 import paige.navic.domain.manager.session.supportsFeature
-import paige.navic.domain.manager.session.supportsPlaySubmission
 import paige.navic.domain.model.DomainPlaybackState
+import paige.navic.domain.server.PlayHistoryRecorder
+import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.domain.server.ServerFeature
 import paige.navic.preferences.PreferenceManager
 import kotlin.time.Clock
@@ -66,6 +67,7 @@ class ScrobbleExoListener(
 		shuffleModeEnabled: Boolean = player.shuffleModeEnabled,
 		playbackRate: Float = player.playbackParameters.speed
 	) {
+		val server = sessionManager.server ?: return
 		if (songId == null
 			|| !reachability.isReachable.value
 			|| !sessionManager.supportsFeature(ServerFeature.PLAYBACK_REPORT)
@@ -73,7 +75,7 @@ class ScrobbleExoListener(
 
 		scope.launch {
 			runCatching {
-				sessionManager.api.reportPlayback(
+				server.reportPlayback(
 					id = songId,
 					positionMs = positionMs,
 					state = state,
@@ -88,14 +90,13 @@ class ScrobbleExoListener(
 	}
 
 	private fun submitNowPlayingScrobble(songId: String?) {
-		if (sessionManager.isLocal()) return
-		if (!preferenceManager.enableScrobbling || !sessionManager.supportsPlaySubmission() || songId == null) return
-
+		if (!preferenceManager.enableScrobbling || songId == null) return
 		if (!reachability.isReachable.value) return
 
+		val scrobble = sessionManager.provider as? ScrobbleProvider ?: return
 		scope.launch {
 			runCatching {
-				sessionManager.api.scrobble(songId, submission = false)
+				scrobble.scrobble(songId, submission = false)
 			}
 		}
 	}
@@ -104,27 +105,25 @@ class ScrobbleExoListener(
 		if (songId == null || hasRecordedLocalPlay || !sessionManager.isLocal()) return
 		if (accumulatedPlayTime < LOCAL_PLAY_MINIMUM_MS) return
 		hasRecordedLocalPlay = true
+		val playHistory = sessionManager.provider as? PlayHistoryRecorder ?: return
 		scope.launch {
 			runCatching {
-				sessionManager.api.scrobble(
-					songId,
-					submission = true,
-					time = Clock.System.now()
-				)
+				playHistory.recordPlay(songId, Clock.System.now())
 			}
 		}
 	}
 
 	private fun scrobbleSubmission(songId: String?) {
-		if (songId == null || sessionManager.isLocal()) return
-		if (!preferenceManager.enableScrobbling || !sessionManager.supportsPlaySubmission()) return
+		if (songId == null) return
+		if (!preferenceManager.enableScrobbling) return
+		val scrobble = sessionManager.provider as? ScrobbleProvider ?: return
 
 		scope.launch {
 			val currentTime = Clock.System.now()
 
 			if (reachability.isReachable.value) {
 				runCatching {
-					sessionManager.api.scrobble(songId, submission = true, time = currentTime)
+					scrobble.scrobble(songId, submission = true, time = currentTime)
 					return@launch
 				}
 			}

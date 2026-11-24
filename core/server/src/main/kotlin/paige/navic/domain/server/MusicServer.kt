@@ -21,17 +21,10 @@ import paige.navic.domain.model.DomainRadio
 import paige.navic.domain.model.DomainSearchResult
 import paige.navic.domain.model.DomainShare
 import paige.navic.domain.model.DomainSong
-import paige.navic.domain.model.DomainUser
 import paige.navic.domain.model.ServerLyrics
 import kotlin.time.Instant
 
-interface MusicServer {
-	suspend fun ping()
-
-	suspend fun serverInfo(): ServerInfo
-
-	suspend fun currentUser(): DomainUser
-
+interface MusicServer : MusicProvider {
 	suspend fun getAlbums(
 		type: DomainAlbumListType,
 		size: Int = 10,
@@ -66,12 +59,6 @@ interface MusicServer {
 
 	suspend fun setRating(id: String, rating: Int)
 
-	suspend fun scrobble(
-		id: String,
-		submission: Boolean = true,
-		time: Instant? = null
-	)
-
 	suspend fun reportPlayback(
 		id: String,
 		positionMs: Long,
@@ -95,23 +82,6 @@ interface MusicServer {
 	)
 
 	suspend fun deletePlaylist(id: String)
-
-	// this is for progressive streams, if you're implementing something that supports proper HLS,
-	// do prefer to implement that for a stable streaming experience
-	suspend fun getPlaybackStreamUrl(
-		id: String,
-		bitrateKbps: Int = 0,
-		format: String? = null,
-		skipTranscodeDecisions: Boolean = false
-	): String
-
-	fun getHlsStreamUrl(id: String, bitrateKbps: Int, format: String?): String? = null
-
-	fun getCoverArtUrl(id: String, size: String? = null): String
-
-	suspend fun getCoverArt(id: String, size: String? = null): ByteArray
-
-	fun getAvatarUrl(username: String): String?
 
 	fun parseResponseError(contentType: String?, body: String): ServerException?
 }
@@ -161,14 +131,4 @@ interface PlaylistCoverServer {
 
 interface CommandFlowServer {
 	val commands: SharedFlow<ServerCommand>
-}
-
-enum class SyncProgressMessage {
-	Indexing,
-	Saved,
-	Finished
-}
-
-interface LocalSyncServer {
-	suspend fun sync(onProgress: suspend (Float, SyncProgressMessage) -> Unit = { _, _ -> })
 }

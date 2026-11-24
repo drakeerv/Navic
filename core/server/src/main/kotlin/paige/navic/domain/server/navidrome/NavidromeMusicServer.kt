@@ -12,6 +12,7 @@ import paige.navic.domain.model.DomainShareItem
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
+import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerType
@@ -26,12 +27,16 @@ class NavidromeMusicServer(
 	private val navidrome: NavidromeClient,
 	private val baseUrl: String,
 	private val username: String
-) : MusicServer by delegate, ShareServer, PlaylistCoverServer {
+) : MusicServer by delegate, ScrobbleProvider, ShareServer, PlaylistCoverServer {
 	@Volatile
 	private var isNavidrome: Boolean? = null
 
 	override suspend fun serverInfo(): ServerInfo =
 		delegate.serverInfo().copy(type = ServerType.NAVIDROME)
+
+	override suspend fun scrobble(id: String, submission: Boolean, time: Instant?) {
+		(delegate as? ScrobbleProvider)?.scrobble(id, submission, time)
+	}
 
 	private suspend fun navidromeOrNull(): NavidromeClient? {
 		val navidrome = isNavidrome ?: (delegate.serverInfo().type == ServerType.NAVIDROME)

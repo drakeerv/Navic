@@ -34,8 +34,8 @@ import paige.navic.domain.server.ChatServer
 import paige.navic.domain.server.InvalidCredentialsException
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.RadioServer
+import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.domain.server.ServerException
-import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerType
@@ -48,7 +48,7 @@ import kotlin.time.Instant
 class SubsonicMusicServer(
 	private val client: SubsonicClient,
 	private val username: String?
-) : MusicServer, ChatServer, ShareServer, RadioServer {
+) : MusicServer, ScrobbleProvider, ChatServer, ShareServer, RadioServer {
 	private companion object {
 		val SEMVER_REGEX = Regex("""^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)""")
 		const val ID3_SUPPORT = "v1.8.0"
@@ -132,15 +132,6 @@ class SubsonicMusicServer(
 			},
 			version = response.version,
 			features = detectedFeatures,
-			capabilities = ServerCapabilities(
-				isRemote = true,
-				supportsDownloads = true,
-				supportsPlaySubmission = true,
-				supportsRatings = true,
-				supportsShares = true,
-				supportsRadio = true,
-				supportsPlaylistMutation = true
-			),
 			details = buildMap {
 				put("OpenSubsonic", response.openSubsonic.toString())
 				response.serverVersion?.let { put("Server version", it) }

@@ -15,6 +15,7 @@ import paige.navic.database.entity.PlaylistSongCrossRef
 import paige.navic.database.entity.SyncActionType
 import paige.navic.database.mapper.toEntity
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.util.Logger
 
 class SyncActionProcessor(
@@ -23,6 +24,10 @@ class SyncActionProcessor(
 	private val sessionManager: SessionManager
 ) {
 	suspend fun processPending(): Result<Unit> {
+		val server = sessionManager.server ?: run {
+			syncDao.clearAllActions()
+			return Result.success(Unit)
+		}
 		try {
 			while (true) {
 				val actions = syncDao.getPendingActions()
@@ -30,23 +35,24 @@ class SyncActionProcessor(
 
 				for ((id, actionType, itemId, content, time) in actions) {
 					when (actionType) {
-						SyncActionType.STAR -> sessionManager.api.star(itemId)
-						SyncActionType.UNSTAR -> sessionManager.api.unstar(itemId)
+						SyncActionType.STAR -> server.star(itemId)
+						SyncActionType.UNSTAR -> server.unstar(itemId)
 						SyncActionType.DELETE_PLAYLIST ->
-							sessionManager.api.deletePlaylist(itemId)
+							server.deletePlaylist(itemId)
 
-						SyncActionType.SCROBBLE -> sessionManager.api.scrobble(
-							itemId,
-							submission = true,
-							time = time
-						)
+						SyncActionType.SCROBBLE ->
+							(sessionManager.provider as? ScrobbleProvider)?.scrobble(
+								itemId,
+								submission = true,
+								time = time
+							)
 
-						SyncActionType.STAR_0 -> sessionManager.api.setRating(itemId, 0)
-						SyncActionType.STAR_1 -> sessionManager.api.setRating(itemId, 1)
-						SyncActionType.STAR_2 -> sessionManager.api.setRating(itemId, 2)
-						SyncActionType.STAR_3 -> sessionManager.api.setRating(itemId, 3)
-						SyncActionType.STAR_4 -> sessionManager.api.setRating(itemId, 4)
-						SyncActionType.STAR_5 -> sessionManager.api.setRating(itemId, 5)
+						SyncActionType.STAR_0 -> server.setRating(itemId, 0)
+						SyncActionType.STAR_1 -> server.setRating(itemId, 1)
+						SyncActionType.STAR_2 -> server.setRating(itemId, 2)
+						SyncActionType.STAR_3 -> server.setRating(itemId, 3)
+						SyncActionType.STAR_4 -> server.setRating(itemId, 4)
+						SyncActionType.STAR_5 -> server.setRating(itemId, 5)
 
 						SyncActionType.CREATE_PLAYLIST -> {
 							val contentObj = content?.let {
@@ -60,7 +66,7 @@ class SyncActionProcessor(
 							val songIds = contentObj?.songIds ?: emptyList()
 
 							if (!name.isNullOrBlank()) {
-								val remotePlaylist = sessionManager.api.createPlaylist(name, songIds)
+								val remotePlaylist = server.createPlaylist(name, songIds)
 								val remoteEntity = remotePlaylist.toEntity()
 
 								playlistDao.deletePlaylist(itemId)

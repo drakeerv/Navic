@@ -21,7 +21,6 @@ import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import paige.navic.R
 import paige.navic.di.LocalSnackBarState
-import paige.navic.domain.server.LocalNoOpException
 import paige.navic.ui.component.common.ErrorCodeBlock
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.dialog.FormDialog
@@ -32,8 +31,7 @@ fun ErrorSnackBar(
 	error: Throwable?,
 	onClearError: () -> Unit
 ) {
-	// what the hell?
-	if (error == null || error.cause is LocalNoOpException || error is LocalNoOpException) return
+	if (error == null) return
 
 	val snackBarState = LocalSnackBarState.current
 	val resources = LocalResources.current

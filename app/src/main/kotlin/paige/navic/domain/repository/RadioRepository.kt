@@ -14,11 +14,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import paige.navic.database.dao.RadioDao
 import paige.navic.database.mapper.toDomainModel
+import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.model.DomainRadio
 
 class RadioRepository(
 	private val radioDao: RadioDao,
-	private val dbRepository: DbRepository
+	private val dbRepository: DbRepository,
+	private val sessionManager: SessionManager
 ) {
 	private fun getLocalData(): Flow<PagingData<DomainRadio>> {
 		return Pager(
@@ -31,7 +33,7 @@ class RadioRepository(
 	}
 
 	private suspend fun refreshLocalData(): Flow<PagingData<DomainRadio>> {
-		dbRepository.syncRadios().getOrThrow()
+		if (sessionManager.server != null) dbRepository.syncRadios().getOrThrow()
 		return getLocalData()
 	}
 

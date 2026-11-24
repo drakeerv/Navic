@@ -13,7 +13,6 @@ import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.manager.session.getServerInfo
-import paige.navic.domain.server.LocalSyncServer
 import paige.navic.domain.server.SyncProgressMessage
 import paige.navic.R
 import paige.navic.domain.repository.DbRepository
@@ -49,16 +48,16 @@ class SyncCoordinator(
 
 		val actionResult = actionProcessor.processPending()
 
-		val isLocal = sessionManager.getServerInfo()?.capabilities?.isRemote == false
+		val isLocal = sessionManager.indexer != null
 		if (!isLocal && !isFullSyncDue(force)) {
 			return@withLock actionResult
 		}
 
 		Logger.i("SyncCoordinator", "Starting full library pull...")
 
-		val result = (sessionManager.api as? LocalSyncServer)?.let { syncServer ->
+		val result = sessionManager.indexer?.let { indexer ->
 			try {
-				syncServer.sync { progress, message ->
+				indexer.index { progress, message ->
 					val resId = when (message) {
 						SyncProgressMessage.Indexing -> R.string.info_syncing
 						SyncProgressMessage.Saved -> R.string.info_syncing_saved

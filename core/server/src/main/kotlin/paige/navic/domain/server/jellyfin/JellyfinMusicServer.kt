@@ -64,7 +64,6 @@ import paige.navic.domain.server.CommandFlowServer
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.ServerCommand
-import paige.navic.domain.server.ServerCapabilities
 import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
@@ -76,7 +75,6 @@ import paige.navic.domain.server.jellyfin.mapper.toDomainSong
 import paige.navic.util.Logger
 import java.util.UUID
 import kotlin.io.encoding.Base64
-import kotlin.time.Instant
 
 class JellyfinMusicServer(
 	private val api: ApiClient,
@@ -168,15 +166,6 @@ class JellyfinMusicServer(
 			features = setOf(
 				ServerFeature.TRANSCODE_OFFSET,
 				ServerFeature.PLAYBACK_REPORT
-			),
-			capabilities = ServerCapabilities(
-				isRemote = true,
-				supportsDownloads = true,
-				supportsPlaySubmission = false,
-				supportsRatings = true,
-				supportsShares = false,
-				supportsRadio = false,
-				supportsPlaylistMutation = true
 			)
 		)
 	}
@@ -466,10 +455,6 @@ class JellyfinMusicServer(
 				itemId = uuid
 			)
 		}
-	}
-
-	override suspend fun scrobble(id: String, submission: Boolean, time: Instant?) {
-		//doesn't support scrobble
 	}
 
 	override suspend fun reportPlayback(

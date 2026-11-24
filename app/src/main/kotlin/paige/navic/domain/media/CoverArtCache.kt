@@ -30,7 +30,7 @@ class CoverArtCache(
 		if (cached != null && !cached.isStale()) return@withContext cached
 
 		val bytes = runCatching {
-			sessionManager.api.getCoverArt(
+			sessionManager.provider.getCoverArt(
 				coverId,
 				size = bucket.toString()
 			)

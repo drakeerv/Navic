@@ -111,7 +111,7 @@ class LyricsRepository(
 					}
 
 					LyricsProvider.Id.SERVER_PROVIDED -> {
-						val subsonicLyrics = sessionManager.api.getLyrics(song.id)
+						val subsonicLyrics = sessionManager.server?.getLyrics(song.id)
 
 						val lines = subsonicLyrics?.lines?.flatMap { line ->
 							if (!subsonicLyrics.synced && line.text.contains("\n")) {

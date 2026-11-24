@@ -119,7 +119,7 @@ class SyncManager(
 		if (!syncImmediately) return
 
 		scope.launch {
-			val isLocal = sessionManager.getServerInfo()?.capabilities?.isRemote == false
+			val isLocal = sessionManager.indexer != null
 			if (isLocal || albumDao.getAlbumCount() == 0 || preferenceManager.lastFullSyncTime <= 0L) {
 				Logger.i("SyncManager", "Syncing now because we haven't synced before")
 				enqueueManualSync(
@@ -152,7 +152,7 @@ class SyncManager(
 
 		workManager.enqueueUniquePeriodicWork(
 			WorkNames.LIBRARY_SYNC_PERIODIC,
-			ExistingPeriodicWorkPolicy.KEEP,
+			ExistingPeriodicWorkPolicy.UPDATE,
 			request
 		)
 	}
@@ -205,6 +205,7 @@ class SyncManager(
 		time: Instant = Clock.System.now(),
 		content: String? = null
 	) {
+		if (sessionManager.server == null) return
 		scope.launch {
 			syncDao.enqueue(
 				action = SyncActionEntity(
@@ -244,7 +245,12 @@ class SyncManager(
 		)
 	}
 
-	private fun networkConstraints() = Constraints.Builder()
-		.setRequiredNetworkType(NetworkType.CONNECTED)
-		.build()
+	private fun networkConstraints(): Constraints =
+		if (sessionManager.indexer != null) {
+			Constraints.NONE
+		} else {
+			Constraints.Builder()
+				.setRequiredNetworkType(NetworkType.CONNECTED)
+				.build()
+		}
 }

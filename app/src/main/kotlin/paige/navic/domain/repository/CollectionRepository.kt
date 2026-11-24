@@ -23,7 +23,6 @@ import paige.navic.domain.model.DomainAlbumInfo
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongCollection
-import paige.navic.domain.server.LocalNoOpException
 
 class CollectionRepository(
 	private val albumDao: AlbumDao,
@@ -39,24 +38,17 @@ class CollectionRepository(
 	}
 
 	private suspend fun refreshLocalData(collectionId: String): DomainSongCollection {
+		val server = sessionManager.server ?: return getLocalData(collectionId)
 		when (val collection = getLocalData(collectionId)) {
 			is DomainAlbum -> {
-				val album = try {
-					sessionManager.api.getAlbum(collection.id)
-				} catch (_: LocalNoOpException) {
-					return getLocalData(collectionId)
-				}
+				val album = server.getAlbum(collection.id)
 				songDao.updateSongsByAlbumId(album.id, album.songs.map { it.toEntity() })
 				albumDao.insertAlbum(album.toEntity())
 				albumDao.getAlbumById(collectionId)
 			}
 
 			is DomainPlaylist -> {
-				val playlist = try {
-					sessionManager.api.getPlaylist(collection.id)
-				} catch (_: LocalNoOpException) {
-					return getLocalData(collectionId)
-				}
+				val playlist = server.getPlaylist(collection.id)
 				playlistDao.insertPlaylist(playlist.toEntity())
 				dbRepository.syncPlaylistSongs(collection.id)
 				playlistDao.getPlaylistById(collectionId)
@@ -86,11 +78,12 @@ class CollectionRepository(
 		?.toDomainModel()
 
 	suspend fun getAlbumInfo(albumId: String): DomainAlbumInfo {
-		return sessionManager.api.getAlbumInfo(albumId)
+		return sessionManager.server?.getAlbumInfo(albumId)
+			?: DomainAlbumInfo(null, null, null, null, null, null)
 	}
 
 	suspend fun removeSongFromPlaylist(playlistId: String, position: Int) {
-		sessionManager.api.updatePlaylist(
+		sessionManager.server?.updatePlaylist(
 			id = playlistId,
 			songIndicesToRemove = listOf(position)
 		)

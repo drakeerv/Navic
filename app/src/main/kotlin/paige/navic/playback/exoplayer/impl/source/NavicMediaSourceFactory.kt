@@ -58,7 +58,7 @@ internal class NavicMediaSourceFactory(
 		// hls playlist base uris are relative, so exoplayer needs the real url as the item uri
 		val hlsUrl = songId
 			?.takeIf { downloadable && !downloaded }
-			?.let { sessionManager.api.getHlsStreamUrl(it, bitrateKbps, format) }
+			?.let { sessionManager.provider.getHlsStreamUrl(it, bitrateKbps, format) }
 
 		return when {
 			hlsUrl != null -> delegate.createMediaSource(

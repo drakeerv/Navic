@@ -24,22 +24,10 @@ enum class ServerType(
 	LOCAL("Local")
 }
 
-data class ServerCapabilities(
-	val isRemote: Boolean = true,
-	val supportsDownloads: Boolean = true,
-	val supportsTranscoding: Boolean = true,
-	val supportsPlaySubmission: Boolean = true,
-	val supportsRatings: Boolean = true,
-	val supportsShares: Boolean = true,
-	val supportsRadio: Boolean = true,
-	val supportsPlaylistMutation: Boolean = true
-)
-
 data class ServerInfo(
 	val type: ServerType,
 	val version: String? = null,
 	val features: Set<ServerFeature> = emptySet(),
-	val capabilities: ServerCapabilities = ServerCapabilities(),
 	/** Provider-specific diagnostics that do not belong in the generic model. */
 	val details: Map<String, String> = emptyMap()
 )

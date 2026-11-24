@@ -35,7 +35,7 @@ class PlaylistUpdateDialogViewModel(
 
 	fun refreshResults() = execute {
 		PlaylistUpdateViewState(
-			playlists = sessionManager.api.getPlaylists()
+			playlists = sessionManager.server?.getPlaylists().orEmpty()
 				.filter { it.id != playlistToExclude }
 		)
 	}
@@ -54,9 +54,10 @@ class PlaylistUpdateDialogViewModel(
 	fun confirm() {
 		val data = uiState.value.data ?: return
 		val selected = data.selectedPlaylists
+		val server = sessionManager.server
 		execute {
 			selected.forEach { playlist ->
-				sessionManager.api.updatePlaylist(
+				server?.updatePlaylist(
 					playlist.id,
 					songIdsToAdd = songIds
 				)

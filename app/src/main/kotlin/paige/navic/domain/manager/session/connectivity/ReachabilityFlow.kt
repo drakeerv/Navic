@@ -52,7 +52,7 @@ class ReachabilityFlow(
 	suspend fun ping(): Result<Unit> = withContext(Dispatchers.IO) {
 		runCatching {
 			check(sessionManager.instanceUrl.isNotBlank()) { "No server configured" }
-			sessionManager.api.ping()
+			sessionManager.provider.ping()
 		}.map { }
 	}
 

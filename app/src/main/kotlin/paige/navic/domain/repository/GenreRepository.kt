@@ -15,11 +15,13 @@ import kotlinx.coroutines.flow.map
 import paige.navic.database.dao.GenreDao
 import paige.navic.database.mapper.toDomainModel
 import paige.navic.database.query.toGenreSqlQuery
+import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.model.DomainGenre
 
 class GenreRepository(
 	private val genreDao: GenreDao,
-	private val dbRepository: DbRepository
+	private val dbRepository: DbRepository,
+	private val sessionManager: SessionManager
 ) {
 	private fun getLocalData(): Flow<PagingData<DomainGenre>> {
 		return Pager(
@@ -34,7 +36,7 @@ class GenreRepository(
 	}
 
 	private suspend fun refreshLocalData(): Flow<PagingData<DomainGenre>> {
-		dbRepository.syncGenres().getOrThrow()
+		if (sessionManager.server != null) dbRepository.syncGenres().getOrThrow()
 		return getLocalData()
 	}
 

@@ -38,6 +38,7 @@ import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainArtist
+import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.ServerException
 import paige.navic.util.Logger
 import kotlin.coroutines.cancellation.CancellationException
@@ -56,6 +57,10 @@ class DbRepository(
 	private val concurrentRequestLimit = Semaphore(20)
 
 	private val dbChunkSize = 500 // should be enough
+
+	private val server: MusicServer
+		get() = sessionManager.server
+			?: throw ServerException("This operation requires a remote music server")
 
 	private suspend fun <T> runDbOp(block: suspend () -> T): Result<T> =
 		withContext(Dispatchers.IO) {
@@ -157,7 +162,7 @@ class DbRepository(
 		onProgress(0.0f, R.string.info_syncing_albums)
 		while (true) {
 			val batch =
-				sessionManager.api.getAlbums(
+				server.getAlbums(
 					DomainAlbumListType.AlphabeticalByName,
 					pageSize,
 					offset
@@ -187,7 +192,7 @@ class DbRepository(
 					launch {
 						concurrentRequestLimit.withPermit {
 							try {
-								val album = sessionManager.api.getAlbum(summary.id)
+								val album = server.getAlbum(summary.id)
 
 								val done = completedAlbums.incrementAndGet()
 								val fetchProgress = 0.1f + (0.8f * (done.toFloat() / totalAlbums))
@@ -268,7 +273,7 @@ class DbRepository(
 	}
 
 	suspend fun syncPlaylists(): Result<List<PlaylistEntity>> = runDbOp {
-		val remotePlaylists = sessionManager.api.getPlaylists()
+		val remotePlaylists = server.getPlaylists()
 		val playlistEntities = remotePlaylists.map { it.toEntity() }
 		val validPlaylistIds = playlistEntities.map { it.playlistId }.toSet()
 
@@ -285,7 +290,7 @@ class DbRepository(
 
 	suspend fun syncPlaylistSongs(playlistId: String): Result<Set<String>> = runDbOp {
 		val playlist = try {
-			sessionManager.api.getPlaylist(playlistId)
+			server.getPlaylist(playlistId)
 		} catch (e: Exception) {
 			if (e is SerializationException) {
 				Logger.e(
@@ -320,7 +325,7 @@ class DbRepository(
 	}
 
 	suspend fun syncGenres(): Result<Unit> = runDbOp {
-		val remoteGenres = sessionManager.api.getGenres()
+		val remoteGenres = server.getGenres()
 		val entities = remoteGenres.map { it.toEntity() }
 
 		entities.chunked(dbChunkSize).forEach { chunk ->
@@ -341,7 +346,7 @@ class DbRepository(
 
 		//try {
 		//	while (true) {
-		//		val batch = sessionManager.api.searchID3(
+		//		val batch = server.searchID3(
 		//			query = "", artistCount = pageSize, artistOffset = offset
 		//		).artists.map { it.toEntity() }
 		//		if (batch.isEmpty()) break
@@ -359,7 +364,7 @@ class DbRepository(
 		//	)
 		//	artists.clear()
 
-		val batch = sessionManager.api.getArtists()
+		val batch = server.getArtists()
 			.map { it.toEntity() }
 		artists.addAll(batch)
 		//}
@@ -385,11 +390,12 @@ class DbRepository(
 	}
 
 	suspend fun fetchArtistMetadata(artistId: String): Result<DomainArtist> = runDbOp {
-		val artistInfo = sessionManager.api.getArtistInfo(artistId)
-		val simIds = artistInfo.similarArtists.map { it.id }
-
 		val currentEntity = artistDao.getArtistById(artistId)
 			?: throw Exception("Artist not found in local DB")
+		if (sessionManager.server == null) return@runDbOp currentEntity.toDomainModel()
+
+		val artistInfo = server.getArtistInfo(artistId)
+		val simIds = artistInfo.similarArtists.map { it.id }
 
 		val updatedEntity = currentEntity.copy(
 			biography = artistInfo.biography,

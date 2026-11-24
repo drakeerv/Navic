@@ -8,9 +8,8 @@ package paige.navic.domain.server.local
 
 import android.content.Context
 import paige.navic.domain.server.AuthorizationData
-import paige.navic.domain.server.MusicServer
-import paige.navic.domain.server.MusicServerFactory
-import paige.navic.domain.server.UserCredentials
+import paige.navic.domain.server.MusicProvider
+import paige.navic.domain.server.MusicProviderFactory
 import paige.navic.domain.server.ServerException
 import paige.navic.database.CacheDatabase
 import paige.navic.database.dao.AlbumDao
@@ -21,7 +20,7 @@ import paige.navic.database.dao.PlaylistDao
 import paige.navic.database.dao.SongDao
 import paige.navic.domain.manager.runtime.StorageManager
 
-class LocalMusicServerFactory(
+class LocalMusicLibraryFactory(
 	private val context: Context,
 	private val database: CacheDatabase,
 	private val localScanDao: LocalScanDao,
@@ -31,11 +30,11 @@ class LocalMusicServerFactory(
 	private val genreDao: GenreDao,
 	private val playlistDao: PlaylistDao,
 	private val storageManager: StorageManager
-) : MusicServerFactory {
-	override fun create(baseUrl: String, authorization: AuthorizationData): MusicServer {
+) : MusicProviderFactory {
+	override fun create(baseUrl: String, authorization: AuthorizationData): MusicProvider {
 		val folders = authorization as? AuthorizationData.LocalFolders
 			?: throw ServerException("Local server requires folder authorization")
-		return LocalMusicServer(
+		return LocalMusicLibrary(
 			context = context,
 			folderUris = folders.folderUris,
 			mutableCache = NavicMutableCache(context, songDao),
@@ -53,9 +52,4 @@ class LocalMusicServerFactory(
 			coverDir = storageManager.musikrCoverDir()
 		)
 	}
-
-	override suspend fun authenticate(
-		baseUrl: String,
-		credentials: UserCredentials
-	): AuthorizationData = throw ServerException("Local server does not use credentials")
 }

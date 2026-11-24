@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import paige.navic.BuildConfig
 import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.manager.session.account.AccountStore
 import paige.navic.domain.model.DomainUser
@@ -22,10 +21,14 @@ import paige.navic.domain.server.AuthorizationData
 import paige.navic.domain.server.ChatServer
 import paige.navic.domain.server.CommandFlowServer
 import paige.navic.domain.server.InvalidCredentialsException
+import paige.navic.domain.server.LibraryIndexer
+import paige.navic.domain.server.MusicProvider
+import paige.navic.domain.server.MusicProviderFactory
 import paige.navic.domain.server.MusicServer
-import paige.navic.domain.server.MusicServerFactory
 import paige.navic.domain.server.PlaylistCoverServer
 import paige.navic.domain.server.RadioServer
+import paige.navic.domain.server.RemoteMusicServerFactory
+import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.domain.server.ServerFeature
 import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerType
@@ -50,7 +53,8 @@ sealed interface SessionState {
 class SessionManager(
 	private val accountStore: AccountStore,
 	private val preferenceManager: PreferenceManager,
-	private val serverFactory: MusicServerFactory
+	private val providerFactory: MusicProviderFactory,
+	private val remoteFactory: RemoteMusicServerFactory
 ) {
 	val ttlLruCache = TTLLruCache<String, String>(
 		maxSize = 500,
@@ -82,28 +86,34 @@ class SessionManager(
 	val instanceUrl: String
 		get() = accountStore.activeAccount?.baseUrl.orEmpty()
 
-	private fun createClient(account: Account?): MusicServer = serverFactory.create(
+	private fun createProvider(account: Account?): MusicProvider = providerFactory.create(
 		baseUrl = account?.baseUrl.orEmpty(),
 		authorization = account?.authorization() ?: AuthorizationData.SubsonicToken("", "")
 	)
 
-	var api: MusicServer = createClient(accountStore.activeAccount)
+	var provider: MusicProvider = createProvider(accountStore.activeAccount)
 		private set
 
+	val server: MusicServer?
+		get() = provider as? MusicServer
+
+	val indexer: LibraryIndexer?
+		get() = provider as? LibraryIndexer
+
 	val chat: ChatServer?
-		get() = api as? ChatServer
+		get() = provider as? ChatServer
 
 	val shares: ShareServer?
-		get() = api as? ShareServer
+		get() = provider as? ShareServer
 
 	val radio: RadioServer?
-		get() = api as? RadioServer
+		get() = provider as? RadioServer
 
 	val playlistCovers: PlaylistCoverServer?
-		get() = api as? PlaylistCoverServer
+		get() = provider as? PlaylistCoverServer
 
 	val commandFlow: CommandFlowServer?
-		get() = api as? CommandFlowServer
+		get() = provider as? CommandFlowServer
 
 	init {
 		val account = accountStore.activeAccount
@@ -131,15 +141,15 @@ class SessionManager(
 			signOut()
 			return
 		}
-		val server = serverFactory.create(
+		val provider = providerFactory.create(
 			baseUrl = account.baseUrl,
 			authorization = authorization
 		)
-		val serverInfo = server.serverInfo()
+		val serverInfo = provider.serverInfo()
 		Logger.i(TAG, "Ping result: $serverInfo")
-		val user = server.currentUser()
+		val user = provider.currentUser()
 
-		api = server
+		this.provider = provider
 		_state.value = SessionState.Authenticated(
 			currentUser = user,
 			serverInfo = serverInfo
@@ -147,13 +157,13 @@ class SessionManager(
 	}
 
 	suspend fun login(instanceUrl: String, credentials: UserCredentials): Account {
-		val authorization = serverFactory.authenticate(instanceUrl, credentials)
-		val server = serverFactory.create(instanceUrl, authorization)
+		val authorization = remoteFactory.authenticate(instanceUrl, credentials)
+		val provider = providerFactory.create(instanceUrl, authorization)
 
-		val serverInfo = server.serverInfo()
+		val serverInfo = provider.serverInfo()
 		Logger.i(TAG, "Ping result: $serverInfo")
 
-		val user = server.currentUser()
+		val user = provider.currentUser()
 
 		val account = accountStore.upsert(
 			Account(
@@ -181,7 +191,7 @@ class SessionManager(
 		// never change the active account here: a different account means different
 		// databases and directories, which the caller applies by switching and restarting
 		if (account.id == accountStore.activeAccountId) {
-			api = server
+			this.provider = provider
 			_state.value = SessionState.Authenticated(
 				currentUser = user,
 				serverInfo = serverInfo
@@ -192,9 +202,9 @@ class SessionManager(
 	}
 
 	suspend fun login(instanceUrl: String, authorization: AuthorizationData, serverType: ServerType): Account {
-		val server = serverFactory.create(instanceUrl, authorization)
-		val serverInfo = server.serverInfo()
-		val user = server.currentUser()
+		val provider = providerFactory.create(instanceUrl, authorization)
+		val serverInfo = provider.serverInfo()
+		val user = provider.currentUser()
 
 		val localFolders = (authorization as? AuthorizationData.LocalFolders)?.folderUris.orEmpty()
 		val account = accountStore.upsert(
@@ -207,7 +217,7 @@ class SessionManager(
 		)
 
 		if (account.id == accountStore.activeAccountId) {
-			api = server
+			this.provider = provider
 			_state.value = SessionState.Authenticated(
 				currentUser = user,
 				serverInfo = serverInfo
@@ -228,7 +238,7 @@ class SessionManager(
 	 */
 	fun setActiveAccount(id: String) {
 		accountStore.setActive(id)
-		api = createClient(accountStore.activeAccount)
+		provider = createProvider(accountStore.activeAccount)
 		ttlLruCache.clear()
 	}
 
@@ -237,7 +247,7 @@ class SessionManager(
 		accountStore.remove(id)
 		if (!wasActive) return
 
-		api = createClient(accountStore.activeAccount)
+		provider = createProvider(accountStore.activeAccount)
 		ttlLruCache.clear()
 
 		val active = accountStore.activeAccount
@@ -249,7 +259,7 @@ class SessionManager(
 	}
 
 	fun refreshClient() {
-		api = createClient(accountStore.activeAccount)
+		provider = createProvider(accountStore.activeAccount)
 	}
 
 	fun updateLocalFolders(folderUris: List<String>) {
@@ -262,7 +272,7 @@ class SessionManager(
 	fun getAvatarUrl(account: Account): String? {
 		val username = account.username?.takeIf(String::isNotBlank) ?: return null
 		val authorization = account.authorization() ?: return null
-		return serverFactory.create(account.baseUrl, authorization).getAvatarUrl(username)
+		return providerFactory.create(account.baseUrl, authorization).getAvatarUrl(username)
 	}
 
 	fun updateInstanceUrl(url: String) {
@@ -280,12 +290,7 @@ class SessionManager(
 	}
 
 	fun getCoverArtUrl(coverArtId: String): String {
-		val serverInfo = getServerInfo()
-		if (serverInfo?.type == ServerType.LOCAL) {
-			return "content://${BuildConfig.APPLICATION_ID}.cover-art/$coverArtId" +
-				"?size=${preferenceManager.coverArtQuality.value}"
-		}
-		return api.getCoverArtUrl(
+		return provider.getCoverArtUrl(
 			coverArtId,
 			size = "${preferenceManager.coverArtQuality.value}"
 		)
@@ -330,21 +335,17 @@ fun SessionManager.supportsFeature(feature: ServerFeature): Boolean {
 }
 
 fun SessionManager.supportsTranscoding(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsTranscoding != false
+	return this.server != null
 }
 
 fun SessionManager.supportsDownloads(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsDownloads != false
+	return this.server != null
 }
 
 fun SessionManager.supportsPlaySubmission(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsPlaySubmission != false
+	return this.provider is ScrobbleProvider
 }
 
 fun SessionManager.supportsRatings(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsRatings != false
-}
-
-fun SessionManager.supportsShares(): Boolean {
-	return this.getServerInfo()?.capabilities?.supportsShares != false
+	return this.server != null
 }
