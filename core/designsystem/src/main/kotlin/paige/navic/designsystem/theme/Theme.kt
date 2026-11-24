@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import org.koin.compose.koinInject
 import paige.navic.domain.model.settings.AnimationStyle
@@ -48,12 +49,16 @@ public fun NavicTheme(
 	}
 	val activity = LocalActivity.current as? ComponentActivity
 
-	val edgeScrim = (colorScheme ?: chosenScheme).background.toArgb()
+	val effectiveScheme = colorScheme ?: chosenScheme
+	val edgeScrim = effectiveScheme.background.toArgb()
+	val isSchemeDark = remember(effectiveScheme, isDark) {
+		effectiveScheme.background.luminance() < 0.5f
+	}
 
 	SystemBarStyle.auto(
 		darkScrim = edgeScrim,
 		lightScrim = edgeScrim,
-		detectDarkMode = { isDark }
+		detectDarkMode = { isSchemeDark }
 	).let {
 		activity?.enableEdgeToEdge(
 			statusBarStyle = it,
@@ -62,8 +67,7 @@ public fun NavicTheme(
 	}
 
 	MaterialExpressiveTheme(
-		colorScheme = colorScheme
-			?: chosenScheme,
+		colorScheme = effectiveScheme,
 		motionScheme = motionScheme,
 		typography = typography(),
 		content = content
