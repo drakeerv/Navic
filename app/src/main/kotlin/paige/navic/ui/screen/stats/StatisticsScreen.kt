@@ -55,6 +55,7 @@ import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainArtist
 import paige.navic.domain.model.DomainSongListType
 import paige.navic.domain.model.settings.BottomBarVisibilityMode
+import paige.navic.domain.model.settings.StatsCalculationMode
 import paige.navic.icons.Icons
 import paige.navic.icons.filled.Headphones
 import paige.navic.icons.filled.Star
@@ -222,9 +223,19 @@ fun StatisticsScreen(
 						key = { it.artist.id },
 						span = { GridItemSpan(maxLineSpan) }
 					) { stats ->
-						val maxDuration = state.topArtists.firstOrNull()?.listeningTime?.inWholeMilliseconds?.toFloat() ?: 1f
-						val ratio = if (maxDuration > 0f) {
-							(stats.listeningTime.inWholeMilliseconds.toFloat() / maxDuration).coerceIn(0f, 1f)
+						val isDurationMode = preferenceManager.statsCalculationMode == StatsCalculationMode.Duration
+						val maxVal = if (isDurationMode) {
+							state.topArtists.firstOrNull()?.listeningTime?.inWholeMilliseconds?.toFloat() ?: 1f
+						} else {
+							state.topArtists.firstOrNull()?.playCount?.toFloat() ?: 1f
+						}
+						val currentVal = if (isDurationMode) {
+							stats.listeningTime.inWholeMilliseconds.toFloat()
+						} else {
+							stats.playCount.toFloat()
+						}
+						val ratio = if (maxVal > 0f) {
+							(currentVal / maxVal).coerceIn(0f, 1f)
 						} else 0f
 						TopArtistItem(
 							stats = stats,

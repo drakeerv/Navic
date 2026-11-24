@@ -6,6 +6,7 @@
 
 package paige.navic.ui.screen.stats.viewmodel
 
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,6 +26,8 @@ import paige.navic.database.mapper.toDomainModel
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainArtist
 import paige.navic.domain.model.DomainSong
+import paige.navic.domain.model.settings.StatsCalculationMode
+import paige.navic.preferences.PreferenceManager
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -58,7 +61,8 @@ data class StatisticsState(
 class StatisticsViewModel(
 	private val songDao: SongDao,
 	private val artistDao: ArtistDao,
-	private val albumDao: AlbumDao
+	private val albumDao: AlbumDao,
+	private val preferenceManager: PreferenceManager
 ) : ViewModel() {
 
 	val starredSongs: StateFlow<List<DomainSong>> = songDao
@@ -67,52 +71,74 @@ class StatisticsViewModel(
 		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
 	@OptIn(ExperimentalCoroutinesApi::class)
-	val state: StateFlow<StatisticsState> = combine(
-		songDao.getTotalPlayCount().map { it ?: 0 },
-		songDao.getTotalListeningTime().map { (it ?: 0L).milliseconds },
-		songDao.getTopSongs(10).map { songs ->
-			songs.map { song ->
-				SongStats(
-					song = song.toDomainModel(),
-					playCount = song.playCount,
-					listeningTime = song.duration * song.playCount
+	val state: StateFlow<StatisticsState> = snapshotFlow { preferenceManager.statsCalculationMode }
+		.flatMapLatest { mode ->
+			val topSongsFlow = if (mode == StatsCalculationMode.Duration) {
+				songDao.getTopSongs(10)
+			} else {
+				songDao.getTopSongsByPlayCount(10)
+			}
+
+			val topAlbumsFlow = if (mode == StatsCalculationMode.Duration) {
+				songDao.getTopAlbumIds(10)
+			} else {
+				songDao.getTopAlbumIdsByPlayCount(10)
+			}
+
+			val topArtistsFlow = if (mode == StatsCalculationMode.Duration) {
+				songDao.getTopArtistIds(10)
+			} else {
+				songDao.getTopArtistIdsByPlayCount(10)
+			}
+
+			combine(
+				songDao.getTotalPlayCount().map { it ?: 0 },
+				songDao.getTotalListeningTime().map { (it ?: 0L).milliseconds },
+				topSongsFlow.map { songs ->
+					songs.map { song ->
+						SongStats(
+							song = song.toDomainModel(),
+							playCount = song.playCount,
+							listeningTime = song.duration * song.playCount
+						)
+					}
+				},
+				topAlbumsFlow.flatMapLatest { ids ->
+					if (ids.isEmpty()) flowOf(emptyList())
+					else flow {
+						val albums = mutableListOf<AlbumStats>()
+						for (id in ids) {
+							val entity = albumDao.getAlbumById(id)
+							val playCount = songDao.getSongsByAlbumId(id).sumOf { it.playCount }
+							val listeningTime = (songDao.getAlbumListeningTime(id).first() ?: 0L).milliseconds
+							entity?.toDomainModel()?.let { albums.add(AlbumStats(it, playCount, listeningTime)) }
+						}
+						emit(albums)
+					}
+				},
+				topArtistsFlow.flatMapLatest { ids ->
+					if (ids.isEmpty()) flowOf(emptyList())
+					else flow {
+						val artists = mutableListOf<ArtistStats>()
+						for (id in ids) {
+							val entity = artistDao.getArtistById(id)
+							val playCount = songDao.getArtistPlayCount(id).first() ?: 0
+							val listeningTime = (songDao.getArtistListeningTime(id).first() ?: 0L).milliseconds
+							entity?.toDomainModel()?.let { artists.add(ArtistStats(it, playCount, listeningTime)) }
+						}
+						emit(artists)
+					}
+				}
+			) { total, duration, songs, albums, artists ->
+				StatisticsState(
+					totalPlays = total,
+					totalDuration = duration,
+					topSongs = songs,
+					topAlbums = albums,
+					topArtists = artists,
+					isLoading = false
 				)
 			}
-		},
-		songDao.getTopAlbumIds(10).flatMapLatest { ids ->
-			if (ids.isEmpty()) flowOf(emptyList())
-			else flow {
-				val albums = mutableListOf<AlbumStats>()
-				for (id in ids) {
-					val entity = albumDao.getAlbumById(id)
-					val playCount = songDao.getSongsByAlbumId(id).sumOf { it.playCount }
-					val listeningTime = (songDao.getAlbumListeningTime(id).first() ?: 0L).milliseconds
-					entity?.toDomainModel()?.let { albums.add(AlbumStats(it, playCount, listeningTime)) }
-				}
-				emit(albums)
-			}
-		},
-		songDao.getTopArtistIds(10).flatMapLatest { ids ->
-			if (ids.isEmpty()) flowOf(emptyList())
-			else flow {
-				val artists = mutableListOf<ArtistStats>()
-				for (id in ids) {
-					val entity = artistDao.getArtistById(id)
-					val playCount = songDao.getArtistPlayCount(id).first() ?: 0
-					val listeningTime = (songDao.getArtistListeningTime(id).first() ?: 0L).milliseconds
-					entity?.toDomainModel()?.let { artists.add(ArtistStats(it, playCount, listeningTime)) }
-				}
-				emit(artists)
-			}
 		}
-	) { total, duration, songs, albums, artists ->
-		StatisticsState(
-			totalPlays = total,
-			totalDuration = duration,
-			topSongs = songs,
-			topAlbums = albums,
-			topArtists = artists,
-			isLoading = false
-		)
-	}.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatisticsState())
+		.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), StatisticsState())
 }

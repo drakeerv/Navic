@@ -146,6 +146,7 @@
 	<string name="subtitle_cover_art_key_required">API key required</string>
 	<string name="subtitle_alternative_addresses">Fallback addresses to reach the music server</string>
 	<string name="subtitle_float_output">Experimental. Requires a restart. Playback speed will no longer work if this option is enabled</string>
+	<string name="subtitle_stats_calculation">Choose whether statistics are ranked by listening time or play count</string>
 
 	<!-- Options -->
 
@@ -319,6 +320,10 @@
 	<string name="option_enable_cronet">Enable Cronet (HTTP/3)</string>
 	<string name="subtitle_enable_cronet">Use Chromium\'s Cronet for HTTP requests. Generally only available if your device has either the proprietary Google Mobile Services, or microG installed.</string>
 
+	<string name="option_stats_calculation">Stats calculation method</string>
+	<string name="option_stats_duration">Song duration</string>
+	<string name="option_stats_play_count">Play count</string>
+
 	<!-- Actions -->
 
 	<string name="action_ok">OK</string>
@@ -477,6 +482,7 @@
 	<string name="info_total_plays">Total plays</string>
 	<string name="info_total_listening_time">Total listening time</string>
 	<string name="info_listening_stats_ratio">%1$s%% of total listening time</string>
+	<string name="info_plays_stats_ratio">%1$s%% of total plays</string>
 	<string name="info_update">Version "%1$s" has been released</string>
 	<string name="info_shared_by">Shared by %1$s</string>
 	<string name="info_share_expires_in">Expires in %1$s</string>

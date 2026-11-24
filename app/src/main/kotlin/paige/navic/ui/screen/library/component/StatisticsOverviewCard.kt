@@ -36,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.koin.compose.koinInject
 import paige.navic.R
+import paige.navic.domain.model.settings.StatsCalculationMode
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.CoverArt
 import paige.navic.ui.screen.stats.viewmodel.StatisticsState
@@ -109,7 +110,8 @@ private fun TopArtistPage(statsState: StatisticsState) {
 		coverArtId = topArtist?.artist?.coverArtId,
 		playCount = topArtist?.playCount ?: 0,
 		duration = topArtist?.listeningTime ?: Duration.ZERO,
-		totalDuration = statsState.totalDuration
+		totalDuration = statsState.totalDuration,
+		totalPlays = statsState.totalPlays
 	)
 }
 
@@ -123,7 +125,8 @@ private fun TopAlbumPage(statsState: StatisticsState) {
 		coverArtId = topAlbum?.album?.coverArtId,
 		playCount = topAlbum?.playCount ?: 0,
 		duration = topAlbum?.listeningTime ?: Duration.ZERO,
-		totalDuration = statsState.totalDuration
+		totalDuration = statsState.totalDuration,
+		totalPlays = statsState.totalPlays
 	)
 }
 
@@ -137,7 +140,8 @@ private fun TopSongPage(statsState: StatisticsState) {
 		coverArtId = topSong?.song?.coverArtId,
 		playCount = topSong?.playCount ?: 0,
 		duration = topSong?.listeningTime ?: Duration.ZERO,
-		totalDuration = statsState.totalDuration
+		totalDuration = statsState.totalDuration,
+		totalPlays = statsState.totalPlays
 	)
 }
 
@@ -149,15 +153,21 @@ private fun StatPageContent(
 	coverArtId: String?,
 	playCount: Int,
 	duration: Duration,
-	totalDuration: Duration
+	totalDuration: Duration,
+	totalPlays: Int
 ) {
 	val colorScheme = rememberColorSchemeFromCoverArt(coverArtId)
 	val barColor = colorScheme.primary
+	val preferenceManager = koinInject<PreferenceManager>()
+	val isDurationMode = preferenceManager.statsCalculationMode == StatsCalculationMode.Duration
+
 	val ratio = when {
-		totalDuration > Duration.ZERO -> (duration.inWholeMilliseconds.toDouble() / totalDuration.inWholeMilliseconds.toDouble()).toFloat()
+		isDurationMode && totalDuration > Duration.ZERO ->
+			(duration.inWholeMilliseconds.toDouble() / totalDuration.inWholeMilliseconds.toDouble()).toFloat()
+		!isDurationMode && totalPlays > 0 ->
+			(playCount.toDouble() / totalPlays.toDouble()).toFloat()
 		else -> 0f
 	}
-	val preferenceManager = koinInject<PreferenceManager>()
 
 	Row(
 		modifier = Modifier.fillMaxWidth(),
@@ -212,10 +222,17 @@ private fun StatPageContent(
 						)
 					}
 					Text(
-						text = stringResource(
-							R.string.info_listening_stats_ratio,
-							(ratio * 100).toInt()
-						),
+						text = if (isDurationMode) {
+							stringResource(
+								R.string.info_listening_stats_ratio,
+								(ratio * 100).toInt()
+							)
+						} else {
+							stringResource(
+								R.string.info_plays_stats_ratio,
+								(ratio * 100).toInt()
+							)
+						},
 						style = MaterialTheme.typography.labelSmall,
 						color = MaterialTheme.colorScheme.onSurfaceVariant
 					)

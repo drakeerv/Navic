@@ -36,6 +36,7 @@ import paige.navic.domain.model.settings.NowPlayingSliderStyle
 import paige.navic.domain.model.settings.OfflineMode
 import paige.navic.domain.model.settings.QueueInfoType
 import paige.navic.domain.model.settings.ReplayGainMode
+import paige.navic.domain.model.settings.StatsCalculationMode
 import paige.navic.domain.model.settings.StreamingQuality
 import paige.navic.domain.model.settings.Theme
 import paige.navic.domain.model.settings.ThemeMode
@@ -122,6 +123,7 @@ class PreferenceManager(
 	var explicitContentPlayback by preference(ExplicitContentPlayback.Allowed)
 	var autoFillQueue by preference(false)
 	var shushQueueDuplicateDialog by preference(false)
+	var statsCalculationMode by preference(StatsCalculationMode.Duration)
 
 	// navigation bar settings
 	var bottomBarCollapseMode by preference(BottomBarCollapseMode.OnScroll)
