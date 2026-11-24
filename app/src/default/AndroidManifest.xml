@@ -9,9 +9,16 @@
 	<!-- the update sheet installs apks directly -->
 	<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+	<!-- allow updates to be silent on api 31+ -->
+	<uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
 	<application>
 		<receiver
 			android:name="paige.navic.update.UpdateInstallReceiver"
-			android:exported="false" />
+			android:exported="false">
+			<intent-filter>
+				<action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+			</intent-filter>
+		</receiver>
 	</application>
 </manifest>

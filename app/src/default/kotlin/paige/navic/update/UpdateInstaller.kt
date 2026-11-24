@@ -13,7 +13,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
-import androidx.core.content.IntentCompat
+import android.widget.Toast
+import paige.navic.R
 import java.io.File
 import java.net.URL
 import java.util.zip.ZipFile
@@ -43,6 +44,12 @@ internal object UpdateInstaller {
 			check(apk.length() > 0) { "extracted apk is empty" }
 			return apk
 		} finally {
+			Toast.makeText(
+				context,
+				R.string.info_update_failed,
+				Toast.LENGTH_SHORT
+			).show()
+
 			raw.delete()
 		}
 	}
@@ -54,6 +61,11 @@ internal object UpdateInstaller {
 			PackageInstaller.SessionParams.MODE_FULL_INSTALL
 		).apply {
 			setAppPackageName(context.packageName)
+
+			// make updates silent on api 31+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+				setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+			}
 		}
 		val sessionId = installer.createSession(params)
 		installer.openSession(sessionId).use { session ->
@@ -82,17 +94,14 @@ internal object UpdateInstaller {
 
 class UpdateInstallReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
-		val status = intent.getIntExtra(
-			PackageInstaller.EXTRA_STATUS,
-			PackageInstaller.STATUS_FAILURE
-		)
-		if (status != PackageInstaller.STATUS_PENDING_USER_ACTION) return
-		val confirm = IntentCompat.getParcelableExtra(
-			intent,
-			Intent.EXTRA_INTENT,
-			Intent::class.java
-		) ?: return
-		confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-		context.startActivity(confirm)
+		if (intent.action != Intent.ACTION_MY_PACKAGE_REPLACED) return
+
+		val launchIntent = context.packageManager
+			.getLaunchIntentForPackage(context.packageName)
+			?.apply {
+				addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+			} ?: return
+
+		context.startActivity(launchIntent)
 	}
 }
