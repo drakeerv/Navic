@@ -132,7 +132,7 @@ class NavicDataSource(
 		var cacheKey: String? = null
 
 		val targetUri = if (uri.scheme == "content" || uri.scheme == "file" || uri.scheme == "http" || uri.scheme == "https") {
-			uri.ensureHttpsIfAccountIsHttps()
+			uri
 		} else songId?.let {
 			runBlocking {
 				withContext(Dispatchers.IO) {
@@ -205,7 +205,7 @@ class NavicDataSource(
 		val cachedStreamUrl = ttlLruCache.get(cacheKey)
 
 		if (cachedStreamUrl != null) {
-			return cachedStreamUrl.toUri().ensureHttpsIfAccountIsHttps()
+			return cachedStreamUrl.toUri()
 		}
 
 		val streamUrl = try {
@@ -217,17 +217,7 @@ class NavicDataSource(
 		}
 
 		ttlLruCache.put(cacheKey, streamUrl)
-		return streamUrl.toUri().ensureHttpsIfAccountIsHttps()
-	}
-
-	private fun Uri.ensureHttpsIfAccountIsHttps(): Uri {
-		val activeAccountUrl = sessionManager.instanceUrl
-		val isAccountHttps = activeAccountUrl.startsWith("https://", ignoreCase = true)
-		if (isAccountHttps && this.scheme.equals("http", ignoreCase = true)) {
-			Logger.w(TAG, "Prevented fallback to HTTP for playback stream URI ($this), enforcing HTTPS")
-			return this.buildUpon().scheme("https").build()
-		}
-		return this
+		return streamUrl.toUri()
 	}
 
 	private fun Uri.withTimeOffset(seconds: Int?): Uri {

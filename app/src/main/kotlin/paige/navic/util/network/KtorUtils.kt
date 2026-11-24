@@ -91,20 +91,6 @@ fun createOkHttpClient(
 			}
 		}
 
-		this.addInterceptor { chain ->
-			val request = chain.request()
-			val response = chain.proceed(request)
-			if (request.isHttps && response.isRedirect) {
-				val location = response.header("Location")
-				if (location != null && location.startsWith("http://", ignoreCase = true)) {
-					response.close()
-					val upgradedUrl = location.replaceFirst("http://", "https://", ignoreCase = true)
-					return@addInterceptor chain.proceed(request.newBuilder().url(upgradedUrl).build())
-				}
-			}
-			response
-		}
-
 		// according to google, this should be the last thing in the interceptors
 		if (enableCronet) cronetInterceptor?.let(this::addInterceptor)
 	}.build()

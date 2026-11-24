@@ -60,16 +60,9 @@ internal class NavicMediaSourceFactory(
 			?.takeIf { downloadable && !downloaded }
 			?.let { sessionManager.provider.getHlsStreamUrl(it, bitrateKbps, format) }
 
-		val activeAccountUrl = sessionManager.instanceUrl
-		val safeHlsUrl = if (hlsUrl != null && activeAccountUrl.startsWith("https://", ignoreCase = true) && hlsUrl.startsWith("http://", ignoreCase = true)) {
-			hlsUrl.replaceFirst("http://", "https://", ignoreCase = true)
-		} else {
-			hlsUrl
-		}
-
 		return when {
-			safeHlsUrl != null -> delegate.createMediaSource(
-				mediaItem.buildUpon().setUri(safeHlsUrl).build()
+			hlsUrl != null -> delegate.createMediaSource(
+				mediaItem.buildUpon().setUri(hlsUrl).build()
 			)
 
 			songId != null &&
