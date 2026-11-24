@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -79,7 +79,9 @@ sealed interface Screen : NavKey {
 	// misc
 	@Immutable
 	@Serializable
-	data object Login : Screen
+	data class Login(
+		val showAccounts: Boolean = true
+	) : Screen
 
 	@Immutable
 	@Serializable

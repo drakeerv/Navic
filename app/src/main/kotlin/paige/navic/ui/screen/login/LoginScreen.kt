@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -30,7 +30,9 @@ private enum class Page {
 }
 
 @Composable
-fun LoginScreen() {
+fun LoginScreen(
+	showAccounts: Boolean
+) {
 	val viewModel = koinViewModel<LoginViewModel>()
 	val loginManager = koinInject<LoginManager>()
 	val authMethod by viewModel.authMethod.collectAsStateWithLifecycle()
@@ -53,6 +55,7 @@ fun LoginScreen() {
 		when (page) {
 			Page.Server -> ServerPage(
 				modifier = pageModifier,
+				showAccounts = showAccounts,
 				onServerTypeChanged = {
 					loginManager.selectServerType(it)
 					viewModel.selectServerType(it)

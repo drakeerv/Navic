@@ -62,6 +62,7 @@ import paige.navic.ui.component.common.ServerTypeIcon
 @Composable
 fun ServerPage(
 	modifier: Modifier = Modifier,
+	showAccounts: Boolean,
 	onServerTypeChanged: (ServerType) -> Unit,
 	onNavigateForward: () -> Unit,
 	onAccountSelected: (Account) -> Unit
@@ -81,7 +82,9 @@ fun ServerPage(
 			Header(
 				modifier = Modifier.weight(1.5f)
 			)
-			SavedServers(onAccountSelected = onAccountSelected)
+			if (showAccounts) {
+				SavedServers(onAccountSelected = onAccountSelected)
+			}
 			ServerChoices(
 				modifier = Modifier.weight(1f),
 				onServerTypeChanged = {

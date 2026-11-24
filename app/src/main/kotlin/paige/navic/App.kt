@@ -122,10 +122,10 @@ import paige.navic.ui.screen.settings.SettingsAppearanceScreen
 import paige.navic.ui.screen.settings.SettingsConnectionOptionsScreen
 import paige.navic.ui.screen.settings.SettingsCustomHeadersScreen
 import paige.navic.ui.screen.settings.SettingsDataStorageScreen
-import paige.navic.ui.screen.settings.SettingsLocalLibraryScreen
 import paige.navic.ui.screen.settings.SettingsDeveloperScreen
 import paige.navic.ui.screen.settings.SettingsDownloadQualityScreen
 import paige.navic.ui.screen.settings.SettingsEqualizerScreen
+import paige.navic.ui.screen.settings.SettingsLocalLibraryScreen
 import paige.navic.ui.screen.settings.SettingsLogsScreen
 import paige.navic.ui.screen.settings.SettingsNowPlayingScreen
 import paige.navic.ui.screen.settings.SettingsPlaybackScreen
@@ -166,7 +166,7 @@ fun App() {
 	val sessionState by sessionManager.sessionState.collectAsStateWithLifecycle()
 	val backStack = rememberNavBackStack(
 		config, if (sessionState is SessionState.Unauthenticated) {
-			Screen.Login
+			Screen.Login()
 		} else {
 			Screen.Library()
 		}
@@ -176,7 +176,7 @@ fun App() {
 		when (sessionState) {
 			is SessionState.Unauthenticated if backStack.lastOrNull() != Screen.Login -> {
 				backStack.clear()
-				backStack.add(Screen.Login)
+				backStack.add(Screen.Login())
 			}
 
 			is SessionState.Authenticated if backStack.lastOrNull() == Screen.Login -> {
@@ -260,7 +260,7 @@ fun App() {
 			NavicTheme {
 				Row(modifier = Modifier.fillMaxSize()) {
 					if (sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
-						&& Screen.Login !in backStack
+						&& !backStack.any { it is Screen.Login }
 					) {
 						SideBar()
 					}
@@ -400,8 +400,8 @@ private fun entryProvider(
 		}
 
 		// misc
-		entry<Screen.Login> {
-			LoginScreen()
+		entry<Screen.Login> { key ->
+			LoginScreen(showAccounts = key.showAccounts)
 		}
 		entry<Screen.ImageView>(metadata = imageViewMetadata) { key ->
 			ImageViewScreen(
