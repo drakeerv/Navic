@@ -98,6 +98,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-v2-gradle-
 
+      - run: |
+          cat <<EOF >>~/.gradle/gradle.properties
+          org.gradle.daemon=false
+          org.gradle.vfs.watch=false
+          org.gradle.logging.stacktrace=all
+          EOF
+
+
       - name: Setup JDK
         uses: actions/setup-java@v6
         with:
@@ -125,12 +133,12 @@ jobs:
         run: |
           echo "${{ secrets.KEYSTORE }}" | base64 -d > release.keystore
           if [ "$IS_RELEASE" = true ] ; then
-            ./gradlew :app:packageDefaultRelease --stacktrace --no-daemon --no-watch-fs
+            ./gradlew :app:packageDefaultRelease
             mv app/build/outputs/apk/**/**/*.apk ./
-            ./gradlew :app:packageFdroidRelease --stacktrace --no-daemon --no-watch-fs
+            ./gradlew :app:packageFdroidRelease
             mv app/build/outputs/apk/**/**/*.apk ./
           else
-            ./gradlew :app:packageDefaultCi --stacktrace --no-daemon --no-watch-fs
+            ./gradlew :app:packageDefaultCi
             mv app/build/outputs/apk/**/**/*.apk ./
           fi
           rm release.keystore
