@@ -8,6 +8,8 @@ package paige.navic.ui.screen.queue.component
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBoxValue
@@ -29,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -181,12 +183,21 @@ fun QueueScreenItem(
 							if (isSelected) {
 								Waveform(isPlaying = isPlaying)
 							}
-							IconButton(
-								onClick = onDrag
+							Box(
+								modifier = Modifier
+									.size(40.dp)
+									.pointerInput(onDrag) {
+										awaitEachGesture {
+											awaitFirstDown(requireUnconsumed = false)
+											onDrag()
+										}
+									},
+								contentAlignment = Alignment.Center
 							) {
 								Icon(
 									Icons.Outlined.DragHandle,
-									contentDescription = stringResource(R.string.action_reorder)
+									contentDescription = stringResource(R.string.action_reorder),
+									tint = MaterialTheme.colorScheme.onSurfaceVariant
 								)
 							}
 						}

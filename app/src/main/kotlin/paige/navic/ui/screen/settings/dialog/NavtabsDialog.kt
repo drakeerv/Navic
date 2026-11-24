@@ -8,15 +8,16 @@ package paige.navic.ui.screen.settings.dialog
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -135,16 +136,19 @@ private fun NavtabRow(
 				}
 			)
 			Text(tab.id.name.lowercase().replaceFirstChar { it.uppercase() })
-			IconButton(
-				modifier = Modifier.dragHandle(
-					state = state,
-					key = tab.id
-				),
-				onClick = {}
+			Box(
+				modifier = Modifier
+					.size(40.dp)
+					.dragHandle(
+						state = state,
+						key = tab.id
+					),
+				contentAlignment = Alignment.Center
 			) {
 				Icon(
 					Icons.Outlined.DragHandle,
-					contentDescription = stringResource(R.string.action_reorder)
+					contentDescription = stringResource(R.string.action_reorder),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 		}

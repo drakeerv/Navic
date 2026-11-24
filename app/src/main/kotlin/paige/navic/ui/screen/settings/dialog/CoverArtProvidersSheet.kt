@@ -12,8 +12,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
@@ -194,13 +196,16 @@ private fun ProviderRow(
 				}
 			}
 
-			IconButton(
-				modifier = Modifier.dragHandle(state = state, key = provider.host),
-				onClick = {}
+			Box(
+				modifier = Modifier
+					.size(40.dp)
+					.dragHandle(state = state, key = provider.host),
+				contentAlignment = Alignment.Center
 			) {
 				Icon(
 					imageVector = Icons.Outlined.DragHandle,
-					contentDescription = stringResource(R.string.action_reorder)
+					contentDescription = stringResource(R.string.action_reorder),
+					tint = MaterialTheme.colorScheme.onSurfaceVariant
 				)
 			}
 		}
