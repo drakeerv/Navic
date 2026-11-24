@@ -235,14 +235,20 @@ private fun ServerChoices(
 	val packageInfo = remember {
 		context.packageManager.getPackageInfo(context.packageName, 0)
 	}
+	val sessionManager = koinInject<SessionManager>()
+	val accounts by sessionManager.accounts.collectAsStateWithLifecycle()
 
 	// "navidrome" is just the same as subsonic, it's just there for people who don't know what subsonic is
-	val serverTypes = listOf(
-		ServerType.SUBSONIC,
-		ServerType.NAVIDROME,
-		ServerType.JELLYFIN,
-		ServerType.LOCAL
-	)
+	val serverTypes = remember(accounts) {
+		buildList {
+			add(ServerType.SUBSONIC)
+			add(ServerType.NAVIDROME)
+			add(ServerType.JELLYFIN)
+			if (!accounts.any { it.serverType == ServerType.LOCAL }) {
+				add(ServerType.LOCAL)
+			}
+		}
+	}
 
 	Column(
 		modifier = modifier.padding(horizontal = 16.dp),
