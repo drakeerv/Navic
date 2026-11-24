@@ -11,6 +11,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -236,6 +237,11 @@ class ChangelogViewModel(
 				}
 			} catch (e: Exception) {
 				Logger.e("ChangelogViewModel", "couldn't install update", e)
+				Toast.makeText(
+					context,
+					R.string.info_update_failed,
+					Toast.LENGTH_SHORT
+				).show()
 			} finally {
 				_installing.value = false
 			}

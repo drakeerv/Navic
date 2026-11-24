@@ -13,8 +13,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageInstaller
 import android.os.Build
-import android.widget.Toast
-import paige.navic.R
 import java.io.File
 import java.net.URL
 import java.util.zip.ZipFile
@@ -44,12 +42,6 @@ internal object UpdateInstaller {
 			check(apk.length() > 0) { "extracted apk is empty" }
 			return apk
 		} finally {
-			Toast.makeText(
-				context,
-				R.string.info_update_failed,
-				Toast.LENGTH_SHORT
-			).show()
-
 			raw.delete()
 		}
 	}
