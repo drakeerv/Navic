@@ -48,6 +48,15 @@ interface PlaylistDao {
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun insertPlaylistSongCrossRefs(crossRefs: List<PlaylistSongCrossRef>)
 
+	@Query("UPDATE PlaylistEntity SET songCount = songCount + :count WHERE playlistId = :playlistId")
+	suspend fun incrementPlaylistSongCount(playlistId: String, count: Int)
+
+	@Transaction
+	suspend fun appendPlaylistSongs(playlistId: String, crossRefs: List<PlaylistSongCrossRef>) {
+		insertPlaylistSongCrossRefs(crossRefs)
+		incrementPlaylistSongCount(playlistId, crossRefs.size)
+	}
+
 	@Transaction
 	@Query("SELECT * FROM PlaylistEntity WHERE playlistId = :playlistId LIMIT 1")
 	suspend fun getPlaylistById(playlistId: String): PlaylistWithSongs?
@@ -72,6 +81,9 @@ interface PlaylistDao {
 
 	@Query("SELECT playlistId FROM PlaylistEntity")
 	suspend fun getAllPlaylistIds(): List<String>
+
+	@Query("SELECT * FROM PlaylistEntity")
+	suspend fun getAllPlaylists(): List<PlaylistEntity>
 
 	@Query("SELECT * FROM PlaylistEntity WHERE name LIKE '%' || :query || '%' COLLATE NOCASE LIMIT :limit OFFSET :offset")
 	suspend fun searchPlaylistsPage(query: String, limit: Int, offset: Int): List<PlaylistEntity>

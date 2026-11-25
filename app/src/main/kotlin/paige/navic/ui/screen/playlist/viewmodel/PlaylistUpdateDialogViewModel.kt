@@ -9,6 +9,9 @@ package paige.navic.ui.screen.playlist.viewmodel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import paige.navic.R
+import paige.navic.database.dao.PlaylistDao
+import paige.navic.database.entity.PlaylistSongCrossRef
+import paige.navic.database.mapper.toDomainModel
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.model.DomainPlaylist
@@ -23,6 +26,7 @@ data class PlaylistUpdateViewState(
 class PlaylistUpdateDialogViewModel(
 	private val songIds: List<String>,
 	private val playlistToExclude: String?,
+	private val playlistDao: PlaylistDao,
 	private val sessionManager: SessionManager,
 	private val snackBarManager: SnackBarManager
 ) : AsyncViewModel<PlaylistUpdateViewState>(UiState.Loading(PlaylistUpdateViewState())) {
@@ -35,7 +39,8 @@ class PlaylistUpdateDialogViewModel(
 
 	fun refreshResults() = execute {
 		PlaylistUpdateViewState(
-			playlists = sessionManager.server?.getPlaylists().orEmpty()
+			playlists = playlistDao.getAllPlaylists()
+				.map { it.toDomainModel() }
 				.filter { it.id != playlistToExclude }
 		)
 	}
@@ -56,6 +61,22 @@ class PlaylistUpdateDialogViewModel(
 		val selected = data.selectedPlaylists
 		val server = sessionManager.server
 		execute {
+			val selectedPlaylists = selected.mapNotNull { playlist ->
+				playlistDao.getPlaylistById(playlist.id)
+			}
+			selectedPlaylists.forEach { playlistWithSongs ->
+				val playlist = playlistWithSongs.playlist
+				val nextPosition = (playlistWithSongs.songs.maxOfOrNull { it.crossRef.position } ?: -1) + 1
+				val crossRefs = songIds.mapIndexed { index, songId ->
+					PlaylistSongCrossRef(
+						playlistId = playlist.playlistId,
+						songId = songId,
+						position = nextPosition + index
+					)
+				}
+				playlistDao.appendPlaylistSongs(playlist.playlistId, crossRefs)
+			}
+
 			selected.forEach { playlist ->
 				server?.updatePlaylist(
 					playlist.id,

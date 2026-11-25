@@ -96,6 +96,7 @@ val viewModelModule = module {
 		PlaylistUpdateDialogViewModel(
 			songIds = songIds,
 			playlistToExclude = playlistToExclude,
+			playlistDao = get(),
 			sessionManager = get(),
 			snackBarManager = get()
 		)

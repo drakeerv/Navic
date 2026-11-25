@@ -22,7 +22,7 @@ class PlaylistRepository(
 	private val dbRepository: DbRepository,
 	private val sessionManager: SessionManager,
 ) {
-	private suspend fun getLocalData(
+	private fun getLocalData(
 		listType: DomainPlaylistListType,
 		reversed: Boolean,
 		filters: Set<DomainFilter> = emptySet()
