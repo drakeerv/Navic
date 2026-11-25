@@ -6,7 +6,7 @@
 
 package paige.navic.ui.screen.settings
 
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -29,9 +29,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.dropUnlessResumed
 import kotlinx.collections.immutable.toImmutableList
 import org.koin.compose.koinInject
@@ -41,6 +41,8 @@ import paige.navic.di.LocalSizeClass
 import paige.navic.domain.model.settings.AnimationStyle
 import paige.navic.domain.model.settings.MarqueeSpeed
 import paige.navic.preferences.PreferenceManager
+import paige.navic.util.appLocale
+import paige.navic.util.setAppLocale
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.ui.component.layout.NestedTopBar
@@ -94,8 +96,9 @@ fun SettingsAppearanceScreen() {
 				verticalArrangement = Arrangement.spacedBy(SettingsGroupDefaults.GapBetweenGroups)
 			) {
 				SettingsGroup {
-					val currentLanguage = AppCompatDelegate.getApplicationLocales()
-						.get(0)?.toLanguageTag()
+					val context = LocalContext.current
+					val activity = LocalActivity.current
+					val currentLanguage = context.appLocale()
 					SettingsChoiceItem(
 						content = { Text(stringResource(R.string.option_language)) },
 						choices = languageTags.toImmutableList(),
@@ -103,10 +106,7 @@ fun SettingsAppearanceScreen() {
 							it != null && Locale.forLanguageTag(it).toLanguageTag() == currentLanguage
 						},
 						onChoiceSelected = { tag ->
-							AppCompatDelegate.setApplicationLocales(
-								if (tag == null) LocaleListCompat.getEmptyLocaleList()
-								else LocaleListCompat.forLanguageTags(tag)
-							)
+							activity?.let { setAppLocale(it, tag) }
 						},
 						label = { tag ->
 							tag?.let { Locale.forLanguageTag(it).getDisplayName(Locale.forLanguageTag(it)) }

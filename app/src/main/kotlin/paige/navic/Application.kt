@@ -7,6 +7,7 @@
 package paige.navic
 
 import android.app.ActivityManager
+import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
@@ -19,9 +20,14 @@ import org.koin.dsl.module
 import paige.navic.di.ActivityProvider
 import paige.navic.di.initKoin
 import paige.navic.util.network.CronetSupportImpl
+import paige.navic.util.withAppLocale
 import kotlin.system.exitProcess
 
 class Application : android.app.Application(), KoinComponent {
+	override fun attachBaseContext(base: Context) {
+		super.attachBaseContext(base.withAppLocale())
+	}
+
 	override fun onCreate() {
 		super.onCreate()
 		CronetSupportImpl().install(this)

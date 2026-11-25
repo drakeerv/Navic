@@ -6,12 +6,18 @@
 
 package paige.navic
 
+import android.content.Context
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
+import paige.navic.util.withAppLocale
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
+	override fun attachBaseContext(newBase: Context) {
+		super.attachBaseContext(newBase.withAppLocale())
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		enableEdgeToEdge()
