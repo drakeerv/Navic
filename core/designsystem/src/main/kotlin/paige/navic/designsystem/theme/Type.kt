@@ -38,17 +38,17 @@ fun oneUiSans(): FontFamily {
 	}
 }
 
+// bundled font is instanced to the GRAD/ROND axes only
+// fonttools varLib.instancer google_sans.ttf opsz=18 wght=400 wdth=100 slnt=0
 @Composable
 fun googleSans(
 	grade: Int = 0,
-	width: Float = 100f,
 	round: Float = 0f
 ): FontFamily {
 	val font = Font(
 		R.font.google_sans,
 		variationSettings = FontVariation.Settings(
 			FontVariation.grade(grade),
-			FontVariation.width(width),
 			FontVariation.Setting("ROND", round)
 		)
 	)
@@ -58,11 +58,10 @@ fun googleSans(
 @Composable
 fun defaultFont(
 	grade: Int = 0,
-	width: Float = 100f,
 	round: Float = 0f
 ): FontFamily {
 	val preferenceManager = koinInject<PreferenceManager>()
-	val googleSans = googleSans(grade, width, round)
+	val googleSans = googleSans(grade, round)
 	val oneUiSans = oneUiSans()
 	return remember(preferenceManager.font, preferenceManager.fontPath) {
 		when (preferenceManager.font) {
