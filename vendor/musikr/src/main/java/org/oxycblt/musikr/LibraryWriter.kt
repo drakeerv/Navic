@@ -11,6 +11,7 @@
 package org.oxycblt.musikr
 
 import org.oxycblt.musikr.tag.interpret.PreSong
+import org.oxycblt.musikr.playlist.M3UPlaylistImport
 
 /**
  * Side-effect laden target for interpreted songs.
@@ -24,6 +25,9 @@ interface LibraryWriter {
 
     /** Persist one interpreted song. */
     suspend fun write(song: PreSong)
+
+    /** Persist or stage an M3U playlist found during a local scan. */
+    suspend fun write(playlist: M3UPlaylistImport) {}
 
     /**
      * Finish the scan.

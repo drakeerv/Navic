@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.toList
 import org.oxycblt.musikr.LibraryWriter
+import org.oxycblt.musikr.playlist.M3UPlaylistImport
 import org.oxycblt.musikr.tag.interpret.PreSong
 import paige.navic.database.CacheDatabase
 import paige.navic.database.dao.AlbumDao
@@ -40,15 +41,22 @@ class NavicLibraryWriter(
 	private val songDao: SongDao,
 	private val albumDao: AlbumDao,
 	private val artistDao: ArtistDao,
-	private val genreDao: GenreDao
+	private val genreDao: GenreDao,
+	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence
 ) : LibraryWriter {
+	private val m3uImports = mutableListOf<M3UPlaylistImport>()
+	private val scannedPaths = mutableMapOf<String, String>()
+
 	override suspend fun begin() {
+		m3uImports.clear()
+		scannedPaths.clear()
 		cacheDatabase.withWriteTransaction {
 			clearStaging()
 		}
 	}
 
 	override suspend fun write(song: PreSong) {
+		scannedPaths[song.path.toPlaylistPathKey()] = song.uri.toString()
 		val scanSongId = localScanDao.insertSong(song.toLocalScanSong())
 		val artists = buildList {
 			song.preArtists.forEachIndexed { position, artist ->
@@ -68,6 +76,10 @@ class NavicLibraryWriter(
 		if (genres.isNotEmpty()) {
 			localScanDao.insertGenres(genres)
 		}
+	}
+
+	override suspend fun write(playlist: M3UPlaylistImport) {
+		m3uImports += playlist
 	}
 
 	override suspend fun finish(): Set<String> {
@@ -100,6 +112,14 @@ class NavicLibraryWriter(
 
 			clearStaging()
 		}
+
+		val songIdsByUri = songDao.getAllSongPaths().associate { it.filePath to it.songId }
+		val scannedPathToSongId = scannedPaths.mapNotNull { (path, uri) ->
+			songIdsByUri[uri]?.let { path to it }
+		}.toMap()
+		m3uPlaylistPersistence.syncScanImports(m3uImports.toList(), scannedPathToSongId)
+		m3uImports.clear()
+		scannedPaths.clear()
 
 		return usedCovers
 	}

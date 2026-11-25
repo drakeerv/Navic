@@ -19,11 +19,13 @@ import kotlinx.coroutines.flow.Flow
 import paige.navic.database.entity.PlayableSongRow
 import paige.navic.database.entity.SongEntity
 import paige.navic.util.Logger
+import kotlin.time.Duration
 import kotlin.time.Instant
 
 data class SongPathRow(
 	val songId: String,
-	val filePath: String?
+	val filePath: String?,
+	val duration: Duration
 )
 
 @Dao
@@ -48,7 +50,7 @@ interface SongDao {
 	@Query("SELECT * FROM SongEntity WHERE filePath = :filePath LIMIT 1")
 	suspend fun getSongByFilePath(filePath: String): SongEntity?
 
-	@Query("SELECT songId, filePath FROM SongEntity")
+	@Query("SELECT songId, filePath, duration FROM SongEntity")
 	suspend fun getAllSongPaths(): List<SongPathRow>
 
 	@Query("SELECT songId, title, artistName, albumTitle, belongsToAlbumId AS albumId, coverArtId, duration, filePath, artists, albumArtists FROM SongEntity WHERE songId = :songId LIMIT 1")

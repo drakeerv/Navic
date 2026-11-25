@@ -9,12 +9,17 @@ package paige.navic.ui.screen.playlist.viewmodel
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
+import android.net.Uri
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SessionState
+import paige.navic.domain.manager.ui.SnackBarManager
+import paige.navic.domain.server.ServerType
+import paige.navic.domain.server.local.NavicM3uPlaylistPersistence
+import paige.navic.R
 import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainPlaylistListType
@@ -27,7 +32,9 @@ import paige.navic.ui.viewmodel.SelectableViewModel
 class PlaylistListViewModel(
 	private val repository: PlaylistRepository,
 	private val sessionManager: SessionManager,
-	private val preferenceManager: PreferenceManager
+	private val preferenceManager: PreferenceManager,
+	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence,
+	private val snackBarManager: SnackBarManager
 ) : SelectableViewModel<DomainPlaylist>() {
 
 	val selectedSorting: StateFlow<DomainPlaylistListType>
@@ -40,6 +47,9 @@ class PlaylistListViewModel(
 		field = MutableStateFlow(preferenceManager.playlistFilters.toDomainFilters())
 
 	val gridState = LazyGridState()
+	val canImportM3u: Boolean
+		get() = (sessionManager.sessionState.value as? SessionState.Authenticated)
+			?.serverInfo?.type == ServerType.LOCAL
 
 	init {
 		viewModelScope.launch {
@@ -54,6 +64,13 @@ class PlaylistListViewModel(
 			selectedReversed.value,
 			selectedFilters.value
 		).cachedIn(viewModelScope)
+	}
+
+	fun importM3u(uri: Uri) = launch {
+		check(canImportM3u) { "M3U import is available for the local library" }
+		check(m3uPlaylistPersistence.import(uri)) { "Could not read this M3U playlist" }
+		snackBarManager.notify(R.string.notice_imported_m3u_playlist)
+		refreshPlaylists(false)
 	}
 
 	fun setSorting(sorting: DomainPlaylistListType) {

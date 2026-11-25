@@ -74,6 +74,7 @@ private class ExtractStepImpl(
                 when (item) {
                     is RawSong -> Finalized(item)
                     is RawPlaylist -> Finalized(item)
+                    is RawM3UPlaylist -> Finalized(item)
                     is NewSong -> {
                         when (val result = metadataExtractor.extract(item.file)) {
                             is MetadataResult.Success ->

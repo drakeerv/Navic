@@ -668,4 +668,7 @@
 		<item quantity="other">%1$d lines selected</item>
 	</plurals>
 
+	<string name="action_import_m3u_playlist">Import M3U playlist</string>
+	<string name="notice_imported_m3u_playlist">Playlist imported</string>
+
 </resources>

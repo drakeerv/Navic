@@ -14,9 +14,11 @@ import androidx.room3.Query
 import androidx.room3.RawQuery
 import androidx.room3.RoomRawQuery
 import androidx.room3.Transaction
+import androidx.room3.Update
 import paige.navic.database.entity.PlayableSongRow
 import paige.navic.database.entity.PlaylistEntity
 import paige.navic.database.entity.PlaylistSongCrossRef
+import paige.navic.database.entity.PendingPlaylistEntryEntity
 import paige.navic.database.relation.PlaylistWithSongs
 import paige.navic.util.Logger
 
@@ -42,11 +44,58 @@ interface PlaylistDao {
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun insertPlaylist(playlist: PlaylistEntity)
 
+	@Update
+	suspend fun updatePlaylist(playlist: PlaylistEntity)
+
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun insertPlaylists(playlists: List<PlaylistEntity>)
 
 	@Insert(onConflict = OnConflictStrategy.REPLACE)
 	suspend fun insertPlaylistSongCrossRefs(crossRefs: List<PlaylistSongCrossRef>)
+
+	@Insert(onConflict = OnConflictStrategy.REPLACE)
+	suspend fun insertPendingPlaylistEntries(entries: List<PendingPlaylistEntryEntity>)
+
+	@Query("SELECT * FROM PendingPlaylistEntry")
+	suspend fun getAllPendingPlaylistEntries(): List<PendingPlaylistEntryEntity>
+
+	@Query("DELETE FROM PendingPlaylistEntry WHERE playlistId = :playlistId")
+	suspend fun deletePendingPlaylistEntries(playlistId: String)
+
+	@Query("SELECT playlistId FROM PlaylistEntity WHERE substr(playlistId, 1, length(:prefix)) = :prefix")
+	suspend fun getPlaylistIdsByPrefix(prefix: String): List<String>
+
+	@Query("SELECT * FROM PlaylistSongCrossRef WHERE playlistId = :playlistId ORDER BY position")
+	suspend fun getPlaylistSongCrossRefs(playlistId: String): List<PlaylistSongCrossRef>
+
+	@Transaction
+	suspend fun replaceImportedPlaylist(
+		playlist: PlaylistEntity,
+		crossRefs: List<PlaylistSongCrossRef>,
+		pendingEntries: List<PendingPlaylistEntryEntity>
+	) {
+		if (getPlaylistEntityById(playlist.playlistId) == null) {
+			insertPlaylist(playlist)
+		} else {
+			updatePlaylist(playlist)
+		}
+		replacePlaylistSongs(playlist.playlistId, crossRefs)
+		deletePendingPlaylistEntries(playlist.playlistId)
+		insertPendingPlaylistEntries(pendingEntries)
+	}
+
+	@Transaction
+	suspend fun replacePlaylistContents(
+		playlist: PlaylistEntity,
+		crossRefs: List<PlaylistSongCrossRef>,
+		pendingEntries: List<PendingPlaylistEntryEntity>
+	) {
+		if (getPlaylistEntityById(playlist.playlistId) == null) return
+		updatePlaylist(playlist)
+		replacePlaylistSongs(playlist.playlistId, crossRefs)
+		deletePendingPlaylistEntries(playlist.playlistId)
+		insertPendingPlaylistEntries(pendingEntries)
+	}
 
 	@Query("UPDATE PlaylistEntity SET songCount = songCount + :count WHERE playlistId = :playlistId")
 	suspend fun incrementPlaylistSongCount(playlistId: String, count: Int)

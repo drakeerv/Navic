@@ -46,6 +46,7 @@ import paige.navic.domain.server.MusicProviderFactory
 import paige.navic.domain.server.RemoteMusicServerFactory
 import paige.navic.domain.server.jellyfin.JellyfinMusicServerFactory
 import paige.navic.domain.server.local.LocalMusicLibraryFactory
+import paige.navic.domain.server.local.NavicM3uPlaylistPersistence
 import paige.navic.domain.server.navidrome.NavidromeMusicServerFactory
 import paige.navic.domain.server.subsonic.SubsonicMusicServerFactory
 import paige.navic.domain.sync.SyncActionProcessor
@@ -100,6 +101,7 @@ val managerModule = module {
 	singleOf(::SleepTimerManager)
 	singleOf(::SnackBarManager)
 	singleOf(::StorageManager)
+	singleOf(::NavicM3uPlaylistPersistence)
 	singleOf(::StreamCacheManager)
 	singleOf(::JellyfinMusicServerFactory)
 	singleOf(::NavidromeMusicServerFactory)

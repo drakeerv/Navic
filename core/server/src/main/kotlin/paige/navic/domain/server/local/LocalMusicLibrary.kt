@@ -17,7 +17,6 @@ import org.oxycblt.musikr.LibraryWriter
 import org.oxycblt.musikr.Musikr
 import org.oxycblt.musikr.Storage
 import org.oxycblt.musikr.cache.MutableCache
-import org.oxycblt.musikr.covers.MemoryCover
 import org.oxycblt.musikr.covers.chained.MutableChainedCovers
 import org.oxycblt.musikr.covers.embedded.CoverIdentifier
 import org.oxycblt.musikr.covers.embedded.EmbeddedCovers

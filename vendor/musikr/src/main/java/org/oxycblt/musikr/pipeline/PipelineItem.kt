@@ -22,6 +22,7 @@ import org.oxycblt.musikr.covers.Cover
 import org.oxycblt.musikr.fs.File
 import org.oxycblt.musikr.metadata.Properties
 import org.oxycblt.musikr.playlist.PlaylistFile
+import org.oxycblt.musikr.playlist.M3UPlaylistImport
 import org.oxycblt.musikr.tag.parse.ParsedTags
 
 internal sealed interface PipelineItem
@@ -49,6 +50,8 @@ internal data object InvalidSong : Extracted.Invalid
 internal data object NotAudio : Explored.Known, Extracted.Valid
 
 internal data class RawPlaylist(val file: PlaylistFile) : Explored.Known, Extracted.Valid
+
+internal data class RawM3UPlaylist(val playlist: M3UPlaylistImport) : Explored.Known, Extracted.Valid
 
 internal data class RawSong(
     val file: File,

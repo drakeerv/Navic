@@ -8,12 +8,15 @@ package paige.navic.ui.screen.playlist
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -33,6 +36,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -60,6 +65,7 @@ import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Add
+import paige.navic.icons.outlined.PlaylistAdd
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.playlist.component.PlaylistListScreenGridItem
 import paige.navic.ui.screen.playlist.component.PlaylistListScreenListItem
@@ -97,6 +103,21 @@ fun PlaylistListScreen(
 	val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
 	var createDialogShown by rememberSaveable { mutableStateOf(false) }
+	var fabMenuExpanded by rememberSaveable { mutableStateOf(false) }
+	val m3uPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+		uri?.let(viewModel::importM3u)
+	}
+	val launchM3uPicker = {
+		m3uPicker.launch(
+			arrayOf(
+				"audio/x-mpegurl",
+				"audio/mpegurl",
+				"application/x-mpegurl",
+				"application/vnd.apple.mpegurl",
+				"text/plain"
+			)
+		)
+	}
 
 	val gridState = rememberLazyGridState()
 
@@ -139,20 +160,47 @@ fun PlaylistListScreen(
 			}
 		},
 		floatingActionButton = {
-			FloatingActionButton(
-				modifier = Modifier.animateFloatingActionButton(
-					visible = !scrollManager.isTriggered
-						|| preferenceManager.bottomBarCollapseMode == BottomBarCollapseMode.Never,
-					alignment = Alignment.BottomEnd
-				),
-				containerColor = MaterialTheme.colorScheme.primary,
-				onClick = { createDialogShown = true }
-			) {
-				Icon(
-					imageVector = Icons.Outlined.Add,
-					contentDescription = stringResource(R.string.title_create_playlist),
-					modifier = Modifier.size(26.dp)
-				)
+			Box {
+				FloatingActionButton(
+					modifier = Modifier.animateFloatingActionButton(
+						visible = !scrollManager.isTriggered
+							|| preferenceManager.bottomBarCollapseMode == BottomBarCollapseMode.Never,
+						alignment = Alignment.BottomEnd
+					),
+					containerColor = MaterialTheme.colorScheme.primary,
+					onClick = { fabMenuExpanded = true }
+				) {
+					Icon(
+						imageVector = Icons.Outlined.Add,
+						contentDescription = stringResource(R.string.title_create_playlist),
+						modifier = Modifier.size(26.dp)
+					)
+				}
+				DropdownMenu(
+					expanded = fabMenuExpanded,
+					onDismissRequest = { fabMenuExpanded = false }
+				) {
+					DropdownMenuItem(
+						text = { Text(stringResource(R.string.title_create_playlist)) },
+						leadingIcon = { Icon(Icons.Outlined.Add, contentDescription = null) },
+						onClick = {
+							fabMenuExpanded = false
+							createDialogShown = true
+						}
+					)
+					if (viewModel.canImportM3u) {
+						DropdownMenuItem(
+							text = { Text(stringResource(R.string.action_import_m3u_playlist)) },
+							leadingIcon = {
+								Icon(Icons.Outlined.PlaylistAdd, contentDescription = null)
+							},
+							onClick = {
+								fabMenuExpanded = false
+								launchM3uPicker()
+							}
+						)
+					}
+				}
 			}
 		},
 		bottomBar = { RootBottomBarSpace() }

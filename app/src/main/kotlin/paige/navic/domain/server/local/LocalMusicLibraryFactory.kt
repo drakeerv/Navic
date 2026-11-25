@@ -29,6 +29,7 @@ class LocalMusicLibraryFactory(
 	private val artistDao: ArtistDao,
 	private val genreDao: GenreDao,
 	private val playlistDao: PlaylistDao,
+	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence,
 	private val storageManager: StorageManager
 ) : MusicProviderFactory {
 	override fun create(baseUrl: String, authorization: AuthorizationData): MusicProvider {
@@ -46,7 +47,8 @@ class LocalMusicLibraryFactory(
 				songDao = songDao,
 				albumDao = albumDao,
 				artistDao = artistDao,
-				genreDao = genreDao
+				genreDao = genreDao,
+				m3uPlaylistPersistence = m3uPlaylistPersistence
 			),
 			songDao = songDao,
 			coverDir = storageManager.musikrCoverDir()

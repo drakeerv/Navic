@@ -31,6 +31,8 @@ import org.oxycblt.musikr.covers.CoverResult
 import org.oxycblt.musikr.fs.FS
 import org.oxycblt.musikr.fs.File
 import org.oxycblt.musikr.playlist.m3u.M3U
+import org.oxycblt.musikr.playlist.ExternalPlaylistManager
+import org.oxycblt.musikr.playlist.M3UPlaylistImport
 import org.oxycblt.musikr.util.mapParallel
 import org.oxycblt.musikr.util.merge
 import org.oxycblt.musikr.util.tryAsyncWith
@@ -40,11 +42,15 @@ internal interface ExploreStep {
 
     companion object {
         fun from(context: Context, config: Config): ExploreStep =
-            ExploreStepImpl(config.fs, config.storage)
+            ExploreStepImpl(config.fs, config.storage, ExternalPlaylistManager.from(context))
     }
 }
 
-private class ExploreStepImpl(private val fs: FS, private val storage: Storage) : ExploreStep {
+private class ExploreStepImpl(
+    private val fs: FS,
+    private val storage: Storage,
+    private val externalPlaylists: ExternalPlaylistManager,
+) : ExploreStep {
     override suspend fun explore(
         scope: CoroutineScope,
         explored: Channel<Explored>,
@@ -55,9 +61,21 @@ private class ExploreStepImpl(private val fs: FS, private val storage: Storage) 
         val classified = Channel<Classified>(Channel.UNLIMITED)
         val classifiedTask =
             scope.mapParallel(PARALLELISM, files, classified, Dispatchers.IO) { file ->
+                if (file.isM3U()) {
+                    val imported = externalPlaylists.import(file.uri)
+                    return@mapParallel Finalized(
+                        RawM3UPlaylist(
+                            M3UPlaylistImport(
+                                sourceUri = file.uri.toString(),
+                                name = imported?.name,
+                                entries = imported?.paths.orEmpty(),
+                                parsed = imported != null,
+                            ),
+                        ),
+                    )
+                }
                 if (
-                    file.mimeType == M3U.MIME_TYPE ||
-                        (!file.mimeType.startsWith("audio/") &&
+                    (!file.mimeType.startsWith("audio/") &&
                             file.mimeType != "application/ogg" &&
                             file.mimeType != "application/x-ogg" &&
                             file.mimeType != "application/octet-stream")
@@ -131,4 +149,8 @@ private class ExploreStepImpl(private val fs: FS, private val storage: Storage) 
     private companion object {
         const val PARALLELISM = 8
     }
+
+    private fun File.isM3U(): Boolean =
+        mimeType.equals(M3U.MIME_TYPE, ignoreCase = true) ||
+            path.name?.substringAfterLast('.', "")?.lowercase() in setOf("m3u", "m3u8")
 }

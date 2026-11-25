@@ -39,12 +39,13 @@ import paige.navic.database.entity.LocalScanSongEntity
 import paige.navic.database.entity.LyricEntity
 import paige.navic.database.entity.PlaylistEntity
 import paige.navic.database.entity.PlaylistSongCrossRef
+import paige.navic.database.entity.PendingPlaylistEntryEntity
 import paige.navic.database.entity.RadioEntity
 import paige.navic.database.entity.SongEntity
 import paige.navic.database.entity.SyncActionEntity
 
 @Database(
-	version = 34,
+	version = 35,
 	entities = [
 		AlbumEntity::class,
 		ArtistEntity::class,
@@ -62,6 +63,7 @@ import paige.navic.database.entity.SyncActionEntity
 		LyricEntity::class,
 		PlaylistEntity::class,
 		PlaylistSongCrossRef::class,
+		PendingPlaylistEntryEntity::class,
 		RadioEntity::class,
 		SongEntity::class,
 		SyncActionEntity::class
@@ -76,7 +78,8 @@ import paige.navic.database.entity.SyncActionEntity
 		AutoMigration(from = 30, to = 31),
 		AutoMigration(from = 31, to = 32),
 		AutoMigration(from = 32, to = 33),
-		AutoMigration(from = 33, to = 34)
+		AutoMigration(from = 33, to = 34),
+		AutoMigration(from = 34, to = 35)
 	]
 )
 @ColumnTypeConverters(Converters::class)

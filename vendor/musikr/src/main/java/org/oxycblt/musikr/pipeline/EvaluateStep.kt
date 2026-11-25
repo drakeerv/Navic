@@ -39,7 +39,7 @@ private class EvaluateStepImpl(private val tagInterpreter: TagInterpreter) : Eva
         for (extracted in extractedMusic) {
             when (extracted) {
                 is RawSong -> writer.write(tagInterpreter.interpret(extracted))
-                // Imported playlists are not part of the local library yet.
+                is RawM3UPlaylist -> writer.write(extracted.playlist)
                 is RawPlaylist -> {}
                 is NotAudio -> {}
                 is InvalidSong -> {}
