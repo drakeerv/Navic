@@ -9,6 +9,7 @@ package paige.navic.domain.server.local
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.io.ByteArrayOutputStream
+import androidx.core.graphics.scale
 
 internal fun ByteArray.transcodeCover(maxSize: Int): ByteArray {
 	val bounds =
@@ -42,7 +43,7 @@ internal fun ByteArray.transcodeCover(maxSize: Int): ByteArray {
 		if (targetWidth == decoded.width && targetHeight == decoded.height) {
 			decoded
 		} else {
-			Bitmap.createScaledBitmap(decoded, targetWidth, targetHeight, true)
+			decoded.scale(targetWidth, targetHeight)
 				.also { if (it !== decoded) decoded.recycle() }
 		}
 

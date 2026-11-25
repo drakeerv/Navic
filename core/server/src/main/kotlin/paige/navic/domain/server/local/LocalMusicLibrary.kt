@@ -39,6 +39,7 @@ import paige.navic.domain.server.ServerInfo
 import paige.navic.domain.server.ServerType
 import paige.navic.domain.server.SyncProgressMessage
 import java.io.File
+import androidx.core.net.toUri
 
 class LocalMusicLibrary(
 	private val context: Context,
@@ -66,7 +67,7 @@ class LocalMusicLibrary(
 
 	private suspend fun buildConfig(): Config {
 		val locations = folderUris.mapNotNull { uri ->
-			Location.Unopened.from(context, Uri.parse(uri)).open(context)
+			Location.Unopened.from(context, uri.toUri()).open(context)
 		}
 		check(locations.isNotEmpty()) { "No readable local music folders configured" }
 
@@ -77,7 +78,7 @@ class LocalMusicLibrary(
 		val embeddedCovers = EmbeddedCovers(CoverIdentifier.md5())
 		val folderCovers = FolderCovers(context)
 		val covers = MutableStoredCovers(
-			src = MutableChainedCovers<MemoryCover, MemoryCover>(embeddedCovers, folderCovers),
+			src = MutableChainedCovers(embeddedCovers, folderCovers),
 			coverStorage = coverStorage,
 			transcoding = NoTranscoding
 		)

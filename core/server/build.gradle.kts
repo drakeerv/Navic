@@ -27,6 +27,7 @@ dependencies {
 	implementation(libs.ktor.serialization.json)
 	implementation(libs.kotlinx.serialization.json)
 	implementation(libs.kotlinx.coroutines.core)
+	implementation(libs.androidx.core.ktx)
 	implementation(libs.androidx.media3.common)
 	implementation(libs.androidx.media3.decoder.ffmpeg)
 	implementation(libs.androidx.annotation)

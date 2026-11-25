@@ -26,7 +26,7 @@ fun ScanAlbumAggregate.toEntity(
 		name = displayName,
 		artistName = firstArtist,
 		artistId = firstArtist?.xxHash32() ?: "",
-		displayArtist = distinctArtists.map { it.displayName.orEmpty() }.joinToString(),
+		displayArtist = distinctArtists.joinToString { it.displayName.orEmpty() },
 		year = year,
 		coverArtId = coverArtId,
 		genre = genres.firstOrNull(),

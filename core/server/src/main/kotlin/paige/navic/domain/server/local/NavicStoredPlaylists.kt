@@ -29,7 +29,7 @@ class NavicStoredPlaylists(
 				playlistId = uid.toString(),
 				name = name,
 				comment = null,
-				owner = "Local",
+				owner = null,
 				coverArtId = null,
 				songCount = songs.size,
 				duration = songs.sumOf { it.durationMs }.milliseconds,
