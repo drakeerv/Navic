@@ -10,8 +10,10 @@ import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainShare
 import paige.navic.domain.model.DomainShareItem
 import paige.navic.domain.model.DomainSong
+import paige.navic.domain.server.ChatServer
 import paige.navic.domain.server.MusicServer
 import paige.navic.domain.server.PlaylistCoverServer
+import paige.navic.domain.server.RadioServer
 import paige.navic.domain.server.ScrobbleProvider
 import paige.navic.domain.server.ServerException
 import paige.navic.domain.server.ServerInfo
@@ -27,7 +29,12 @@ class NavidromeMusicServer(
 	private val navidrome: NavidromeClient,
 	private val baseUrl: String,
 	private val username: String
-) : MusicServer by delegate, ScrobbleProvider, ShareServer, PlaylistCoverServer {
+) : MusicServer by delegate,
+	ScrobbleProvider,
+	ShareServer,
+	PlaylistCoverServer,
+	RadioServer by (delegate as RadioServer),
+	ChatServer by (delegate as ChatServer) {
 	@Volatile
 	private var isNavidrome: Boolean? = null
 

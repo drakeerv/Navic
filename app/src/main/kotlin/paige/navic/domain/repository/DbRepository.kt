@@ -423,7 +423,8 @@ class DbRepository(
 	}
 
 	suspend fun syncRadios(): Result<Unit> = runDbOp {
-		val remoteRadios = sessionManager.radio?.getRadioStations().orEmpty()
+		val radioServer = sessionManager.radio ?: return@runDbOp
+		val remoteRadios = radioServer.getRadioStations()
 		val entities = remoteRadios.map { it.toEntity() }
 
 		entities.chunked(dbChunkSize).forEach { chunk ->
