@@ -471,7 +471,8 @@ class ExoControllerHandler(
 	}
 
 	override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-		val currentSong = controller.currentMediaItem?.mediaId?.let(songForId) ?: return
+		val currentItem = controller.currentMediaItem ?: return
+		val currentSong = currentItem.mediaId.let(songForId) ?: return
 		if (currentSong.id.startsWith("radio_")) {
 			val rawTitle = mediaMetadata.title?.toString()?.takeIf { it.isNotBlank() }
 			val rawArtist = mediaMetadata.artist?.toString()
@@ -479,27 +480,23 @@ class ExoControllerHandler(
 				?: mediaMetadata.subtitle?.toString()
 					?.takeIf { it.isNotBlank() && it != "Live Radio" }
 
-			val updatedSong = if (rawTitle != null) {
+			val (parsedArtist, parsedTitle) = if (rawTitle != null) {
 				val parts = rawTitle.split(" - ", limit = 2)
 				if (parts.size == 2) {
-					currentSong.copy(
-						artistName = parts[0].trim(),
-						title = parts[1].trim()
-					)
+					parts[0].trim() to parts[1].trim()
 				} else if (rawArtist != null) {
-					currentSong.copy(
-						title = rawTitle,
-						artistName = rawArtist
-					)
+					rawArtist to rawTitle
 				} else {
-					currentSong.copy(
-						title = rawTitle,
-						artistName = "Live Radio"
-					)
+					"Live Radio" to rawTitle
 				}
 			} else {
-				currentSong
+				currentSong.artistName to currentSong.title
 			}
+
+			val updatedSong = currentSong.copy(
+				artistName = parsedArtist,
+				title = parsedTitle
+			)
 
 			if (updatedSong != currentSong) {
 				rememberSong(updatedSong)
@@ -715,7 +712,10 @@ private fun buildMediaItem(
 		.setMediaId(
 			prefix?.let { "$it:$id" } ?: id
 		)
-		.setMediaMetadata(metadata)
+
+	if (!id.startsWith("radio_")) {
+		builder.setMediaMetadata(metadata)
+	}
 
 	if (id.startsWith("radio_")) {
 		builder.setLiveConfiguration(MediaItem.LiveConfiguration.Builder().build())

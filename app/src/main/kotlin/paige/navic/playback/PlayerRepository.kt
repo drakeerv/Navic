@@ -9,7 +9,6 @@ package paige.navic.playback
 import android.app.Application
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
-import androidx.media3.common.MediaMetadata
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
@@ -548,16 +547,9 @@ class PlayerRepository(
 			isExternal = false
 		)
 
-		val metadata = MediaMetadata.Builder()
-			.setTitle(radio.name)
-			.setArtist("Live Radio")
-			.setIsPlayable(true)
-			.build()
-
 		val mediaItem = MediaItem.Builder()
 			.setUri(radio.streamUrl)
 			.setMediaId("radio_${radio.name.hashCode()}")
-			.setMediaMetadata(metadata)
 			.setLiveConfiguration(MediaItem.LiveConfiguration.Builder().build())
 			.build()
 

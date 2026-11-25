@@ -69,14 +69,21 @@ fun AnnotatedString.Builder.appendBulletPoint()
 
 fun AnnotatedString.Builder.appendArtists(
 	artists: List<DomainSongArtist>,
+	fallbackName: String = "",
 	onClick: ((artistId: String) -> Unit)? = null
 ) {
+	if (artists.isEmpty()) {
+		if (fallbackName.isNotBlank()) {
+			append(fallbackName)
+		}
+		return
+	}
 	val listener = LinkInteractionListener { annotation ->
 		val artistId = (annotation as LinkAnnotation.Clickable).tag
 		onClick?.invoke(artistId)
 	}
 	artists.forEachIndexed { index, artist ->
-		if (onClick != null) {
+		if (onClick != null && artist.id.isNotBlank()) {
 			withLink(
 				link = LinkAnnotation.Clickable(
 					linkInteractionListener = listener,

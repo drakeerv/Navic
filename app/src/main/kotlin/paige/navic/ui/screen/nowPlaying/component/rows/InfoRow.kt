@@ -118,6 +118,7 @@ fun NowPlayingInfoRow(
 						if (currentSong != null) {
 							appendArtists(
 								artists = currentSong.artists,
+								fallbackName = currentSong.artistName.orEmpty(),
 								onClick = {
 									backStack.remove(Screen.NowPlaying)
 									backStack.add(Screen.ArtistDetail(it))

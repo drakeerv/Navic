@@ -181,10 +181,10 @@ private fun SideBarMiniPlayer(
 						overflow = TextOverflow.Ellipsis,
 						style = MaterialTheme.typography.bodyMedium
 					)
-					song?.artists?.let { artists ->
+					song?.let { song ->
 						Text(
 							text = buildAnnotatedString {
-								appendArtists(artists)
+								appendArtists(song.artists, fallbackName = song.artistName.orEmpty())
 							},
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,

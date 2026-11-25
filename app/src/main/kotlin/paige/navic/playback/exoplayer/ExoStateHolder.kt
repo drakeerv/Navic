@@ -35,6 +35,7 @@ import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
 import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
 import androidx.media3.exoplayer.metadata.MetadataOutput
+import androidx.media3.exoplayer.metadata.MetadataRenderer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.text.TextOutput
 import androidx.media3.exoplayer.video.VideoRendererEventListener
@@ -215,7 +216,8 @@ class ExoStateHolder(
 						eventHandler,
 						audioRendererEventListener,
 						audioSink
-					)
+					),
+					MetadataRenderer(metadataRendererOutput, eventHandler.looper)
 				)
 			}
 

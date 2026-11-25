@@ -250,7 +250,7 @@ fun MiniPlayer(
 				MarqueeText(
 					text = buildAnnotatedString {
 						if (song != null) {
-							appendArtists(song.artists)
+							appendArtists(song.artists, fallbackName = song.artistName.orEmpty())
 						} else {
 							append(notPlayingString)
 						}
