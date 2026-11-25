@@ -34,10 +34,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.collections.immutable.ImmutableList
+import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.designsystem.theme.defaultFont
+import paige.navic.domain.manager.session.account.AccountStore
 import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.settings.ListViewMode
+import paige.navic.domain.server.ServerType
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
 import paige.navic.icons.Icons
@@ -63,6 +66,9 @@ fun <T> SortSheet(
 	onToggleFilter: ((DomainFilter) -> Unit)? = null,
 	onDismissRequest: () -> Unit
 ) {
+	val accountStore = koinInject<AccountStore>()
+	val serverType = accountStore.activeAccount?.serverType
+
 	ModalBottomSheet(
 		onDismissRequest = onDismissRequest,
 		sheetState = rememberBottomSheetState(
@@ -124,7 +130,9 @@ fun <T> SortSheet(
 						.padding(top = 8.dp),
 					horizontalArrangement = Arrangement.spacedBy(8.dp)
 				) {
-					DomainFilter.entries.forEach { filter ->
+					DomainFilter.entries
+						.filterNot { it == DomainFilter.Downloaded && serverType == ServerType.LOCAL }
+						.forEach { filter ->
 						FilterChip(
 							selected = selectedFilters.contains(filter),
 							onClick = { onToggleFilter(filter) },
