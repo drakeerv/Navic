@@ -25,6 +25,7 @@ val isTaskRelease =
 
 android {
 	namespace = "paige.navic"
+	ndkVersion = libs.versions.android.ndk.get()
 
 	buildFeatures {
 		resValues = true
@@ -139,10 +140,6 @@ android {
 			excludes += "/org/bouncycastle/**"
 			excludes += "/META-INF/{AL2.0,LGPL2.1}"
 		}
-
-		jniLibs {
-			keepDebugSymbols.add("**/*.so")
-		}
 	}
 
 	dependenciesInfo {
@@ -157,6 +154,10 @@ androidComponents {
 			variantBuilder.enable = false
 	}
 	onVariants { variant ->
+		// release .so are stripped by the strip*DebugSymbols task; debug keeps symbols
+		if (variant.buildType == "debug") {
+			variant.packaging.jniLibs.keepDebugSymbols.add("**/*.so")
+		}
 		variant.outputs.forEach { output ->
 			output.outputFileName = if (variant.flavorName == "fdroid") {
 				"Navic.fdroid.apk"
