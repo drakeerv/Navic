@@ -30,7 +30,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import paige.navic.R
-import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.domain.manager.session.SyncManager
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainArtistListType
@@ -41,7 +40,7 @@ import paige.navic.ui.component.dialog.DeletionDialog
 import paige.navic.ui.component.dialog.DeletionTarget
 import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.layout.PullToRefreshBox
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
@@ -143,10 +142,7 @@ fun LibraryScreen() {
 				}
 			)
 		},
-		bottomBar = {
-			val scrollManager = LocalBottomBarScrollManager.current
-			RootBottomBar(scrolled = scrollManager.isTriggered)
-		}
+		bottomBar = { RootBottomBarSpace() }
 	) { innerPadding ->
 		Box(
 			modifier = Modifier

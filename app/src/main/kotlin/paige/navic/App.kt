@@ -10,6 +10,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
@@ -20,9 +21,11 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.unveilIn
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -46,13 +49,16 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.Dp
@@ -76,6 +82,7 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
 import org.koin.compose.koinInject
 import paige.navic.designsystem.theme.NavicTheme
+import paige.navic.di.LocalBottomBarHeight
 import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSharedTransitionScope
@@ -85,16 +92,19 @@ import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.manager.ui.BottomBarScrollManager
 import paige.navic.domain.manager.ui.SnackBarManager
+import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.domain.model.settings.ExplicitContentPlayback
 import paige.navic.domain.server.ServerCommand
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
+import paige.navic.ui.component.layout.RootBottomBar
 import paige.navic.ui.component.layout.SideBar
 import paige.navic.ui.component.snackbar.NavicSnackBar
 import paige.navic.ui.component.snackbar.SwipeableSnackBarHost
 import paige.navic.ui.navigation.BottomSheetSceneStrategy
 import paige.navic.ui.navigation.NowPlayingSceneStrategy
 import paige.navic.ui.navigation.Screen
+import paige.navic.ui.navigation.showsRootBottomBar
 import paige.navic.ui.screen.album.AlbumListScreen
 import paige.navic.ui.screen.artist.ArtistDetailScreen
 import paige.navic.ui.screen.artist.ArtistListScreen
@@ -249,16 +259,32 @@ fun App() {
 		}
 	}
 
+	var bottomBarHeight by remember { mutableStateOf(0.dp) }
+	var nowPlayingExpanded by remember { mutableStateOf(false) }
+	val showBottomBar by remember(backStack, sizeClass, nowPlayingExpanded) {
+		derivedStateOf {
+			val allScreens = preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens
+			val nowPlayingIndex = backStack.indexOfLast { it == Screen.NowPlaying }
+			val shouldShow = if (nowPlayingIndex >= 0 && !nowPlayingExpanded) {
+				backStack.getOrNull(nowPlayingIndex - 1).showsRootBottomBar(allScreens)
+			} else {
+				backStack.lastOrNull().showsRootBottomBar(allScreens)
+			}
+			sizeClass.widthSizeClass < WindowWidthSizeClass.Medium && shouldShow
+		}
+	}
+
 	SharedTransitionLayout {
 		CompositionLocalProvider(
 			LocalNavStack provides backStack,
 			LocalSnackBarState provides snackBarState,
 			LocalSharedTransitionScope provides this@SharedTransitionLayout,
 			LocalBottomBarScrollManager provides scrollManager,
+			LocalBottomBarHeight provides if (showBottomBar) bottomBarHeight else 0.dp,
 			LocalSizeClass provides sizeClass
 		) {
 			NavicTheme {
-				Row(modifier = Modifier.fillMaxSize()) {
+				Row(modifier = Modifier.fillMaxSize()) rowScope@ {
 					if (sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 						&& !backStack.any { it is Screen.Login }
 					) {
@@ -276,72 +302,88 @@ fun App() {
 							}
 						}
 					) { _ ->
-						NavDisplay(
-							modifier = Modifier
-								.weight(1f)
-								.consumeWindowInsets(
-									WindowInsets.safeDrawing.only(WindowInsetsSides.Start)
+						Box(modifier = Modifier.fillMaxSize()) {
+							NavDisplay(
+								modifier = Modifier
+									.fillMaxSize()
+									.consumeWindowInsets(
+										WindowInsets.safeDrawing.only(WindowInsetsSides.Start)
+									),
+								backStack = backStack,
+								sceneStrategies = listOf(
+									remember { NowPlayingSceneStrategy<NavKey> { nowPlayingExpanded = it } },
+									remember { BottomSheetSceneStrategy() },
+									rememberListDetailSceneStrategy()
 								),
-							backStack = backStack,
-							sceneStrategies = listOf(
-								remember { NowPlayingSceneStrategy() },
-								remember { BottomSheetSceneStrategy() },
-								rememberListDetailSceneStrategy()
-							),
-							entryDecorators = listOf(
-								rememberSaveableStateHolderNavEntryDecorator(),
+								entryDecorators = listOf(
+									rememberSaveableStateHolderNavEntryDecorator(),
 
-								// makes it so that ViewModels get destroyed if their
-								// associated screen is removed from the back stack
-								//
-								// this might not always be desirable, so the
-								// `PersistentViewModelStoreOwner` class is used for
-								// certain ViewModels to work around this
-								rememberViewModelStoreNavEntryDecorator()
-							),
-							onBack = {
-								if (backStack.size >= 2) {
-									backStack.removeLastOrNull()
+									// makes it so that ViewModels get destroyed if their
+									// associated screen is removed from the back stack
+									//
+									// this might not always be desirable, so the
+									// `PersistentViewModelStoreOwner` class is used for
+									// certain ViewModels to work around this
+									rememberViewModelStoreNavEntryDecorator()
+								),
+								onBack = {
+									if (backStack.size >= 2) {
+										backStack.removeLastOrNull()
+									}
+								},
+								entryProvider = entryProvider(backStack),
+								sharedTransitionScope = this@SharedTransitionLayout,
+								transitionSpec = {
+									Material3Transitions.SharedXAxisEnterTransition(
+										density
+									) togetherWith Material3Transitions.SharedXAxisExitTransition(
+										density
+									)
+								},
+								popTransitionSpec = {
+									Material3Transitions.SharedXAxisPopEnterTransition(
+										density
+									) togetherWith Material3Transitions.SharedXAxisPopExitTransition(
+										density
+									)
+								},
+								predictivePopTransitionSpec = { edge ->
+									if (preferenceManager.enablePredictiveBackAnimations) {
+										val mult = if (edge == NavigationEvent.EDGE_RIGHT) -1 else 1
+										val enter = unveilIn()
+											.plus(scaleIn(initialScale = 0.25f))
+											.plus(
+												slideInHorizontally(
+												animationSpec = tween(500, easing = EaseOutQuart),
+												initialOffsetX = { (-it * 25) * mult }
+											))
+										val exit = scaleOut(targetScale = 0.9f)
+											.plus(
+												slideOutHorizontally(
+												animationSpec = tween(300, easing = EaseOutQuart),
+												targetOffsetX = { (it / 10) * mult }
+											))
+										enter togetherWith exit
+									} else {
+										ContentTransform(EnterTransition.None, ExitTransition.None)
+									}
 								}
-							},
-							entryProvider = entryProvider(backStack),
-							sharedTransitionScope = this@SharedTransitionLayout,
-							transitionSpec = {
-								Material3Transitions.SharedXAxisEnterTransition(
-									density
-								) togetherWith Material3Transitions.SharedXAxisExitTransition(
-									density
+							)
+							this@rowScope.AnimatedVisibility(
+								visible = showBottomBar,
+								modifier = Modifier.align(Alignment.BottomCenter),
+								enter = fadeIn(tween(220)) + slideInVertically(tween(220)) { it },
+								exit = ExitTransition.None
+							) {
+								RootBottomBar(
+									scrolled = scrollManager.isTriggered,
+									modifier = Modifier
+										.onSizeChanged {
+											bottomBarHeight = with(density) { it.height.toDp() }
+										}
 								)
-							},
-							popTransitionSpec = {
-								Material3Transitions.SharedXAxisPopEnterTransition(
-									density
-								) togetherWith Material3Transitions.SharedXAxisPopExitTransition(
-									density
-								)
-							},
-							predictivePopTransitionSpec = { edge ->
-								if (preferenceManager.enablePredictiveBackAnimations) {
-									val mult = if (edge == NavigationEvent.EDGE_RIGHT) -1 else 1
-									val enter = unveilIn()
-										.plus(scaleIn(initialScale = 0.25f))
-										.plus(
-											slideInHorizontally(
-											animationSpec = tween(500, easing = EaseOutQuart),
-											initialOffsetX = { (-it * 25) * mult }
-										))
-									val exit = scaleOut(targetScale = 0.9f)
-										.plus(
-											slideOutHorizontally(
-											animationSpec = tween(300, easing = EaseOutQuart),
-											targetOffsetX = { (it / 10) * mult }
-										))
-									enter togetherWith exit
-								} else {
-									ContentTransform(EnterTransition.None, ExitTransition.None)
-								}
 							}
-						)
+						}
 					}
 				}
 				if (preferenceManager.checkForUpdates) {

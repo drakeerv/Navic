@@ -20,7 +20,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.animateFloatingActionButton
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -42,11 +41,9 @@ import org.koin.compose.viewmodel.koinViewModel
 import paige.navic.R
 import paige.navic.R.string.info_no_playlists_short
 import paige.navic.di.LocalBottomBarScrollManager
-import paige.navic.di.LocalSizeClass
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.settings.BottomBarCollapseMode
-import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.domain.model.settings.ListViewMode
 import paige.navic.playback.PlayerRepository
 import paige.navic.ui.component.common.ContentUnavailable
@@ -56,7 +53,7 @@ import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.layout.ArtGrid
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.PullToRefreshBox
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.layout.artGridPlaceholder
 import paige.navic.ui.component.snackbar.ErrorSnackBar
@@ -158,17 +155,7 @@ fun PlaylistListScreen(
 				)
 			}
 		},
-		bottomBar = {
-			val sizeClass = LocalSizeClass.current
-			val scrollManager = LocalBottomBarScrollManager.current
-			val preferVisible =
-				preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens
-			if (!nested
-				|| (sizeClass.widthSizeClass < WindowWidthSizeClass.Medium && preferVisible)
-			) {
-				RootBottomBar(scrolled = scrollManager.isTriggered)
-			}
-		}
+		bottomBar = { RootBottomBarSpace() }
 	) { innerPadding ->
 		val isLoading = state is UiState.Loading || lazyPagingItems?.loadState?.refresh is LoadState.Loading
 		val itemCount = lazyPagingItems?.itemCount ?: 0

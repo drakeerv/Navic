@@ -32,17 +32,14 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import paige.navic.R
-import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.di.LocalSnackBarState
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.ui.ShareManager
-import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.ui.component.common.ContentUnavailable
 import paige.navic.ui.component.dialog.DeletionDialog
 import paige.navic.ui.component.dialog.DeletionTarget
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.PullToRefreshBox
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.artGridError
 import paige.navic.ui.component.sheet.ShareSheet
 import paige.navic.ui.core.UiState
@@ -57,7 +54,6 @@ fun ShareListScreen() {
 	val state by viewModel.uiState.collectAsStateWithLifecycle()
 
 	val shareManager = koinInject<ShareManager>()
-	val preferenceManager = koinInject<PreferenceManager>()
 	val resources = LocalResources.current
 	val snackBarState = LocalSnackBarState.current
 	val scope = rememberCoroutineScope()
@@ -66,12 +62,7 @@ fun ShareListScreen() {
 
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.title_shares)) }) },
-		bottomBar = {
-			val scrollManager = LocalBottomBarScrollManager.current
-			if (preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens) {
-				RootBottomBar(scrolled = scrollManager.isTriggered)
-			}
-		}
+		bottomBar = { RootBottomBarSpace() }
 	) { contentPadding ->
 		PullToRefreshBox(
 			modifier = Modifier

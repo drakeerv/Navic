@@ -13,9 +13,11 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +33,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.dropUnlessResumed
 import org.koin.compose.koinInject
 import paige.navic.R
+import paige.navic.di.LocalBottomBarHeight
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
 import paige.navic.domain.model.settings.BottomBarCollapseMode
@@ -123,3 +126,7 @@ fun RootBottomBar(
 		)
 	}
 }
+
+// reserves the space the overlaid RootBottomBar occupies in each screen's Scaffold
+@Composable
+fun RootBottomBarSpace() = Spacer(Modifier.height(LocalBottomBarHeight.current))

@@ -21,7 +21,9 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
@@ -36,6 +38,7 @@ import androidx.navigation3.scene.OverlayScene
 import androidx.navigation3.scene.Scene
 import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.scene.SceneStrategyScope
+import kotlinx.coroutines.flow.collect
 import paige.navic.designsystem.theme.NavicTheme
 import paige.navic.di.LocalSheetState
 import paige.navic.ui.component.sheet.ModalBottomSheet
@@ -49,6 +52,7 @@ class NowPlayingScene<T : Any>(
 	override val overlaidEntries: List<NavEntry<T>>,
 	private val maxWidth: Dp,
 	private val isTransparent: Boolean,
+	private val onExpandedChange: (Boolean) -> Unit,
 	private val onBack: () -> Unit
 ) : OverlayScene<T> {
 
@@ -61,6 +65,14 @@ class NowPlayingScene<T : Any>(
 			SheetValue.Hidden,
 			setOf(SheetValue.Hidden, SheetValue.Expanded)
 		)
+		LaunchedEffect(sheetState) {
+			try {
+				snapshotFlow { sheetState.currentValue == SheetValue.Expanded }
+					.collect(onExpandedChange)
+			} finally {
+				onExpandedChange(false)
+			}
+		}
 		val lifecycleOwner = rememberLifecycleOwner()
 		val screenCornerRadius = rememberScreenCornerRadius()
 
@@ -128,7 +140,9 @@ class NowPlayingScene<T : Any>(
 	// on LocalSheetState
 }
 
-class NowPlayingSceneStrategy<T : Any> : SceneStrategy<T> {
+class NowPlayingSceneStrategy<T : Any>(
+	private val onExpandedChange: (Boolean) -> Unit
+) : SceneStrategy<T> {
 
 	override fun SceneStrategyScope<T>.calculateScene(entries: List<NavEntry<T>>): Scene<T>? {
 		val entry = entries.lastOrNull() ?: return null
@@ -142,6 +156,7 @@ class NowPlayingSceneStrategy<T : Any> : SceneStrategy<T> {
 			overlaidEntries = entries.dropLast(1),
 			maxWidth = maxWidth,
 			isTransparent = isTransparent,
+			onExpandedChange = onExpandedChange,
 			onBack = onBack
 		)
 	}

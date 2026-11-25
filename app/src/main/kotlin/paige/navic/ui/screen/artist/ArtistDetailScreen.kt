@@ -40,7 +40,6 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -68,15 +67,12 @@ import org.koin.core.parameter.parametersOf
 import paige.navic.R
 import paige.navic.database.entity.DownloadStatus
 import paige.navic.designsystem.theme.NavicTheme
-import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.di.LocalNavStack
-import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongListType
 import paige.navic.domain.model.settings.ArtistAlbumViewMode
-import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.domain.model.settings.DownloadDeletionType
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Grid
@@ -92,7 +88,7 @@ import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.dialog.rememberDownloadDeletionHandler
 import paige.navic.ui.component.layout.ArtCarousel
 import paige.navic.ui.component.layout.ArtCarouselItem
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.Screen
 import paige.navic.ui.screen.album.component.AlbumListScreenGridItem
@@ -172,15 +168,7 @@ fun ArtistDetailScreen(
 					onSetStarred = { viewModel.starArtist(it) },
 				)
 			},
-			bottomBar = {
-				val sizeClass = LocalSizeClass.current
-				val scrollManager = LocalBottomBarScrollManager.current
-				val preferVisible =
-					preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens
-				if (sizeClass.widthSizeClass < WindowWidthSizeClass.Medium && preferVisible) {
-					RootBottomBar(scrolled = scrollManager.isTriggered)
-				}
-			}
+			bottomBar = { RootBottomBarSpace() }
 		) { contentPadding ->
 			AnimatedContent(
 				targetState = artistState,

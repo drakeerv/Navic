@@ -9,6 +9,7 @@ package paige.navic.di
 import org.koin.android.ext.koin.androidApplication
 import org.koin.core.module.dsl.viewModel
 import org.koin.core.module.dsl.viewModelOf
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainArtistListType
@@ -36,6 +37,7 @@ import paige.navic.ui.screen.search.viewmodel.SearchViewModel
 import paige.navic.ui.screen.settings.viewmodel.CoverArtProvidersViewModel
 import paige.navic.ui.screen.settings.viewmodel.LyricsPriorityViewModel
 import paige.navic.ui.screen.settings.viewmodel.NavtabsViewModel
+import paige.navic.ui.screen.settings.NavtabsConfigStore
 import paige.navic.ui.screen.settings.viewmodel.SettingsDataStorageViewModel
 import paige.navic.ui.screen.share.viewmodel.ShareDialogViewModel
 import paige.navic.ui.screen.share.viewmodel.ShareListViewModel
@@ -46,6 +48,7 @@ import paige.navic.ui.viewmodel.RootViewModel
 import paige.navic.util.network.NavicAddressHelper
 
 val viewModelModule = module {
+	singleOf(::NavtabsConfigStore)
 	single<PlayerRepository> {
 		PlayerRepository(
 			application = androidApplication(),

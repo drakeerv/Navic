@@ -19,7 +19,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
@@ -47,16 +46,13 @@ import org.koin.core.parameter.parametersOf
 import paige.navic.R
 import paige.navic.R.string.title_more_by_artist
 import paige.navic.designsystem.theme.NavicTheme
-import paige.navic.di.LocalBottomBarScrollManager
 import paige.navic.di.LocalNavStack
-import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.supportsDownloads
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainPlaylist
 import paige.navic.domain.model.DomainSongCollection
-import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.ContentUnavailable
@@ -64,7 +60,7 @@ import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.layout.ArtCarousel
 import paige.navic.ui.component.layout.ArtCarouselItem
 import paige.navic.ui.component.layout.PullToRefreshBox
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.sheet.CollectionSheet
 import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
@@ -182,15 +178,7 @@ fun CollectionDetailScreen(
 					refreshCollection = { viewModel.refreshCollection(false) }
 				)
 			},
-			bottomBar = {
-				val sizeClass = LocalSizeClass.current
-				val scrollManager = LocalBottomBarScrollManager.current
-				val preferVisible =
-					preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens
-				if (sizeClass.widthSizeClass < WindowWidthSizeClass.Medium && preferVisible) {
-					RootBottomBar(scrolled = scrollManager.isTriggered)
-				}
-			}
+			bottomBar = { RootBottomBarSpace() }
 		) { contentPadding ->
 			PullToRefreshBox(
 				modifier = Modifier

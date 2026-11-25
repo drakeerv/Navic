@@ -229,3 +229,22 @@ sealed interface Screen : NavKey {
 		data object Equalizer : Settings
 	}
 }
+
+fun NavKey?.showsRootBottomBar(allScreens: Boolean) = when (this) {
+	is Screen.Library -> true
+	is Screen.AlbumList -> !nested || allScreens
+	is Screen.ArtistList -> !nested || allScreens
+	is Screen.GenreList -> !nested || allScreens
+	is Screen.PlaylistList -> !nested || allScreens
+	is Screen.SongList -> !nested || allScreens
+	is Screen.RadioList -> !nested || allScreens
+	is Screen.Search -> !nested || allScreens
+	is Screen.Statistics -> !nested || allScreens
+	is Screen.Starred,
+	is Screen.GenreDetail,
+	is Screen.ArtistDetail,
+	is Screen.CollectionDetail,
+	is Screen.ShareList -> allScreens
+
+	else -> false
+}

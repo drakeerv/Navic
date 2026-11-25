@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,8 +26,6 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import paige.navic.R
-import paige.navic.di.LocalBottomBarScrollManager
-import paige.navic.di.LocalSizeClass
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.model.DomainAlbumListType
@@ -37,7 +34,6 @@ import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.DomainSongListType
-import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.playback.PlayerRepository
 import paige.navic.ui.component.dialog.DeleteDownloadTarget
 import paige.navic.ui.component.dialog.QueueDuplicateDialog
@@ -45,7 +41,7 @@ import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.dialog.rememberDownloadDeletionHandler
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.PullToRefreshBox
-import paige.navic.ui.component.layout.RootBottomBar
+import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.album.viewmodel.AlbumListViewModel
@@ -112,15 +108,7 @@ fun StarredScreen() {
 
 	Scaffold(
 		topBar = { NestedTopBar({ Text(stringResource(R.string.title_starred)) }) },
-		bottomBar = {
-			val sizeClass = LocalSizeClass.current
-			val scrollManager = LocalBottomBarScrollManager.current
-			val preferVisible =
-				preferenceManager.bottomBarVisibilityMode == BottomBarVisibilityMode.AllScreens
-			if (sizeClass.widthSizeClass < WindowWidthSizeClass.Medium && preferVisible) {
-				RootBottomBar(scrolled = scrollManager.isTriggered)
-			}
-		}
+		bottomBar = { RootBottomBarSpace() }
 	) { innerPadding ->
 		val isLoading = songsState is UiState.Loading ||
 			albumsState is UiState.Loading ||
