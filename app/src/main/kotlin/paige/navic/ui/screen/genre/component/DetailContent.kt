@@ -145,7 +145,7 @@ fun GenreDetailScreenContent(
 					.animateItem()
 					.width(150.dp),
 				album = album,
-				selected = album == selectedAlbum,
+				selected = album.id == selectedAlbum?.id,
 				starred = selectedAlbumIsStarred,
 				onSelect = { onSelectAlbum(album) },
 				onDeselect = onClearAlbumSelection,
