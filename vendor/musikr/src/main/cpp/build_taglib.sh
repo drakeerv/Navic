@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 WORKING_DIR=$1
 echo "Working directory is at $WORKING_DIR"

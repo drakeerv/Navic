@@ -125,7 +125,7 @@ fun CollectionDetailScreen(
 	val downloadsMap = remember(allDownloads) { allDownloads.associateBy { it.songId } }
 	val backStack = LocalNavStack.current
 
-	val titleAlpha by remember {
+	val titleAlpha = remember {
 		derivedStateOf {
 			if (viewModel.listState.firstVisibleItemIndex >= 1) return@derivedStateOf 1f
 			val height =
@@ -157,7 +157,7 @@ fun CollectionDetailScreen(
 				CollectionDetailScreenTopBar(
 					albumInfo = state.data?.albumInfo,
 					collection = collection,
-					titleAlpha = titleAlpha,
+					titleAlpha = { titleAlpha.value },
 					onSetShareId = { shareId = it },
 					onUploadCover = {
 						coverPicker.launch(
@@ -201,7 +201,7 @@ fun CollectionDetailScreen(
 					item {
 						CollectionDetailScreenHeadingRow(
 							collection = collection,
-							titleAlpha = 1f - titleAlpha
+							titleAlpha = { 1f - titleAlpha.value }
 						)
 					}
 

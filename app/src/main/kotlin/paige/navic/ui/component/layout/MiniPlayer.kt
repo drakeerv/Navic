@@ -215,7 +215,8 @@ fun MiniPlayer(
 						.size(coverArtSize)
 						.padding(if (playerState.isLoading) 8.dp else 0.dp),
 					coverArtId = song?.coverArtId,
-					shape = coverArtShape
+					shape = coverArtShape,
+					memoryCacheKeySuffix = "mini"
 				)
 				if (song?.coverArtId == null) {
 					Icon(

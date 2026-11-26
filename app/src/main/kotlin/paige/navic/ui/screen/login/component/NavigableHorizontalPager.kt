@@ -49,6 +49,7 @@ fun NavigableHorizontalPager(
 	modifier: Modifier = Modifier,
 	state: PagerState,
 	userScrollEnabled: Boolean = true,
+	backTargetPage: (currentPage: Int) -> Int = { it - 1 },
 	pageContent: @Composable (page: Int, pageModifier: Modifier) -> Unit
 ) {
 	val navigationState = rememberNavigationEventState(NavigationEventInfo.None)
@@ -84,7 +85,7 @@ fun NavigableHorizontalPager(
 			focusManager.clearFocus(true)
 			pagerScope.launch {
 				state.animateScrollToPage(
-					state.currentPage - 1,
+					backTargetPage(state.currentPage),
 					animationSpec = tween(
 						durationMillis = DurationLong1,
 						easing = EmphasizedEasing
