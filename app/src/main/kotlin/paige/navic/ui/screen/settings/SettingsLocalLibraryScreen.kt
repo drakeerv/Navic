@@ -38,6 +38,7 @@ import paige.navic.domain.manager.session.SyncManager
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.NestedTopBarDefaults
 import paige.navic.ui.component.local.LocalFolderSelection
+import paige.navic.ui.screen.settings.component.SettingsToggleItem
 
 @Composable
 fun SettingsLocalLibraryScreen() {
@@ -48,13 +49,13 @@ fun SettingsLocalLibraryScreen() {
 	val backStack = LocalNavStack.current
 	val scope = rememberCoroutineScope()
 
-	val initialFolders = remember {
-		sessionManager.accounts.value
-			.firstOrNull { it.id == sessionManager.activeAccountId }
-			?.localFolderUris
-			.orEmpty()
+	val initialAccount = remember {
+		sessionManager.accounts.value.firstOrNull { it.id == sessionManager.activeAccountId }
 	}
+	val initialFolders = initialAccount?.localFolderUris.orEmpty()
+	val initialM3uSync = initialAccount?.syncM3uPlaylists ?: true
 	var folders by remember { mutableStateOf(initialFolders) }
+	var syncM3uPlaylists by remember { mutableStateOf(initialM3uSync) }
 
 	Scaffold(
 		topBar = {
@@ -91,10 +92,18 @@ fun SettingsLocalLibraryScreen() {
 				}
 			)
 
+			SettingsToggleItem(
+				checked = syncM3uPlaylists,
+				onCheckedChange = { syncM3uPlaylists = it },
+				supportingContent = { Text(stringResource(R.string.info_sync_m3u_playlists)) }
+			) {
+				Text(stringResource(R.string.option_sync_m3u_playlists))
+			}
+
 			Button(
 				modifier = Modifier.fillMaxWidth(),
 				onClick = dropUnlessResumed {
-					sessionManager.updateLocalFolders(folders)
+					sessionManager.updateLocalLibrary(folders, syncM3uPlaylists)
 					syncManager.triggerManualSync()
 					scope.launch {
 						snackBarState.showSnackbar(
@@ -103,7 +112,8 @@ fun SettingsLocalLibraryScreen() {
 					}
 					backStack.removeLastOrNull()
 				},
-				enabled = folders.isNotEmpty() && folders != initialFolders
+				enabled = folders.isNotEmpty() &&
+					(folders != initialFolders || syncM3uPlaylists != initialM3uSync)
 			) {
 				Text(stringResource(R.string.action_save_local_folders))
 			}

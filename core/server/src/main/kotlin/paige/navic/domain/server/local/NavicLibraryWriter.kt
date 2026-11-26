@@ -42,7 +42,8 @@ class NavicLibraryWriter(
 	private val albumDao: AlbumDao,
 	private val artistDao: ArtistDao,
 	private val genreDao: GenreDao,
-	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence
+	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence,
+	private val syncM3uPlaylists: Boolean
 ) : LibraryWriter {
 	private val m3uImports = mutableListOf<M3UPlaylistImport>()
 	private val scannedPaths = mutableMapOf<String, String>()
@@ -117,7 +118,11 @@ class NavicLibraryWriter(
 		val scannedPathToSongId = scannedPaths.mapNotNull { (path, uri) ->
 			songIdsByUri[uri]?.let { path to it }
 		}.toMap()
-		m3uPlaylistPersistence.syncScanImports(m3uImports.toList(), scannedPathToSongId)
+		m3uPlaylistPersistence.syncScanImports(
+			m3uImports.toList(),
+			scannedPathToSongId,
+			syncEnabled = syncM3uPlaylists
+		)
 		m3uImports.clear()
 		scannedPaths.clear()
 

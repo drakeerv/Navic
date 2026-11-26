@@ -181,23 +181,17 @@ fun LoginPage(
 			LargeFlexibleTopAppBar(
 				title = {
 					Text(
-						text = stringResource(
-							if (viewModel.serverType == ServerType.LOCAL) {
-								R.string.subtitle_local_library
-							} else {
-								R.string.action_log_in
-							}
-						),
+						text = stringResource(R.string.action_log_in),
 						style = MaterialTheme.typography.headlineMedium,
 						fontFamily = defaultFont(round = 100f)
 					)
 				},
 				subtitle = {
 					Crossfade(targetState = viewModel.serverType) { state ->
-						val label = when (state) {
-							ServerType.JELLYFIN -> stringResource(R.string.info_login_description_jellyfin)
-							ServerType.LOCAL -> stringResource(R.string.info_local_library_short)
-							else -> stringResource(R.string.info_login_description)
+						val label = if (state == ServerType.JELLYFIN) {
+							stringResource(R.string.info_login_description_jellyfin)
+						} else {
+							stringResource(R.string.info_login_description)
 						}
 						Text(label)
 					}
@@ -263,60 +257,22 @@ fun LoginPage(
 					}
 				}
 
-				if (viewModel.serverType == ServerType.LOCAL) {
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(horizontal = 16.dp),
-						verticalArrangement = Arrangement.spacedBy(12.dp)
-					) {
-						LocalFolderSelection(
-							modifier = Modifier.fillMaxWidth(),
-							folderUris = viewModel.localFolderUris,
-							enabled = !isBusy,
-							onFoldersChanged = viewModel::setLocalFolders,
-							onPermissionError = {
-								loginScope.launch {
-									snackBarState.showSnackbar(
-										resources.getString(R.string.info_local_folder_permission_denied)
-									)
-								}
-							}
-						)
-
-						Row(
-							modifier = Modifier.padding(horizontal = 8.dp),
-							horizontalArrangement = Arrangement.spacedBy(16.dp)
-						) {
-							Icon(
-								imageVector = Icons.Outlined.Info,
-								contentDescription = null,
-								tint = MaterialTheme.colorScheme.onSurfaceVariant
-							)
-							Text(
-								text = stringResource(R.string.info_local_library_onboarding),
-								color = MaterialTheme.colorScheme.onSurfaceVariant,
-								style = MaterialTheme.typography.bodyMedium
-							)
-						}
-					}
-				} else {
-					LoginScreenFields(
-						isBusy = isBusy,
-						instanceState = instanceState,
-						instanceError = formState.instanceError,
-						instanceFocusRequester = instanceFocusRequester,
-						authMethod = viewModel.authMethod,
-						serverType = viewModel.serverType,
-						onAuthMethodChange = viewModel::selectAuthMethod,
-						usernameState = usernameState,
-						usernameError = formState.usernameError,
-						usernameFocusRequester = usernameFocusRequester,
-						passwordState = passwordState,
-						passwordError = formState.passwordError,
-						passwordFocusRequester = passwordFocusRequester,
-						onLogin = login
-					)
+				LoginScreenFields(
+					isBusy = isBusy,
+					instanceState = instanceState,
+					instanceError = formState.instanceError,
+					instanceFocusRequester = instanceFocusRequester,
+					authMethod = viewModel.authMethod,
+					serverType = viewModel.serverType,
+					onAuthMethodChange = viewModel::selectAuthMethod,
+					usernameState = usernameState,
+					usernameError = formState.usernameError,
+					usernameFocusRequester = usernameFocusRequester,
+					passwordState = passwordState,
+					passwordError = formState.passwordError,
+					passwordFocusRequester = passwordFocusRequester,
+					onLogin = login
+				)
 
 					Spacer(Modifier.height(12.dp))
 
@@ -335,7 +291,6 @@ fun LoginPage(
 								}
 							})
 					)
-				}
 			}
 
 			Column(
@@ -347,18 +302,11 @@ fun LoginPage(
 				Button(
 					modifier = Modifier.fillMaxWidth(),
 					onClick = login,
-					enabled = !isBusy && (viewModel.serverType != ServerType.LOCAL || viewModel.localFolderUris.isNotEmpty()),
+					enabled = !isBusy,
 					shape = CircleShape
 				) {
-					val label = stringResource(
-						when {
-							viewModel.serverType != ServerType.LOCAL -> R.string.action_log_in
-							viewModel.hasLocalAccount -> R.string.action_save_local_folders
-							else -> R.string.action_create_local_library
-						}
-					)
 					Text(
-						text = label,
+						text = stringResource(R.string.action_log_in),
 						fontFamily = defaultFont(100)
 					)
 				}

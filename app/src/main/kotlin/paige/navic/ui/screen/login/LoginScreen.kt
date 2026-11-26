@@ -19,14 +19,16 @@ import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import paige.navic.domain.manager.session.LoginManager
 import paige.navic.domain.server.AuthMethod
+import paige.navic.domain.server.ServerType
 import paige.navic.ui.screen.login.component.HorizontalPagerAnimationSpec
 import paige.navic.ui.screen.login.component.NavigableHorizontalPager
 import paige.navic.ui.screen.login.page.LoginPage
+import paige.navic.ui.screen.login.page.LocalLibraryPage
 import paige.navic.ui.screen.login.page.ServerPage
 import paige.navic.ui.screen.login.viewmodel.LoginViewModel
 
 private enum class Page {
-	Server, Login
+	Server, Login, LocalLibrary
 }
 
 @Composable
@@ -64,7 +66,11 @@ fun LoginScreen(
 				onNavigateForward = {
 					pagerScope.launch {
 						pagerState.animateScrollToPage(
-							1,
+							if (viewModel.serverType.value == ServerType.LOCAL) {
+								Page.LocalLibrary.ordinal
+							} else {
+								Page.Login.ordinal
+							},
 							animationSpec = HorizontalPagerAnimationSpec
 						)
 					}
@@ -77,7 +83,11 @@ fun LoginScreen(
 					focusManager.clearFocus(true)
 					pagerScope.launch {
 						pagerState.animateScrollToPage(
-							1,
+							if (account.serverType == ServerType.LOCAL) {
+								Page.LocalLibrary.ordinal
+							} else {
+								Page.Login.ordinal
+							},
 							animationSpec = HorizontalPagerAnimationSpec
 						)
 					}
@@ -103,6 +113,18 @@ fun LoginScreen(
 					)
 				}
 			}
+
+			Page.LocalLibrary -> LocalLibraryPage(
+				modifier = pageModifier,
+				onNavigateBack = {
+					pagerScope.launch {
+						pagerState.animateScrollToPage(
+							Page.Server.ordinal,
+							animationSpec = HorizontalPagerAnimationSpec
+						)
+					}
+				}
+			)
 		}
 	}
 }

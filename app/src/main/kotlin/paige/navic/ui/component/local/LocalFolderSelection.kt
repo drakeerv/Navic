@@ -7,7 +7,6 @@
 package paige.navic.ui.component.local
 
 import android.content.Intent
-import android.net.Uri
 import android.provider.DocumentsContract
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -18,12 +17,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import paige.navic.R
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.Delete
@@ -61,69 +62,98 @@ fun LocalFolderSelection(
 	}
 
 	Column(
-		modifier = modifier,
-		verticalArrangement = Arrangement.spacedBy(8.dp)
+		modifier = modifier
 	) {
 		Column(
 			modifier = Modifier
 				.fillMaxWidth()
 				.animateContentSize(),
-			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
+			verticalArrangement = Arrangement.spacedBy(8.dp)
 		) {
-			folderUris.forEachIndexed { index, uri ->
-				SegmentedListItem(
-					shapes = SegmentedListItemDefaults.segmentedShapes(
-						index = index,
-						count = folderUris.size
-					),
-					enabled = enabled,
-					leadingContent = {
-						Icon(
-							imageVector = Icons.Outlined.Folder,
-							contentDescription = null
-						)
-					},
-					trailingContent = {
-						IconButton(
-							onClick = {
-								onFoldersChanged(folderUris.filterIndexed { i, _ -> i != index })
-							},
-							enabled = enabled
-						) {
-							Icon(
-								imageVector = Icons.Outlined.Delete,
-								contentDescription = stringResource(R.string.action_remove_folder)
-							)
-						}
-					},
-					content = { Text(uri.toFolderName()) }
+			Button(
+				modifier = Modifier.fillMaxWidth(),
+				onClick = { picker.launch(null) },
+				enabled = enabled
+			) {
+				val label = stringResource(
+					if (folderUris.isEmpty()) {
+						R.string.action_choose_music_folders
+					} else {
+						R.string.action_add_music_folder
+					}
 				)
+				Text(text = label)
 			}
-		}
 
-		Button(
-			modifier = Modifier.fillMaxWidth(),
-			onClick = { picker.launch(null) },
-			enabled = enabled
-		) {
-			val label = stringResource(
-				if (folderUris.isEmpty()) {
-					R.string.action_choose_music_folders
-				} else {
-					R.string.action_add_music_folder
+			Column(
+				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
+			) {
+				folderUris.forEachIndexed { index, uri ->
+					val folder = uri.toFolderDisplayName()
+
+					SegmentedListItem(
+						shapes = SegmentedListItemDefaults.segmentedShapes(
+							index = index,
+							count = folderUris.size
+						),
+						enabled = enabled,
+						leadingContent = {
+							Icon(
+								imageVector = Icons.Outlined.Folder,
+								contentDescription = null
+							)
+						},
+						trailingContent = {
+							IconButton(
+								onClick = {
+									onFoldersChanged(folderUris.filterIndexed { i, _ -> i != index })
+								},
+								enabled = enabled
+							) {
+								Icon(
+									imageVector = Icons.Outlined.Delete,
+									contentDescription = stringResource(R.string.action_remove_folder)
+								)
+							}
+						},
+						content = {
+							Text(folder.name)
+						},
+						supportingContent = {
+							if (folder.parentPath.isNotBlank()) {
+								Text(
+									text = folder.parentPath,
+									style = MaterialTheme.typography.labelSmall
+								)
+							}
+						}
+					)
 				}
-			)
-			Text(text = label)
+			}
 		}
 	}
 }
 
-private fun String.toFolderName(): String {
-	val uri = Uri.parse(this)
-	val documentId = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()
-	return documentId
-		?.substringAfterLast(':')
-		?.ifBlank { documentId }
+private data class FolderDisplayName(
+	val name: String,
+	val parentPath: String
+)
+
+private fun String.toFolderDisplayName(): FolderDisplayName {
+	val uri = toUri()
+
+	val documentId = runCatching {
+		DocumentsContract.getTreeDocumentId(uri)
+	}.getOrNull()
+
+	val path = documentId
+		?.substringAfter(':', documentId)
+		?.takeIf { it.isNotBlank() }
 		?: uri.lastPathSegment
 		?: this
+
+	return FolderDisplayName(
+		name = path.substringAfterLast('/'),
+		parentPath = path.substringBeforeLast('/', "")
+	)
 }

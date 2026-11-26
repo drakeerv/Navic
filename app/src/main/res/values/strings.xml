@@ -670,5 +670,8 @@
 
 	<string name="action_import_m3u_playlist">Import M3U playlist</string>
 	<string name="notice_imported_m3u_playlist">Playlist imported</string>
+	<string name="option_sync_m3u_playlists">Sync M3U playlists</string>
+	<string name="info_sync_m3u_playlists">Keep playlists from music folders updated during library scans</string>
+	<string name="title_local_scan_settings">Scan settings</string>
 
 </resources>

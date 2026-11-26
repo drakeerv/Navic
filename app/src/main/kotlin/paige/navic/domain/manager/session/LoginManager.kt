@@ -65,6 +65,7 @@ class LoginManager(
 
 	var localFolderUris by mutableStateOf<List<String>>(emptyList())
 		private set
+	var syncM3uPlaylists by mutableStateOf(true)
 
 	val hasLocalAccount: Boolean
 		get() = accountStore.accounts.value.any { it.serverType == ServerType.LOCAL }
@@ -73,15 +74,18 @@ class LoginManager(
 		localFolderUris = uris.distinct()
 	}
 
+	fun updateSyncM3uPlaylists(enabled: Boolean) {
+		syncM3uPlaylists = enabled
+	}
+
 	fun selectServerType(type: ServerType) {
 		if (serverType != type) {
 			passwordState.clearText()
 		}
 		if (type == ServerType.LOCAL) {
-			localFolderUris = accountStore.accounts.value
-				.firstOrNull { it.serverType == ServerType.LOCAL }
-				?.localFolderUris
-				.orEmpty()
+			val account = accountStore.accounts.value.firstOrNull { it.serverType == ServerType.LOCAL }
+			localFolderUris = account?.localFolderUris.orEmpty()
+			syncM3uPlaylists = account?.syncM3uPlaylists ?: true
 		}
 		serverType = type
 	}
@@ -149,6 +153,7 @@ class LoginManager(
 		account.serverType?.let(::selectServerType)
 		selectAuthMethod(account.authMethod)
 		localFolderUris = account.localFolderUris
+		syncM3uPlaylists = account.syncM3uPlaylists
 	}
 
 	fun login() {
@@ -185,7 +190,10 @@ class LoginManager(
 				if (type == ServerType.LOCAL) {
 					sessionManager.login(
 						instanceUrl = "local",
-						authorization = AuthorizationData.LocalFolders(localFolderUris),
+						authorization = AuthorizationData.LocalFolders(
+							folderUris = localFolderUris,
+							syncM3uPlaylists = syncM3uPlaylists
+						),
 						serverType = ServerType.LOCAL
 					)
 				} else {

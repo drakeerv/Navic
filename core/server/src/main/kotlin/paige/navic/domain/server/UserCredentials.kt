@@ -27,7 +27,8 @@ sealed interface AuthorizationData {
 	) : AuthorizationData
 
 	data class LocalFolders(
-		val folderUris: List<String>
+		val folderUris: List<String>,
+		val syncM3uPlaylists: Boolean = true
 	) : AuthorizationData
 }
 

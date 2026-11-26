@@ -206,13 +206,15 @@ class SessionManager(
 		val serverInfo = provider.serverInfo()
 		val user = provider.currentUser()
 
-		val localFolders = (authorization as? AuthorizationData.LocalFolders)?.folderUris.orEmpty()
+		val localAuthorization = authorization as? AuthorizationData.LocalFolders
+		val localFolders = localAuthorization?.folderUris.orEmpty()
 		val account = accountStore.upsert(
 			Account(
 				id = UUID.randomUUID().toString(),
 				baseUrl = instanceUrl,
 				serverType = serverType,
-				localFolderUris = localFolders
+				localFolderUris = localFolders,
+				syncM3uPlaylists = localAuthorization?.syncM3uPlaylists ?: true
 			)
 		)
 
@@ -266,6 +268,21 @@ class SessionManager(
 		val account = accountStore.activeAccount ?: return
 		if (account.serverType != ServerType.LOCAL) return
 		accountStore.updateLocalFolders(account.id, folderUris)
+		refreshClient()
+	}
+
+	fun updateLocalM3uPlaylists(enabled: Boolean) {
+		val account = accountStore.activeAccount ?: return
+		if (account.serverType != ServerType.LOCAL) return
+		accountStore.updateLocalM3uPlaylists(account.id, enabled)
+		refreshClient()
+	}
+
+	fun updateLocalLibrary(folderUris: List<String>, syncM3uPlaylists: Boolean) {
+		val account = accountStore.activeAccount ?: return
+		if (account.serverType != ServerType.LOCAL) return
+		accountStore.updateLocalFolders(account.id, folderUris)
+		accountStore.updateLocalM3uPlaylists(account.id, syncM3uPlaylists)
 		refreshClient()
 	}
 

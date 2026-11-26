@@ -98,6 +98,16 @@ class AccountStore(
 		})
 	}
 
+	fun updateLocalM3uPlaylists(id: String, enabled: Boolean) {
+		writeAccounts(_accounts.value.map {
+			if (it.id == id && it.serverType == ServerType.LOCAL) {
+				it.copy(syncM3uPlaylists = enabled)
+			} else {
+				it
+			}
+		})
+	}
+
 	fun remove(id: String) {
 		writeAccounts(_accounts.value.filterNot { it.id == id })
 		if (activeAccountId == id) {

@@ -23,7 +23,8 @@ data class Account(
 	val apiKey: String? = null,
 	val jellyfinToken: String? = null,
 	val jellyfinUserId: String? = null,
-	val localFolderUris: List<String> = emptyList()
+	val localFolderUris: List<String> = emptyList(),
+	val syncM3uPlaylists: Boolean = true
 ) {
 	val hasCredentials: Boolean
 		get() = credentials() != null || authorization() != null
@@ -51,7 +52,9 @@ data class Account(
 
 	fun authorization(): AuthorizationData? = when {
 		serverType == ServerType.LOCAL ->
-			localFolderUris.takeIf { it.isNotEmpty() }?.let(AuthorizationData::LocalFolders)
+			localFolderUris.takeIf { it.isNotEmpty() }?.let {
+				AuthorizationData.LocalFolders(it, syncM3uPlaylists)
+			}
 
 		serverType == ServerType.JELLYFIN -> {
 			val token = jellyfinToken?.takeIf(String::isNotBlank) ?: return null

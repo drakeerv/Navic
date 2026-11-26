@@ -51,26 +51,29 @@ class NavicM3uPlaylistPersistence(
 
 	suspend fun syncScanImports(
 		imports: List<M3UPlaylistImport>,
-		scannedPathToSongId: Map<String, String>
+		scannedPathToSongId: Map<String, String>,
+		syncEnabled: Boolean
 	) {
-		val existingScanIds = playlistDao.getPlaylistIdsByPrefix(SCAN_PLAYLIST_PREFIX)
-		val activeIds = imports.mapTo(mutableSetOf()) { scanPlaylistId(it.sourceUri) }
 		val songsById = songDao.getAllSongPaths().associateBy { it.songId }
 		val durations = songsById.mapValues { it.value.duration }
 
-		for (import in imports.filter { it.parsed }) {
-			persist(
-				playlistId = scanPlaylistId(import.sourceUri),
-			name = import.name?.takeIf(String::isNotBlank)
-				?: import.sourceUri.toUri().lastPathSegment.orEmpty().substringBeforeLast('.').ifBlank { "Imported playlist" },
-				entries = import.entries,
-				pathToSongId = scannedPathToSongId,
-				songDurations = durations
-			)
-		}
+		if (syncEnabled) {
+			val existingScanIds = playlistDao.getPlaylistIdsByPrefix(SCAN_PLAYLIST_PREFIX)
+			val activeIds = imports.mapTo(mutableSetOf()) { scanPlaylistId(it.sourceUri) }
+			for (import in imports.filter { it.parsed }) {
+				persist(
+					playlistId = scanPlaylistId(import.sourceUri),
+					name = import.name?.takeIf(String::isNotBlank)
+						?: import.sourceUri.toUri().lastPathSegment.orEmpty().substringBeforeLast('.').ifBlank { "Imported playlist" },
+					entries = import.entries,
+					pathToSongId = scannedPathToSongId,
+					songDurations = durations
+				)
+			}
 
-		for (playlistId in existingScanIds - activeIds) {
-			playlistDao.deletePlaylist(playlistId)
+			for (playlistId in existingScanIds - activeIds) {
+				playlistDao.deletePlaylist(playlistId)
+			}
 		}
 
 		resolvePendingEntries(scannedPathToSongId, durations)

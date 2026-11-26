@@ -48,7 +48,8 @@ class LocalMusicLibraryFactory(
 				albumDao = albumDao,
 				artistDao = artistDao,
 				genreDao = genreDao,
-				m3uPlaylistPersistence = m3uPlaylistPersistence
+				m3uPlaylistPersistence = m3uPlaylistPersistence,
+				syncM3uPlaylists = folders.syncM3uPlaylists
 			),
 			songDao = songDao,
 			coverDir = storageManager.musikrCoverDir()
