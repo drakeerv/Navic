@@ -86,14 +86,19 @@ import paige.navic.ui.screen.login.component.LoginScreenFields
 fun LoginPage(
 	modifier: Modifier = Modifier,
 	authMethod: AuthMethod,
+	serverType: ServerType,
+	isCurrent: Boolean,
 	onNavigateBack: () -> Unit
 ) {
 	val viewModel = koinInject<LoginManager>()
 
-	LaunchedEffect(authMethod) {
-		when (authMethod) {
-			AuthMethod.ApiKey -> viewModel.selectAuthMethod(AuthMethod.ApiKey)
-			else -> viewModel.selectAuthMethod(AuthMethod.Token)
+	LaunchedEffect(isCurrent, authMethod, serverType) {
+		if (isCurrent) {
+			viewModel.selectServerType(serverType)
+			when (authMethod) {
+				AuthMethod.ApiKey -> viewModel.selectAuthMethod(AuthMethod.ApiKey)
+				else -> viewModel.selectAuthMethod(AuthMethod.Token)
+			}
 		}
 	}
 
@@ -187,7 +192,7 @@ fun LoginPage(
 					)
 				},
 				subtitle = {
-					Crossfade(targetState = viewModel.serverType) { state ->
+					Crossfade(targetState = serverType) { state ->
 						val label = if (state == ServerType.JELLYFIN) {
 							stringResource(R.string.info_login_description_jellyfin)
 						} else {
@@ -263,7 +268,7 @@ fun LoginPage(
 					instanceError = formState.instanceError,
 					instanceFocusRequester = instanceFocusRequester,
 					authMethod = viewModel.authMethod,
-					serverType = viewModel.serverType,
+					serverType = serverType,
 					onAuthMethodChange = viewModel::selectAuthMethod,
 					usernameState = usernameState,
 					usernameError = formState.usernameError,

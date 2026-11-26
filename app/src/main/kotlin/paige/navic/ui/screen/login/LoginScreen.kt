@@ -51,7 +51,10 @@ fun LoginScreen(
 	NavigableHorizontalPager(
 		modifier = Modifier.fillMaxSize(),
 		state = pagerState,
-		userScrollEnabled = authMethod != null
+		userScrollEnabled = authMethod != null,
+		backTargetPage = { page ->
+			if (page == Page.LocalLibrary.ordinal) Page.Server.ordinal else page - 1
+		}
 	) { index, pageModifier ->
 		val page = Page.entries[index]
 		when (page) {
@@ -101,6 +104,8 @@ fun LoginScreen(
 					LoginPage(
 						modifier = pageModifier,
 						authMethod = selectedAuthMethod,
+						serverType = selectedServerType,
+						isCurrent = pagerState.currentPage == Page.Login.ordinal,
 						onNavigateBack = {
 							focusManager.clearFocus(true)
 							pagerScope.launch {
@@ -116,6 +121,7 @@ fun LoginScreen(
 
 			Page.LocalLibrary -> LocalLibraryPage(
 				modifier = pageModifier,
+				isCurrent = pagerState.currentPage == Page.LocalLibrary.ordinal,
 				onNavigateBack = {
 					pagerScope.launch {
 						pagerState.animateScrollToPage(
