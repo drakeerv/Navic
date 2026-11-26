@@ -4,10 +4,19 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
+import java.util.Properties
+
 plugins {
 	alias(libs.plugins.navic.application)
 	alias(libs.plugins.navic.application.compose)
 	alias(libs.plugins.kotlin.serialization)
+}
+
+val keystorePropsFile = rootProject.file("keystore.properties")
+val keystoreProps = Properties().apply {
+	if (keystorePropsFile.exists()) {
+		keystorePropsFile.inputStream().use { load(it) }
+	}
 }
 
 configurations.all {
@@ -45,8 +54,8 @@ android {
 	defaultConfig {
 		applicationId = "paige.navic"
 		targetSdk = libs.versions.android.targetSdk.get().toInt()
-		versionCode = 61
-		versionName = "v1.0.0-beta02"
+		versionCode = (findProperty("versionCode") as String?)?.toIntOrNull() ?: 68
+		versionName = (findProperty("versionName") as String?) ?: "v1.0.0-beta09"
 
 		buildConfigField("boolean", "CI_BUILD", "false")
 
@@ -60,10 +69,17 @@ android {
 
 	signingConfigs {
 		create("release") {
-			keyAlias = System.getenv("SIGNING_KEY_ALIAS")
-			keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
-			storeFile = System.getenv("SIGNING_STORE_FILE")?.let(::File)
-			storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+			if (keystoreProps.isNotEmpty()) {
+				storeFile = rootProject.file(keystoreProps.getProperty("storeFile"))
+				storePassword = keystoreProps.getProperty("storePassword")
+				keyAlias = keystoreProps.getProperty("keyAlias")
+				keyPassword = keystoreProps.getProperty("keyPassword")
+			} else {
+				keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+				keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
+				storeFile = System.getenv("SIGNING_STORE_FILE")?.let(::File)
+				storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+			}
 		}
 	}
 
