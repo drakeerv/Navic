@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version name (e.g. 1.0.0-beta03)"
+        required: true
+        default: "1.0.0-beta03"
+      version_code:
+        description: "Version code (integer, must increase)"
+        required: true
+        default: "62"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: |
+          set +o pipefail
+          sdkmanager=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort | tail -n 1)
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+
+      - name: Install Android CMake and NDK
+        shell: bash
+        run: |
+          set +o pipefail
+          sdkmanager=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort | tail -n 1)
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" "cmake;3.30.5" "ndk;28.2.13676358"
+
+      - name: Require signing secrets
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::KEYSTORE_BASE64 is not configured. Add KEYSTORE_BASE64, KEYSTORE_PASSWORD, KEY_ALIAS, and KEY_PASSWORD repository secrets."
+            exit 1
+          fi
+
+      - name: Configure signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > release-keystore.jks
+          cat > keystore.properties <<EOF
+          storeFile=release-keystore.jks
+          storePassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          keyPassword=$KEY_PASSWORD
+          EOF
+
+      - name: Build release APKs
+        run: >
+          ./gradlew :app:packageDefaultRelease :app:packageFdroidRelease --stacktrace --no-daemon
+          -PversionName=v${{ inputs.version }}
+          -PversionCode=${{ inputs.version_code }}
+
+      - name: Prepare APKs
+        run: |
+          mkdir -p release
+          cp app/build/outputs/apk/default/release/Navic.apk release/Navic.apk
+          cp app/build/outputs/apk/fdroid/release/Navic.fdroid.apk release/Navic.fdroid.apk
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Navic v${{ inputs.version }}
+          files: release/*.apk
+          generate_release_notes: true

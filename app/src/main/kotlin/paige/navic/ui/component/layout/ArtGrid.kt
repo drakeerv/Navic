@@ -121,6 +121,7 @@ fun ArtGridItem(
 			coverArtId = coverArtId,
 			coverVersion = coverVersion,
 			contentDescription = title,
+			crossfadeMs = 0,
 			modifier = Modifier.fillMaxWidth(),
 			interactionSource = interactionSource
 		)
