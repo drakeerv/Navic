@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - bleeding-edge
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build debug APKs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          submodules: 'recursive'
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Accept Android SDK licenses
+        shell: bash
+        run: |
+          set +o pipefail
+          sdkmanager=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort | tail -n 1)
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+
+      - name: Install Android CMake and NDK
+        shell: bash
+        run: |
+          set +o pipefail
+          sdkmanager=$(find "$ANDROID_HOME/cmdline-tools" -name sdkmanager -type f | sort | tail -n 1)
+          yes | "$sdkmanager" --sdk_root="$ANDROID_HOME" "cmake;3.30.5" "ndk;28.2.13676358"
+
+      - name: Build
+        run: ./gradlew :app:assembleDefaultDebug :app:assembleFdroidDebug --stacktrace --no-daemon
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v6
+        with:
+          name: navic-debug-apks
+          path: app/build/outputs/apk/**/*.apk
+          if-no-files-found: error

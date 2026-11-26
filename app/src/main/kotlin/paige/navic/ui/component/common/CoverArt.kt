@@ -50,7 +50,8 @@ fun CoverArt(
 	fakeShadowElevation: Dp = 0.dp,
 	rotationZ: Float = 0f,
 	interactionSource: MutableInteractionSource? = null,
-	shape: Shape? = null
+	shape: Shape? = null,
+	memoryCacheKeySuffix: String? = null
 ) {
 	val coilPlatformContext = LocalCoilPlatformContext.current
 
@@ -64,11 +65,12 @@ fun CoverArt(
 		preferenceManager.artistImageShape.shape
 	}
 
-	val model = remember(coverArtId, coverVersion) {
+	val model = remember(coverArtId, coverVersion, memoryCacheKeySuffix) {
 		val cacheKey = listOfNotNull(coverArtId, coverVersion).joinToString("_")
+		val memoryCacheKey = memoryCacheKeySuffix?.let { "$cacheKey@$it" } ?: cacheKey
 		ImageRequest.Builder(coilPlatformContext)
 			.data(coverArtId?.let { sessionManager.getCoverArtUrl(it) })
-			.memoryCacheKey(cacheKey)
+			.memoryCacheKey(memoryCacheKey)
 			.diskCacheKey(cacheKey)
 			.diskCachePolicy(CachePolicy.ENABLED)
 			.memoryCachePolicy(CachePolicy.ENABLED)

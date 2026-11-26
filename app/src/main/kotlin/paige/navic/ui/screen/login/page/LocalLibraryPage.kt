@@ -69,6 +69,7 @@ import paige.navic.ui.screen.settings.component.SettingsToggleItem
 @Composable
 fun LocalLibraryPage(
 	modifier: Modifier = Modifier,
+	isCurrent: Boolean,
 	onNavigateBack: () -> Unit
 ) {
 	val loginManager = koinInject<LoginManager>()
@@ -83,8 +84,11 @@ fun LocalLibraryPage(
 	var notificationsDenied by remember { mutableStateOf(false) }
 	val scope = rememberCoroutineScope()
 
+	LaunchedEffect(isCurrent) {
+		if (isCurrent) loginManager.selectServerType(ServerType.LOCAL)
+	}
+
 	LaunchedEffect(Unit) {
-		loginManager.selectServerType(ServerType.LOCAL)
 		loginManager.events.collect { event ->
 			isBusy = event is LoginEvent.Loading
 			when (event) {

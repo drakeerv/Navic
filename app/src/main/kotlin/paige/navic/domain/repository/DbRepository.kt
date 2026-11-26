@@ -7,6 +7,7 @@
 package paige.navic.domain.repository
 
 import androidx.room3.concurrent.AtomicInt
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -54,9 +55,10 @@ class DbRepository(
 	private val syncDao: SyncActionDao,
 	private val sessionManager: SessionManager
 ) {
-	private val concurrentRequestLimit = Semaphore(20)
+	private val concurrentRequestLimit = Semaphore(8)
 
-	private val dbChunkSize = 500 // should be enough
+	private val dbChunkSize = 500
+	private val fetchBatchSize = 200
 
 	private val server: MusicServer
 		get() = sessionManager.server
@@ -177,6 +179,7 @@ class DbRepository(
 
 		val totalAlbums = allAlbumSummaries.size
 		val completedAlbums = AtomicInt(0)
+		val lastProgressPercent = AtomicInteger(-1)
 		var finalSongsSynced = 0
 
 		val allValidAlbumIds = mutableSetOf<String>()
@@ -184,41 +187,46 @@ class DbRepository(
 
 		onProgress(0.1f, R.string.info_syncing_albums)
 
-		val albumChannel = Channel<DomainAlbum>(capacity = 100)
+		val albumChannel = Channel<DomainAlbum>(capacity = 24)
 
 		coroutineScope {
 			launch(Dispatchers.IO) {
-				allAlbumSummaries.map { summary ->
-					launch {
-						concurrentRequestLimit.withPermit {
-							try {
-								val album = server.getAlbum(summary.id)
+				allAlbumSummaries.chunked(fetchBatchSize).forEach { batch ->
+					batch.map { summary ->
+						launch {
+							concurrentRequestLimit.withPermit {
+								try {
+									val album = server.getAlbum(summary.id)
 
-								val done = completedAlbums.incrementAndGet()
-								val fetchProgress = 0.1f + (0.8f * (done.toFloat() / totalAlbums))
-								onProgress(fetchProgress, R.string.info_syncing_albums)
+									val done = completedAlbums.incrementAndGet()
+									val fetchProgress = 0.1f + (0.8f * (done.toFloat() / totalAlbums))
+									val percent = (fetchProgress * 100).toInt()
+									if (lastProgressPercent.getAndSet(percent) != percent) {
+										onProgress(fetchProgress, R.string.info_syncing_albums)
+									}
 
-								albumChannel.send(album)
-							} catch (e: Exception) {
-								if (e is SerializationException) {
-									Logger.e(
-										"DbRepository",
-										"could not deserialize album ${summary.id} (${summary.name}); skipping it",
-										e
-									)
-								} else if (e.message != null && e.message!!.contains("DATA_NOT_FOUND")) {
-									Logger.e(
-										"DbRepository",
-										"album with id ${summary.id} (${summary.name}) not found; skipping it",
-										e
-									)
-								} else {
-									throw e
+									albumChannel.send(album)
+								} catch (e: Exception) {
+									if (e is SerializationException) {
+										Logger.e(
+											"DbRepository",
+											"could not deserialize album ${summary.id} (${summary.name}); skipping it",
+											e
+										)
+									} else if (e.message != null && e.message!!.contains("DATA_NOT_FOUND")) {
+										Logger.e(
+											"DbRepository",
+											"album with id ${summary.id} (${summary.name}) not found; skipping it",
+											e
+										)
+									} else {
+										throw e
+									}
 								}
 							}
 						}
-					}
-				}.joinAll()
+					}.joinAll()
+				}
 				albumChannel.close()
 			}
 
