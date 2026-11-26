@@ -225,7 +225,7 @@ class LoginManager(
 				return@launch
 			}
 
-			syncManager.triggerManualSync()
+			syncManager.startPeriodicSync()
 			_events.tryEmit(LoginEvent.Success)
 		}
 	}
