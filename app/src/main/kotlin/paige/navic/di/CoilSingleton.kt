@@ -20,6 +20,7 @@ import coil3.request.ImageResult
 import coil3.request.crossfade
 import coil3.serviceLoaderEnabled
 import coil3.size.Dimension
+import kotlinx.coroutines.Dispatchers
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.media.CoverArtCache
@@ -137,7 +138,7 @@ class CoilSingleton(
 
 	private fun getMemoryCache(): MemoryCache {
 		return sharedMemoryCache ?: MemoryCache.Builder()
-			.maxSizePercent(context, 0.15)
+			.maxSizePercent(context, 0.10)
 			.build().also { sharedMemoryCache = it }
 	}
 
@@ -150,6 +151,7 @@ class CoilSingleton(
 			}
 			.diskCache { getDiskCache() }
 			.memoryCache { getMemoryCache() }
+			.decoderCoroutineContext(Dispatchers.Default.limitedParallelism(3))
 			.crossfade(true)
 			.build()
 	}
@@ -169,6 +171,7 @@ class CoilSingleton(
 			}
 			.diskCache { getDiskCache() }
 			.memoryCache { getMemoryCache() }
+			.decoderCoroutineContext(Dispatchers.Default.limitedParallelism(3))
 			.crossfade(true)
 			.build()
 	}

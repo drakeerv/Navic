@@ -265,7 +265,7 @@ fun SearchScreen(
 										.animateItem(fadeInSpec = null)
 										.width(150.dp),
 									album = album,
-									selected = album == albumListSelection.data?.selected,
+									selected = album.id == albumListSelection.data?.selected?.id,
 									starred = albumListSelection.data?.selected?.starredAt != null,
 									onSelect = {
 										albumListViewModel.selected = album
