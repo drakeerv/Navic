@@ -57,10 +57,6 @@ fun LoginScreenFields(
 	Column(
 		verticalArrangement = Arrangement.spacedBy(8.dp)
 	) {
-		if (serverType == ServerType.LOCAL) {
-			return@Column
-		}
-
 		OutlinedTextField(
 			modifier = Modifier
 				.height(70.dp)

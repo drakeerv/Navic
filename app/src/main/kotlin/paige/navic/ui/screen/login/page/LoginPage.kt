@@ -274,23 +274,23 @@ fun LoginPage(
 					onLogin = login
 				)
 
-					Spacer(Modifier.height(12.dp))
+				Spacer(Modifier.height(12.dp))
 
-					Text(
-						text = stringResource(R.string.option_connection_options),
-						color = MaterialTheme.colorScheme.primary,
-						textDecoration = TextDecoration.Underline,
-						modifier = Modifier
-							.padding(horizontal = 16.dp)
-							.clickable(onClick = dropUnlessResumed {
-								backStack.lastOrNull()?.let {
-									if (it is Screen.Login) {
-										backStack.add(Screen.Settings.ConnectionOptions)
-										focusManager.clearFocus(true)
-									}
+				Text(
+					text = stringResource(R.string.option_connection_options),
+					color = MaterialTheme.colorScheme.primary,
+					textDecoration = TextDecoration.Underline,
+					modifier = Modifier
+						.padding(horizontal = 16.dp)
+						.clickable(onClick = dropUnlessResumed {
+							backStack.lastOrNull()?.let {
+								if (it is Screen.Login) {
+									backStack.add(Screen.Settings.ConnectionOptions)
+									focusManager.clearFocus(true)
 								}
-							})
-					)
+							}
+						})
+				)
 			}
 
 			Column(
