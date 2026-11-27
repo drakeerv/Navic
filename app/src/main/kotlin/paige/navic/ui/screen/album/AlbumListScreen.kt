@@ -39,11 +39,11 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import paige.navic.R
 import paige.navic.R.string.info_no_albums
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.settings.ListViewMode
 import paige.navic.playback.PlayerRepository
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.AlphabeticalScroller
 import paige.navic.ui.component.common.ContentUnavailable
 import paige.navic.ui.component.dialog.ShareSheet
@@ -53,7 +53,6 @@ import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.layout.artGridPlaceholder
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.album.component.AlbumListScreenGridItem
@@ -356,11 +355,6 @@ fun AlbumListScreen(
 			}
 		}
 	}
-
-	ErrorSnackBar(
-		error = (state as? UiState.Error)?.error,
-		onClearError = { viewModel.clearError() }
-	)
 
 	ShareSheet(
 		id = shareId,

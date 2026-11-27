@@ -6,7 +6,6 @@
 
 package paige.navic.ui.screen.settings
 
-import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,8 +30,8 @@ import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.di.LocalNavStack
 import paige.navic.di.LocalSizeClass
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.ui.SnackBarManager
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.common.SegmentedListButtonDefaults
 import paige.navic.ui.component.common.SegmentedListItem
@@ -44,7 +43,7 @@ import paige.navic.ui.navigation.Screen
 import paige.navic.ui.screen.settings.component.SettingsGroup
 import paige.navic.ui.screen.settings.component.SettingsGroupDefaults
 import paige.navic.ui.screen.settings.component.SettingsNavItem
-import paige.navic.util.MiscUtils
+import paige.navic.util.AppRestarter
 
 @Composable
 fun SettingsDeveloperScreen() {
@@ -54,6 +53,7 @@ fun SettingsDeveloperScreen() {
 	var exceptionConfirmationShown by rememberSaveable { mutableStateOf(false) }
 	val preferenceManager = koinInject<PreferenceManager>()
 	val snackBarManager = koinInject<SnackBarManager>()
+	val appRestarter = koinInject<AppRestarter>()
 
 	Scaffold(
 		topBar = {
@@ -77,8 +77,6 @@ fun SettingsDeveloperScreen() {
 					.padding(horizontal = 16.dp),
 				verticalArrangement = Arrangement.spacedBy(SettingsGroupDefaults.GapBetweenGroups)
 			) {
-				val context = koinInject<Context>()
-
 				SettingsGroup {
 					SettingsNavItem(
 						onClick = {
@@ -115,7 +113,7 @@ fun SettingsDeveloperScreen() {
 					)
 					SegmentedListItem(
 						onClick = {
-							MiscUtils.triggerRebirth(context)
+							appRestarter.restart()
 						},
 						content = { Text(stringResource(R.string.action_restart_application)) },
 						shapes = SegmentedListItemDefaults.segmentedShapes(index = 2, count = 3)

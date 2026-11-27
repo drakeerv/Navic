@@ -52,7 +52,6 @@ import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.sheet.RadioSheet
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.radio.component.RadioListScreenCard
@@ -171,11 +170,6 @@ fun RadioListScreen(
 			}
 		}
 	}
-
-	ErrorSnackBar(
-		error = (state as? UiState.Error)?.error,
-		onClearError = { viewModel.clearError() }
-	)
 
 	if (createDialogShown) {
 		RadioCreateDialog(

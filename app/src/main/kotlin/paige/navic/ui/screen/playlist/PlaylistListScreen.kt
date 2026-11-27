@@ -6,6 +6,8 @@
 
 package paige.navic.ui.screen.playlist
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -14,9 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -36,8 +38,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -46,11 +46,14 @@ import org.koin.compose.viewmodel.koinViewModel
 import paige.navic.R
 import paige.navic.R.string.info_no_playlists_short
 import paige.navic.di.LocalBottomBarScrollManager
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.settings.BottomBarCollapseMode
 import paige.navic.domain.model.settings.ListViewMode
+import paige.navic.icons.Icons
+import paige.navic.icons.outlined.Add
+import paige.navic.icons.outlined.PlaylistAdd
 import paige.navic.playback.PlayerRepository
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.common.ContentUnavailable
 import paige.navic.ui.component.dialog.DeletionDialog
 import paige.navic.ui.component.dialog.DeletionTarget
@@ -61,11 +64,7 @@ import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.layout.artGridPlaceholder
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
-import paige.navic.icons.Icons
-import paige.navic.icons.outlined.Add
-import paige.navic.icons.outlined.PlaylistAdd
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.playlist.component.PlaylistListScreenGridItem
 import paige.navic.ui.screen.playlist.component.PlaylistListScreenListItem
@@ -305,11 +304,6 @@ fun PlaylistListScreen(
 			}
 		}
 	}
-
-	ErrorSnackBar(
-		error = (state as? UiState.Error)?.error,
-		onClearError = { viewModel.clearError() }
-	)
 
 	ShareSheet(
 		id = shareId,

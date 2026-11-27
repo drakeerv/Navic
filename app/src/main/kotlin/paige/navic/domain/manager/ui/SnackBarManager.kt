@@ -17,9 +17,11 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import paige.navic.R
 import paige.navic.domain.model.snackbars.PlayerEvent
-import paige.navic.util.MiscUtils
+import paige.navic.util.AppRestarter
 
-class SnackBarManager {
+class SnackBarManager(
+	val appRestarter: AppRestarter
+) {
 	private val _events = MutableSharedFlow<PlayerEvent>()
 	val events: SharedFlow<PlayerEvent> = _events.asSharedFlow()
 
@@ -52,11 +54,17 @@ class SnackBarManager {
 		}
 	}
 
+	fun notifyError(
+
+	) {
+
+	}
+
 	fun notifyRestartRequired() {
 		notifyWithAction(
 			resource = R.string.notice_restart_required,
 			actionLabelRes = R.string.action_restart,
-			onAction = { context -> MiscUtils.triggerRebirth(context) }
+			onAction = { appRestarter.restart() }
 		)
 	}
 }

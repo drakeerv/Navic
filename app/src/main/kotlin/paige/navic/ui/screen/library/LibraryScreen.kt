@@ -42,7 +42,6 @@ import paige.navic.ui.component.dialog.ShareSheet
 import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.screen.album.viewmodel.AlbumListViewModel
@@ -228,23 +227,6 @@ fun LibraryScreen() {
 			}
 		}
 	}
-
-	val flattenedErrors = listOf(
-		(albumsState as? UiState.Error)?.error,
-		(playlistsState as? UiState.Error)?.error,
-		(artistsState as? UiState.Error)?.error,
-		(genresState as? UiState.Error)?.error
-	).mapNotNull { it?.stackTraceToString() }.takeIf { it.isNotEmpty() }?.joinToString("\n\n")
-
-	ErrorSnackBar(
-		error = flattenedErrors?.let { Error(it) },
-		onClearError = {
-			albumsViewModel.clearError()
-			playlistsViewModel.clearError()
-			artistsViewModel.clearError()
-			genresViewModel.clearError()
-		}
-	)
 
 	ShareSheet(
 		id = shareId,

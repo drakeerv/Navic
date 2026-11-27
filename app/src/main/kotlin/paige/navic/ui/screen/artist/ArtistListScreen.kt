@@ -34,18 +34,17 @@ import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
 import paige.navic.R
 import paige.navic.di.LocalNavStack
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainArtist
 import paige.navic.domain.model.DomainArtistListType
 import paige.navic.playback.PlayerRepository
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.layout.ArtGridItem
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.layout.RootTopBar
 import paige.navic.ui.component.sheet.ArtistSheet
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.PersistentViewModelStoreOwner
 import paige.navic.ui.navigation.Screen
@@ -150,11 +149,6 @@ fun ArtistListScreen(
 			)
 		}
 	}
-
-	ErrorSnackBar(
-		error = (state as? UiState.Error)?.error,
-		onClearError = { viewModel.clearError() }
-	)
 }
 
 @Composable

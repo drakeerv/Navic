@@ -40,7 +40,7 @@ abstract class AsyncViewModel<T>(
 			}.onSuccess { result ->
 				_uiState.value = UiState.Success(result)
 			}.onFailure { error ->
-				updateState { UiState.Error(Exception(error), it.data) }
+				updateState { UiState.Error(error as Exception, it.data) }
 			}
 		}
 	}
@@ -50,7 +50,7 @@ abstract class AsyncViewModel<T>(
 			runCatching {
 				block()
 			}.onFailure { error ->
-				updateState { UiState.Error(Exception(error), it.data) }
+				updateState { UiState.Error(error as Exception, it.data) }
 			}
 		}
 	}

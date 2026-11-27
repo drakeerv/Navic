@@ -23,21 +23,20 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import org.koin.compose.koinInject
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
-import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.DownloadManager
 import paige.navic.domain.model.DomainAlbumListType
 import paige.navic.domain.model.DomainSong
 import paige.navic.domain.model.DomainSongCollection
 import paige.navic.domain.model.DomainSongListType
 import paige.navic.playback.PlayerRepository
+import paige.navic.preferences.PreferenceManager
 import paige.navic.ui.component.dialog.DeleteDownloadTarget
-import paige.navic.ui.component.dialog.rememberDownloadDeletionHandler
 import paige.navic.ui.component.dialog.QueueDuplicateDialog
 import paige.navic.ui.component.dialog.ShareSheet
+import paige.navic.ui.component.dialog.rememberDownloadDeletionHandler
 import paige.navic.ui.component.layout.NestedTopBar
 import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.screen.album.viewmodel.AlbumListViewModel
 import paige.navic.ui.screen.genre.component.GenreDetailScreenContent
@@ -149,19 +148,6 @@ fun GenreDetailScreen(
 			)
 		}
 	}
-
-	val flattenedErrors = listOf(
-		(albumsState as? UiState.Error)?.error,
-		(songsState as? UiState.Error)?.error
-	).mapNotNull { it?.stackTraceToString() }.takeIf { it.isNotEmpty() }?.joinToString("\n\n")
-
-	ErrorSnackBar(
-		error = flattenedErrors?.let { Error(it) },
-		onClearError = {
-			albumsViewModel.clearError()
-			songsViewModel.clearError()
-		}
-	)
 
 	ShareSheet(
 		id = shareId,

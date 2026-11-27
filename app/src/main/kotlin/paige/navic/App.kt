@@ -311,7 +311,7 @@ fun App() {
 									),
 								backStack = backStack,
 								sceneStrategies = listOf(
-									remember { NowPlayingSceneStrategy<NavKey> { nowPlayingExpanded = it } },
+									remember { NowPlayingSceneStrategy { nowPlayingExpanded = it } },
 									remember { BottomSheetSceneStrategy() },
 									rememberListDetailSceneStrategy()
 								),
@@ -349,19 +349,19 @@ fun App() {
 								},
 								predictivePopTransitionSpec = { edge ->
 									if (preferenceManager.enablePredictiveBackAnimations) {
-										val mult = if (edge == NavigationEvent.EDGE_RIGHT) -1 else 1
+										val multi = if (edge == NavigationEvent.EDGE_RIGHT) -1 else 1
 										val enter = unveilIn()
 											.plus(scaleIn(initialScale = 0.25f))
 											.plus(
 												slideInHorizontally(
 												animationSpec = tween(500, easing = EaseOutQuart),
-												initialOffsetX = { (-it * 25) * mult }
+												initialOffsetX = { (-it * 25) * multi }
 											))
 										val exit = scaleOut(targetScale = 0.9f)
 											.plus(
 												slideOutHorizontally(
 												animationSpec = tween(300, easing = EaseOutQuart),
-												targetOffsetX = { (it / 10) * mult }
+												targetOffsetX = { (it / 10) * multi }
 											))
 										enter togetherWith exit
 									} else {

@@ -62,7 +62,6 @@ import paige.navic.ui.component.layout.ArtCarouselItem
 import paige.navic.ui.component.layout.PullToRefreshBox
 import paige.navic.ui.component.layout.RootBottomBarSpace
 import paige.navic.ui.component.sheet.CollectionSheet
-import paige.navic.ui.component.snackbar.ErrorSnackBar
 import paige.navic.ui.core.UiState
 import paige.navic.ui.navigation.Screen.ArtistDetail
 import paige.navic.ui.navigation.Screen.CollectionDetail
@@ -428,11 +427,6 @@ fun CollectionDetailScreen(
 				}
 			}
 		}
-
-		ErrorSnackBar(
-			error = (state as? UiState.Error)?.error,
-			onClearError = { viewModel.clearError() }
-		)
 
 		ShareSheet(
 			id = shareId,
