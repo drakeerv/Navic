@@ -22,7 +22,6 @@ import okhttp3.OkHttpClient.Builder
 import paige.navic.preferences.AccountSettings
 import paige.navic.preferences.PreferenceManager
 import java.security.SecureRandom
-import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLSocketFactory
 import javax.net.ssl.TrustManager
@@ -52,6 +51,7 @@ fun createOkHttpClient(
 	proxyUrl: String?,
 	trustAllCerts: Boolean,
 	cronetInterceptor: Interceptor?,
+	extraInterceptors: List<Interceptor>? = null,
 	enableCronet: Boolean = false,
 	dnsResolver: Dns? = null,
 	customHeaders: Map<String, String>? = null
@@ -60,8 +60,6 @@ fun createOkHttpClient(
 		proxyUrl?.let {
 			proxy(extractProxyConfigFromUrl(it))
 		}
-
-		connectTimeout(3, TimeUnit.SECONDS)
 
 		if (trustAllCerts) {
 			val noopTrustManager = NoopTrustManager()
@@ -79,6 +77,12 @@ fun createOkHttpClient(
 			}
 		}
 
+		if (extraInterceptors != null) {
+			for (interceptor in extraInterceptors) {
+				interceptor.let(this::addInterceptor)
+			}
+		}
+
 		if (!customHeaders.isNullOrEmpty()) {
 			this.addInterceptor {
 				val request = it.request()
@@ -92,7 +96,9 @@ fun createOkHttpClient(
 		}
 
 		// according to google, this should be the last thing in the interceptors
-		if (enableCronet) cronetInterceptor?.let(this::addInterceptor)
+		if (enableCronet) {
+			cronetInterceptor?.let(this::addInterceptor)
+		}
 	}.build()
 }
 

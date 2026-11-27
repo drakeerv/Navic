@@ -18,6 +18,7 @@ import paige.navic.util.network.buildKtorEngine
 import paige.navic.util.network.createOkHttpClient
 import paige.navic.util.network.getProxyUrlOrNull
 import okhttp3.Interceptor
+import paige.navic.util.network.RateLimitInterceptor
 
 class NavidromeMusicServerFactory(
 	private val preferenceManager: PreferenceManager,
@@ -38,7 +39,8 @@ class NavidromeMusicServerFactory(
 				trustAllCerts = preferenceManager.dangerousSslNoopEnabled,
 				cronetInterceptor = cronetInterceptor,
 				enableCronet = preferenceManager.cronetEnabled,
-				dnsResolver = dnsResolver
+				dnsResolver = dnsResolver,
+				extraInterceptors = listOf(RateLimitInterceptor())
 			)
 		)
 
