@@ -28,7 +28,7 @@ import paige.navic.ui.screen.login.page.ServerPage
 import paige.navic.ui.screen.login.viewmodel.LoginViewModel
 
 private enum class Page {
-	Server, Login, LocalLibrary
+	Server, Login
 }
 
 @Composable
@@ -62,15 +62,10 @@ fun LoginScreen(
 					loginManager.selectServerType(it)
 					viewModel.selectServerType(it)
 					viewModel.selectAuthMethod(AuthMethod.Token)
-				},
-				onNavigateForward = {
+
 					pagerScope.launch {
 						pagerState.animateScrollToPage(
-							if (viewModel.serverType.value == ServerType.LOCAL) {
-								Page.LocalLibrary.ordinal
-							} else {
-								Page.Login.ordinal
-							},
+							Page.Login.ordinal,
 							animationSpec = HorizontalPagerAnimationSpec
 						)
 					}
@@ -81,13 +76,10 @@ fun LoginScreen(
 					viewModel.selectServerType(account.serverType)
 
 					focusManager.clearFocus(true)
+
 					pagerScope.launch {
 						pagerState.animateScrollToPage(
-							if (account.serverType == ServerType.LOCAL) {
-								Page.LocalLibrary.ordinal
-							} else {
-								Page.Login.ordinal
-							},
+							Page.Login.ordinal,
 							animationSpec = HorizontalPagerAnimationSpec
 						)
 					}
@@ -98,33 +90,35 @@ fun LoginScreen(
 				val selectedAuthMethod = authMethod
 				val selectedServerType = serverType
 				if (selectedAuthMethod != null && selectedServerType != null) {
-					LoginPage(
-						modifier = pageModifier,
-						authMethod = selectedAuthMethod,
-						onNavigateBack = {
-							focusManager.clearFocus(true)
-							pagerScope.launch {
-								pagerState.animateScrollToPage(
-									0,
-									animationSpec = HorizontalPagerAnimationSpec
-								)
+					when (selectedServerType) {
+						ServerType.LOCAL -> LocalLibraryPage(
+							modifier = pageModifier,
+							onNavigateBack = {
+								pagerScope.launch {
+									pagerState.animateScrollToPage(
+										Page.Server.ordinal,
+										animationSpec = HorizontalPagerAnimationSpec
+									)
+								}
 							}
-						}
-					)
-				}
-			}
+						)
 
-			Page.LocalLibrary -> LocalLibraryPage(
-				modifier = pageModifier,
-				onNavigateBack = {
-					pagerScope.launch {
-						pagerState.animateScrollToPage(
-							Page.Server.ordinal,
-							animationSpec = HorizontalPagerAnimationSpec
+						else -> LoginPage(
+							modifier = pageModifier,
+							authMethod = selectedAuthMethod,
+							onNavigateBack = {
+								focusManager.clearFocus(true)
+								pagerScope.launch {
+									pagerState.animateScrollToPage(
+										0,
+										animationSpec = HorizontalPagerAnimationSpec
+									)
+								}
+							}
 						)
 					}
 				}
-			)
+			}
 		}
 	}
 }

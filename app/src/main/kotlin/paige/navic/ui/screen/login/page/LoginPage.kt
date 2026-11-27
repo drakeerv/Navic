@@ -15,9 +15,9 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -69,12 +69,10 @@ import paige.navic.domain.server.ServerType
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.ArrowBack
 import paige.navic.icons.outlined.Error
-import paige.navic.icons.outlined.Info
 import paige.navic.ui.component.common.ErrorBox
 import paige.navic.ui.component.common.SegmentedListButton
 import paige.navic.ui.component.dialog.FormDialog
 import paige.navic.ui.component.layout.TopBarButton
-import paige.navic.ui.component.local.LocalFolderSelection
 import paige.navic.ui.core.LoginEvent
 import paige.navic.ui.core.LoginField
 import paige.navic.ui.core.UiState
@@ -178,137 +176,151 @@ fun LoginPage(
 	Scaffold(
 		modifier = modifier,
 		topBar = {
-			LargeFlexibleTopAppBar(
-				title = {
-					Text(
-						text = stringResource(R.string.action_log_in),
-						style = MaterialTheme.typography.headlineMedium,
-						fontFamily = defaultFont(round = 100f)
-					)
-				},
-				subtitle = {
-					Crossfade(targetState = viewModel.serverType) { state ->
-						val label = if (state == ServerType.JELLYFIN) {
-							stringResource(R.string.info_login_description_jellyfin)
-						} else {
-							stringResource(R.string.info_login_description)
-						}
-						Text(label)
-					}
-				},
-				navigationIcon = {
-					TopBarButton(
-						modifier = Modifier.padding(horizontal = 12.dp),
-						onClick = onNavigateBack
-					) {
-						Icon(
-							imageVector = Icons.Outlined.ArrowBack,
-							contentDescription = stringResource(R.string.action_navigate_back)
+			Box(
+				modifier = Modifier.fillMaxWidth(),
+				contentAlignment = Alignment.TopCenter
+			) {
+				LargeFlexibleTopAppBar(
+					modifier = Modifier
+						.widthIn(max = 600.dp)
+						.fillMaxWidth(),
+					title = {
+						Text(
+							text = stringResource(R.string.action_log_in),
+							style = MaterialTheme.typography.headlineMedium,
+							fontFamily = defaultFont(round = 100f)
 						)
-					}
-				},
-				scrollBehavior = scrollBehavior
-			)
+					},
+					subtitle = {
+						Crossfade(targetState = viewModel.serverType) { state ->
+							val label = if (state == ServerType.JELLYFIN) {
+								stringResource(R.string.info_login_description_jellyfin)
+							} else {
+								stringResource(R.string.info_login_description)
+							}
+							Text(label)
+						}
+					},
+					navigationIcon = {
+						TopBarButton(
+							modifier = Modifier.padding(horizontal = 12.dp),
+							onClick = onNavigateBack
+						) {
+							Icon(
+								imageVector = Icons.Outlined.ArrowBack,
+								contentDescription = stringResource(R.string.action_navigate_back)
+							)
+						}
+					},
+					scrollBehavior = scrollBehavior
+				)
+			}
 		}
 	) { innerPadding ->
-		Column(
+		Box(
 			modifier = Modifier
-				.fillMaxSize()
 				.padding(innerPadding)
 				.consumeWindowInsets(innerPadding)
-				.imePadding(),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(6.dp)
+				.fillMaxWidth(),
+			contentAlignment = Alignment.TopCenter
 		) {
 			Column(
 				modifier = Modifier
-					.weight(1f)
-					.verticalScroll(rememberScrollState())
+					.widthIn(max = 600.dp)
+					.fillMaxSize()
+					.imePadding(),
+				horizontalAlignment = Alignment.CenterHorizontally,
+				verticalArrangement = Arrangement.spacedBy(6.dp)
 			) {
-				val spatialSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
-				val effectSpec = MaterialTheme.motionScheme.slowEffectsSpec<Float>()
-				AnimatedContent(
-					errorState != null,
+				Column(
 					modifier = Modifier
-						.fillMaxWidth()
-						.padding(horizontal = 16.dp),
-					transitionSpec = {
-						(fadeIn(
-							animationSpec = effectSpec
-						) + scaleIn(
-							initialScale = 0.8f,
-							animationSpec = spatialSpec
-						)) togetherWith (fadeOut(
-							animationSpec = effectSpec
-						) + scaleOut(
-							animationSpec = spatialSpec
-						))
-					}
+						.weight(1f)
+						.verticalScroll(rememberScrollState())
 				) {
-					if (it) {
-						errorState?.let { ex ->
-							ErrorBox(
-								UiState.Error(ex, null),
-								padding = PaddingValues(0.dp),
-								modifier = Modifier.fillMaxWidth(),
-								bottomPadding = 8.dp
-							)
+					val spatialSpec = MaterialTheme.motionScheme.slowSpatialSpec<Float>()
+					val effectSpec = MaterialTheme.motionScheme.slowEffectsSpec<Float>()
+					AnimatedContent(
+						errorState != null,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(horizontal = 16.dp),
+						transitionSpec = {
+							(fadeIn(
+								animationSpec = effectSpec
+							) + scaleIn(
+								initialScale = 0.8f,
+								animationSpec = spatialSpec
+							)) togetherWith (fadeOut(
+								animationSpec = effectSpec
+							) + scaleOut(
+								animationSpec = spatialSpec
+							))
+						}
+					) {
+						if (it) {
+							errorState?.let { ex ->
+								ErrorBox(
+									UiState.Error(ex, null),
+									padding = PaddingValues(0.dp),
+									modifier = Modifier.fillMaxWidth(),
+									bottomPadding = 8.dp
+								)
+							}
 						}
 					}
+
+					LoginScreenFields(
+						isBusy = isBusy,
+						instanceState = instanceState,
+						instanceError = formState.instanceError,
+						instanceFocusRequester = instanceFocusRequester,
+						authMethod = viewModel.authMethod,
+						serverType = viewModel.serverType,
+						onAuthMethodChange = viewModel::selectAuthMethod,
+						usernameState = usernameState,
+						usernameError = formState.usernameError,
+						usernameFocusRequester = usernameFocusRequester,
+						passwordState = passwordState,
+						passwordError = formState.passwordError,
+						passwordFocusRequester = passwordFocusRequester,
+						onLogin = login
+					)
+
+					Spacer(Modifier.height(12.dp))
+
+					Text(
+						text = stringResource(R.string.option_connection_options),
+						color = MaterialTheme.colorScheme.primary,
+						textDecoration = TextDecoration.Underline,
+						modifier = Modifier
+							.padding(horizontal = 16.dp)
+							.clickable(onClick = dropUnlessResumed {
+								backStack.lastOrNull()?.let {
+									if (it is Screen.Login) {
+										backStack.add(Screen.Settings.ConnectionOptions)
+										focusManager.clearFocus(true)
+									}
+								}
+							})
+					)
 				}
 
-				LoginScreenFields(
-					isBusy = isBusy,
-					instanceState = instanceState,
-					instanceError = formState.instanceError,
-					instanceFocusRequester = instanceFocusRequester,
-					authMethod = viewModel.authMethod,
-					serverType = viewModel.serverType,
-					onAuthMethodChange = viewModel::selectAuthMethod,
-					usernameState = usernameState,
-					usernameError = formState.usernameError,
-					usernameFocusRequester = usernameFocusRequester,
-					passwordState = passwordState,
-					passwordError = formState.passwordError,
-					passwordFocusRequester = passwordFocusRequester,
-					onLogin = login
-				)
-
-				Spacer(Modifier.height(12.dp))
-
-				Text(
-					text = stringResource(R.string.option_connection_options),
-					color = MaterialTheme.colorScheme.primary,
-					textDecoration = TextDecoration.Underline,
+				Column(
 					modifier = Modifier
 						.padding(horizontal = 16.dp)
-						.clickable(onClick = dropUnlessResumed {
-							backStack.lastOrNull()?.let {
-								if (it is Screen.Login) {
-									backStack.add(Screen.Settings.ConnectionOptions)
-									focusManager.clearFocus(true)
-								}
-							}
-						})
-				)
-			}
-
-			Column(
-				modifier = Modifier
-					.widthIn(max = 600.dp)
-					.padding(horizontal = 16.dp)
-					.padding(bottom = 8.dp)
-			) {
-				Button(
-					modifier = Modifier.fillMaxWidth(),
-					onClick = login,
-					enabled = !isBusy,
-					shape = CircleShape
+						.padding(bottom = 8.dp)
 				) {
-					Text(
-						text = stringResource(R.string.action_log_in),
-						fontFamily = defaultFont(100)
-					)
+					Button(
+						modifier = Modifier.fillMaxWidth(),
+						onClick = login,
+						enabled = !isBusy,
+						shape = CircleShape
+					) {
+						Text(
+							text = stringResource(R.string.action_log_in),
+							fontFamily = defaultFont(100)
+						)
+					}
 				}
 			}
 		}

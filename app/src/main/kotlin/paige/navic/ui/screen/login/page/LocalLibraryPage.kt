@@ -13,12 +13,14 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -36,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -116,111 +119,126 @@ fun LocalLibraryPage(
 	Scaffold(
 		modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
 		topBar = {
-			LargeFlexibleTopAppBar(
-				title = {
-					Text(
-						text = stringResource(R.string.subtitle_local_library),
-						style = MaterialTheme.typography.headlineMedium,
-						fontFamily = defaultFont(round = 100f)
-					)
-				},
-				navigationIcon = {
-					TopBarButton(
-						modifier = Modifier.padding(horizontal = 12.dp),
-						onClick = onNavigateBack
-					) {
-						Icon(
-							Icons.Outlined.ArrowBack,
-							stringResource(R.string.action_navigate_back)
+			Box(
+				modifier = Modifier.fillMaxWidth(),
+				contentAlignment = Alignment.TopCenter
+			) {
+				LargeFlexibleTopAppBar(
+					modifier = Modifier
+						.widthIn(max = 600.dp)
+						.fillMaxWidth(),
+					title = {
+						Text(
+							text = stringResource(R.string.subtitle_local_library),
+							style = MaterialTheme.typography.headlineMedium,
+							fontFamily = defaultFont(round = 100f)
 						)
-					}
-				},
-				scrollBehavior = scrollBehavior
-			)
+					},
+					navigationIcon = {
+						TopBarButton(
+							modifier = Modifier.padding(horizontal = 12.dp),
+							onClick = onNavigateBack
+						) {
+							Icon(
+								Icons.Outlined.ArrowBack,
+								stringResource(R.string.action_navigate_back)
+							)
+						}
+					},
+					scrollBehavior = scrollBehavior
+				)
+			}
 		}
 	) { innerPadding ->
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(innerPadding)
-				.padding(horizontal = 16.dp),
+				.padding(innerPadding),
+			contentAlignment = Alignment.TopCenter
 		) {
-			Text(
-				text = stringResource(R.string.info_local_library_onboarding),
-				modifier = Modifier.padding(PaddingValues(top = 4.dp)),
-				style = MaterialTheme.typography.bodyMedium
-			)
-
 			Column(
 				modifier = Modifier
-					.weight(1f)
-					.verticalScroll(rememberScrollState()),
-				verticalArrangement = Arrangement.spacedBy(16.dp)
-			) {
-				Spacer(Modifier.padding(4.dp))
-
-				errorState?.let { error ->
-					ErrorBox(
-						UiState.Error(error, null),
-						padding = PaddingValues(0.dp),
-						modifier = Modifier.fillMaxWidth()
-					)
-				}
-
-				SettingsGroup(
-					title = { Text(stringResource(R.string.title_local_scan_settings)) }
-				) {
-					SettingsToggleItem(
-						checked = syncM3uPlaylists,
-						onCheckedChange = loginManager::updateSyncM3uPlaylists,
-						enabled = !isBusy,
-						supportingContent = { Text(stringResource(R.string.info_sync_m3u_playlists)) }
-					) {
-						Text(stringResource(R.string.option_sync_m3u_playlists))
-					}
-				}
-
-				SettingsGroup(
-					title = { Text(stringResource(R.string.title_music_folders)) }
-				) {
-					LocalFolderSelection(
-						modifier = Modifier.fillMaxWidth(),
-						folderUris = localFolderUris,
-						enabled = !isBusy,
-						onFoldersChanged = loginManager::setLocalFolders,
-						onPermissionError = {
-							scope.launch {
-								snackBarState.showSnackbar(
-									resources.getString(R.string.info_local_folder_permission_denied)
-								)
-							}
-						}
-					)
-					Spacer(Modifier.padding(12.dp))
-				}
-			}
-
-			Button(
-				modifier = Modifier.fillMaxWidth(),
-				onClick = {
-					scope.launch {
-						if (!permissionManager.requestNotificationsPermission()) {
-							notificationsDenied = true
-						} else {
-							loginManager.login()
-						}
-					}
-				},
-				enabled = !isBusy && localFolderUris.isNotEmpty(),
-				shape = CircleShape
+					.widthIn(max = 600.dp)
+					.fillMaxSize()
+					.padding(horizontal = 16.dp)
 			) {
 				Text(
-					stringResource(
-						if (loginManager.hasLocalAccount) R.string.action_save_local_folders
-						else R.string.action_create_local_library
-					),
-					fontFamily = defaultFont(100)
+					text = stringResource(R.string.info_local_library_onboarding),
+					modifier = Modifier.padding(PaddingValues(top = 4.dp)),
+					style = MaterialTheme.typography.bodyMedium
 				)
+
+				Column(
+					modifier = Modifier
+						.weight(1f)
+						.verticalScroll(rememberScrollState()),
+					verticalArrangement = Arrangement.spacedBy(16.dp)
+				) {
+					Spacer(Modifier.padding(4.dp))
+
+					errorState?.let { error ->
+						ErrorBox(
+							UiState.Error(error, null),
+							padding = PaddingValues(0.dp),
+							modifier = Modifier.fillMaxWidth()
+						)
+					}
+
+					SettingsGroup(
+						title = { Text(stringResource(R.string.title_local_scan_settings)) }
+					) {
+						SettingsToggleItem(
+							checked = syncM3uPlaylists,
+							onCheckedChange = loginManager::updateSyncM3uPlaylists,
+							enabled = !isBusy,
+							supportingContent = { Text(stringResource(R.string.info_sync_m3u_playlists)) }
+						) {
+							Text(stringResource(R.string.option_sync_m3u_playlists))
+						}
+					}
+
+					SettingsGroup(
+						title = { Text(stringResource(R.string.title_music_folders)) }
+					) {
+						LocalFolderSelection(
+							modifier = Modifier.fillMaxWidth(),
+							folderUris = localFolderUris,
+							enabled = !isBusy,
+							onFoldersChanged = loginManager::setLocalFolders,
+							onPermissionError = {
+								scope.launch {
+									snackBarState.showSnackbar(
+										resources.getString(R.string.info_local_folder_permission_denied)
+									)
+								}
+							}
+						)
+						Spacer(Modifier.padding(12.dp))
+					}
+				}
+
+				Button(
+					modifier = Modifier.fillMaxWidth(),
+					onClick = {
+						scope.launch {
+							if (!permissionManager.requestNotificationsPermission()) {
+								notificationsDenied = true
+							} else {
+								loginManager.login()
+							}
+						}
+					},
+					enabled = !isBusy && localFolderUris.isNotEmpty(),
+					shape = CircleShape
+				) {
+					Text(
+						stringResource(
+							if (loginManager.hasLocalAccount) R.string.action_save_local_folders
+							else R.string.action_create_local_library
+						),
+						fontFamily = defaultFont(100)
+					)
+				}
 			}
 		}
 	}

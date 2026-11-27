@@ -14,19 +14,23 @@ import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -50,6 +54,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.compose.koinInject
 import paige.navic.R
 import paige.navic.designsystem.theme.defaultFont
+import paige.navic.di.LocalSizeClass
 import paige.navic.domain.manager.session.SessionManager
 import paige.navic.domain.manager.session.account.Account
 import paige.navic.domain.server.ServerType
@@ -64,36 +69,68 @@ fun ServerPage(
 	modifier: Modifier = Modifier,
 	showAccounts: Boolean,
 	onServerTypeChanged: (ServerType) -> Unit,
-	onNavigateForward: () -> Unit,
 	onAccountSelected: (Account) -> Unit
 ) {
 	Scaffold(
 		modifier = modifier
 	) { innerPadding ->
-		Column(
-			modifier = Modifier
-				.fillMaxSize()
-				.padding(innerPadding)
-				.consumeWindowInsets(innerPadding)
-				.verticalScroll(rememberScrollState()),
-			horizontalAlignment = Alignment.CenterHorizontally,
-			verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
-		) {
-			Header(
-				modifier = Modifier.weight(1.5f)
-			)
-			if (showAccounts) {
-				SavedServers(onAccountSelected = onAccountSelected)
+		val sizeClass = LocalSizeClass.current
+		val isLandscape = sizeClass.widthSizeClass >= WindowWidthSizeClass.Expanded
+
+		if (!isLandscape) {
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(innerPadding)
+					.consumeWindowInsets(innerPadding)
+					.verticalScroll(rememberScrollState()),
+				horizontalAlignment = Alignment.CenterHorizontally
+			) {
+				Content(
+					modifier = Modifier.weight(1f).widthIn(120.dp),
+					showAccounts = showAccounts,
+					onServerTypeChanged = onServerTypeChanged,
+					onAccountSelected = onAccountSelected
+				)
 			}
-			ServerChoices(
-				modifier = Modifier.weight(1f),
-				onServerTypeChanged = {
-					onServerTypeChanged(it)
-					onNavigateForward()
-				}
-			)
+		} else {
+			Row(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(innerPadding)
+					.consumeWindowInsets(innerPadding),
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				Content(
+					modifier = Modifier.weight(1f).fillMaxHeight(),
+					showAccounts = showAccounts,
+					onServerTypeChanged = onServerTypeChanged,
+					onAccountSelected = onAccountSelected
+				)
+			}
 		}
 	}
+}
+
+@Composable
+private fun Content(
+	modifier: Modifier,
+	showAccounts: Boolean,
+	onAccountSelected: (Account) -> Unit,
+	onServerTypeChanged: (ServerType) -> Unit
+) {
+	Header(
+		modifier = modifier
+	)
+	if (showAccounts) {
+		SavedServers(onAccountSelected = onAccountSelected)
+	}
+	ServerChoices(
+		modifier = modifier,
+		onServerTypeChanged = {
+			onServerTypeChanged(it)
+		}
+	)
 }
 
 @Composable
@@ -101,13 +138,12 @@ private fun Header(
 	modifier: Modifier = Modifier
 ) {
 	Column(
-		modifier = modifier.fillMaxWidth(),
+		modifier = modifier,
 		horizontalAlignment = Alignment.CenterHorizontally,
 		verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)
 	) {
-		Spacer(Modifier.weight(1f))
 		Logo()
-		Spacer(Modifier.weight(0.1f))
+
 		Text(
 			text = stringResource(R.string.title_welcome),
 			style = MaterialTheme.typography.headlineMedium,
@@ -116,7 +152,6 @@ private fun Header(
 		Text(
 			text = stringResource(R.string.subtitle_welcome)
 		)
-		Spacer(Modifier.weight(0.5f))
 	}
 }
 
