@@ -1,6 +1,6 @@
 /*
- * Navic, a Subsonic music streaming app for Android
- * Copyright (c) 2026 paige
+ * Navic - https://codeberg.org/paige/Navic
+ * Copyright (c) 2026 paige & contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
 
@@ -121,7 +121,7 @@ interface SongDao {
 
 	@Query("""
 		SELECT * FROM SongEntity 
-		WHERE (artistId = :artistId OR (artistName IS NOT NULL AND LOWER(artistName) = LOWER(:artistName)) OR artists LIKE '%' || :artistId || '%' OR artists LIKE '%' || :artistName || '%')
+		WHERE (artistId = :artistId OR (artistName IS NOT NULL AND LOWER(artistName) = LOWER(:artistName)) OR artists LIKE '%' || :artistId || '^' || :artistName || '%')
 		AND (belongsToAlbumId IS NULL OR belongsToAlbumId NOT IN (:excludedAlbumIds))
 		ORDER BY playCount DESC, LOWER(title) ASC
 	""")
@@ -133,7 +133,7 @@ interface SongDao {
 
 	@Query("""
 		SELECT * FROM SongEntity 
-		WHERE (artistId = :artistId OR (artistName IS NOT NULL AND LOWER(artistName) = LOWER(:artistName)) OR artists LIKE '%' || :artistId || '%' OR artists LIKE '%' || :artistName || '%')
+		WHERE (artistId = :artistId OR (artistName IS NOT NULL AND LOWER(artistName) = LOWER(:artistName)) OR artists LIKE '%' || :artistId || '^' || :artistName || '%')
 		ORDER BY playCount DESC, LOWER(title) ASC
 	""")
 	suspend fun getAppearsOnSongsForArtistAll(
