@@ -37,6 +37,7 @@ import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -295,10 +296,6 @@ fun AccountSheet(
 	val accounts by sessionManager.accounts.collectAsStateWithLifecycle()
 	var accountToRemove by remember { mutableStateOf<Account?>(null) }
 
-	var sleepTimerSheetOpen by rememberSaveable { mutableStateOf(false) }
-	val sleepTimerManager = koinInject<SleepTimerManager>()
-	val sleepTimerMode by sleepTimerManager.mode.collectAsStateWithLifecycle()
-
 	val sheetState = rememberBottomSheetState(
 		initialValue = SheetValue.Hidden,
 		enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
@@ -409,19 +406,21 @@ fun AccountSheet(
 				)
 			}
 
-			HorizontalDivider(
-				modifier = Modifier.padding(vertical = 8.dp),
-				thickness = 1.dp,
-				color = MaterialTheme.colorScheme.outlineVariant
-			)
+			var count by remember { mutableIntStateOf(0) }
+
+			if (count != 0) {
+				HorizontalDivider(
+					modifier = Modifier.padding(vertical = 8.dp),
+					thickness = 1.dp,
+					color = MaterialTheme.colorScheme.outlineVariant
+				)
+			}
 
 			Column(
 				verticalArrangement = Arrangement.spacedBy(SegmentedListItemDefaults.segmentedGap())
 			) {
 				val isSharingAllowed = sessionManager.getUser()?.canShare() == true
 				val supportsChat = sessionManager.supportsFeature(ServerFeature.CHAT)
-
-				var count = 1
 
 				if (isSharingAllowed) count++
 				if (supportsChat) count++
@@ -455,52 +454,6 @@ fun AccountSheet(
 						content = { Text(stringResource(R.string.title_chat)) }
 					)
 				}
-
-				SegmentedListItem(
-					shapes = SegmentedListItemDefaults.segmentedShapes(
-						index = count - 1,
-						count = count
-					),
-					onClick = { sleepTimerSheetOpen = true },
-					leadingContent = {
-						val tint = when (sleepTimerMode) {
-							!is SleepTimerMode.Disabled -> MaterialTheme.colorScheme.positive
-							else -> LocalContentColor.current
-						}
-						Icon(
-							imageVector = Icons.Outlined.Bedtime,
-							contentDescription = null,
-							tint = tint
-						)
-					},
-					content = {
-						val label = when (val mode = sleepTimerMode) {
-							is SleepTimerMode.Time -> stringResource(
-								R.string.action_sleep_timer_enabled,
-								sleepTimerManager.timeLeft?.label() ?: ""
-							)
-
-							is SleepTimerMode.Songs -> stringResource(
-								R.string.action_sleep_timer_songs_enabled,
-								mode.remaining
-							)
-
-							is SleepTimerMode.EndOfQueue -> stringResource(
-								R.string.action_sleep_timer_queue_enabled
-							)
-
-							else -> stringResource(R.string.action_sleep_timer)
-						}
-						val color = when (sleepTimerMode) {
-							!is SleepTimerMode.Disabled -> MaterialTheme.colorScheme.positive
-							else -> LocalContentColor.current
-						}
-						Text(
-							text = label,
-							color = color
-						)
-					}
-				)
 			}
 
 			HorizontalDivider(
@@ -515,6 +468,19 @@ fun AccountSheet(
 				SegmentedListItem(
 					shapes = SegmentedListItemDefaults.segmentedShapes(
 						index = 0,
+						count = 2
+					),
+					onClick = {
+						animateToDismiss()
+						backStack.add(Screen.Settings.Root)
+					},
+					leadingContent = { Icon(Icons.Filled.Settings, null) },
+					content = { Text(stringResource(R.string.title_settings)) }
+				)
+
+				SegmentedListItem(
+					shapes = SegmentedListItemDefaults.segmentedShapes(
+						index = 1,
 						count = 2
 					),
 					onClick = {
@@ -546,25 +512,8 @@ fun AccountSheet(
 						Text(label)
 					}
 				)
-
-				SegmentedListItem(
-					shapes = SegmentedListItemDefaults.segmentedShapes(
-						index = 1,
-						count = 2
-					),
-					onClick = {
-						animateToDismiss()
-						backStack.add(Screen.Settings.Root)
-					},
-					leadingContent = { Icon(Icons.Filled.Settings, null) },
-					content = { Text(stringResource(R.string.title_settings)) }
-				)
 			}
 		}
-	}
-
-	if (sleepTimerSheetOpen) {
-		SleepTimerSheet(onDismissRequest = { sleepTimerSheetOpen = false })
 	}
 
 	accountToRemove?.let { account ->
