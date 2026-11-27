@@ -9,13 +9,12 @@ package paige.navic.domain.repository
 import androidx.room3.concurrent.AtomicInt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.SerializationException
 import paige.navic.R
@@ -54,9 +53,19 @@ class DbRepository(
 	private val syncDao: SyncActionDao,
 	private val sessionManager: SessionManager
 ) {
-	private val concurrentRequestLimit = Semaphore(20)
+	private val syncWorkerCount = 8
+	private val dbChunkSize = 500
+	private val songChunkSize = 1500
 
-	private val dbChunkSize = 500 // should be enough
+	private data class LibraryAlbumData(
+		val album: AlbumEntity,
+		val songs: List<SongEntity>
+	)
+
+	private data class PlaylistSyncData(
+		val playlistId: String,
+		val songs: List<SongEntity>
+	)
 
 	private val server: MusicServer
 		get() = sessionManager.server
@@ -71,6 +80,363 @@ class DbRepository(
 				Result.failure(e)
 			}
 		}
+
+	private fun mapLibraryAlbum(
+		summary: DomainAlbum,
+		album: DomainAlbum
+	): LibraryAlbumData {
+		val albumEntity = album.toEntity(
+			artistIdOverride = summary.artistId,
+			artistNameOverride = summary.artistName
+		)
+
+		val songEntities = album.songs.map { song ->
+			song.toEntity(
+				artistIdOverride = albumEntity.artistId.takeIf { song.artistId.isBlank() },
+				artistNameOverride = albumEntity.artistName.takeIf {
+					song.artistName.isNullOrBlank()
+				}
+			)
+		}
+
+		return LibraryAlbumData(
+			album = albumEntity,
+			songs = songEntities
+		)
+	}
+
+	private suspend fun fetchLibraryAlbum(summary: DomainAlbum): LibraryAlbumData? {
+		val album = try {
+			server.getAlbum(summary.id)
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: SerializationException) {
+			Logger.e(
+				"DbRepository",
+				"Could not deserialize album ${summary.id} (${summary.name}); skipping it",
+				e
+			)
+			return null
+		} catch (e: Exception) {
+			if (e.message?.contains("DATA_NOT_FOUND") == true) {
+				Logger.e(
+					"DbRepository",
+					"Album ${summary.id} (${summary.name}) not found; skipping it",
+					e
+				)
+				return null
+			}
+
+			throw e
+		}
+
+		return mapLibraryAlbum(summary, album)
+	}
+
+	private suspend fun syncLibraryStream(
+		onProgress: suspend (Float) -> Unit
+	): Pair<Set<String>, Set<String>> = coroutineScope {
+		val input = Channel<DomainAlbum>(capacity = syncWorkerCount)
+		val output = Channel<LibraryAlbumData>(capacity = 1)
+		val completedFetches = AtomicInt(0)
+		val progressMutex = Mutex()
+		var lastReportedProgress = 0f
+
+		suspend fun reportProgress(progress: Float) {
+			progressMutex.withLock {
+				lastReportedProgress = maxOf(
+					lastReportedProgress,
+					progress.coerceIn(0f, 1f)
+				)
+				onProgress(lastReportedProgress)
+			}
+		}
+
+		val producer = launch {
+			try {
+				val pageSize = 500
+				var offset = 0
+
+				while (true) {
+					val page = server.getAlbums(
+						DomainAlbumListType.AlphabeticalByName,
+						pageSize,
+						offset
+					)
+
+					if (page.isEmpty()) break
+
+					for (summary in page) {
+						input.send(summary)
+					}
+
+					if (page.size < pageSize) break
+					offset += pageSize
+				}
+			} finally {
+				input.close()
+			}
+		}
+
+		val workers = List(syncWorkerCount) {
+			launch {
+				for (summary in input) {
+					val albumData = fetchLibraryAlbum(summary)
+					if (albumData != null) {
+						output.send(albumData)
+					}
+
+					val done = completedFetches.incrementAndGet()
+					if (done == 1 || done % 10 == 0) {
+						val estimate = 0.1f + 0.8f * (done.toFloat() / (done.toFloat() + 500f))
+						reportProgress(estimate)
+					}
+				}
+			}
+		}
+
+		val closer = launch {
+			try {
+				producer.join()
+				workers.joinAll()
+			} finally {
+				output.close()
+			}
+		}
+
+		val validAlbumIds = mutableSetOf<String>()
+		val validSongIds = mutableSetOf<String>()
+		val albumBatch = ArrayList<AlbumEntity>(dbChunkSize)
+		val songBatch = ArrayList<SongEntity>(songChunkSize)
+		val artistBatch = LinkedHashMap<String, ArtistEntity>()
+
+		var persistedAlbumCount = 0
+		var persistedSongCount = 0L
+
+		fun addArtist(artist: ArtistEntity) {
+			if (artist.artistId.isNotBlank()) {
+				artistBatch[artist.artistId] = artist
+			}
+		}
+
+		suspend fun flushBatches() {
+			if (albumBatch.isEmpty() && songBatch.isEmpty() && artistBatch.isEmpty()) {
+				return
+			}
+
+			if (albumBatch.isNotEmpty()) {
+				albumDao.insertAlbums(albumBatch)
+			}
+
+			if (songBatch.isNotEmpty()) {
+				songDao.insertSongs(songBatch)
+			}
+
+			if (artistBatch.isNotEmpty()) {
+				artistDao.insertArtistsIgnoringConflicts(artistBatch.values.toList())
+			}
+
+			persistedSongCount += songBatch.size
+			albumBatch.clear()
+			songBatch.clear()
+			artistBatch.clear()
+		}
+
+		for ((album, songs) in output) {
+			albumBatch.add(album)
+			validAlbumIds.add(album.albumId)
+			persistedAlbumCount++
+
+			if (album.artistId.isNotBlank()) {
+				addArtist(
+					ArtistEntity(
+						artistId = album.artistId,
+						name = album.artistName ?: album.artistId,
+						coverArtId = album.coverArtId
+					)
+				)
+			}
+
+			for (song in songs) {
+				songBatch.add(song)
+				validSongIds.add(song.songId)
+
+				if (song.artistId.isNotBlank()) {
+					addArtist(
+						ArtistEntity(
+							artistId = song.artistId,
+							name = song.artistName ?: song.artistId,
+							albumCount = 0,
+							coverArtId = song.coverArtId
+						)
+					)
+				}
+
+				for ((id, name) in song.artists) {
+					if (id.isNotBlank()) {
+						addArtist(
+							ArtistEntity(
+								artistId = id,
+								name = name,
+								albumCount = 0,
+								coverArtId = song.coverArtId
+							)
+						)
+					}
+				}
+
+				for ((id, name) in song.albumArtists) {
+					if (id.isNotBlank()) {
+						addArtist(
+							ArtistEntity(
+								artistId = id,
+								name = name,
+								albumCount = 0,
+								coverArtId = song.coverArtId
+							)
+						)
+					}
+				}
+
+				if (songBatch.size >= songChunkSize) {
+					flushBatches()
+				}
+			}
+
+			if (albumBatch.size >= dbChunkSize) {
+				flushBatches()
+			}
+
+			if (persistedAlbumCount == 1 || persistedAlbumCount % 10 == 0) {
+				val estimate = 0.1f + 0.8f * (
+					persistedAlbumCount.toFloat() /
+						(persistedAlbumCount.toFloat() + 500f)
+					)
+				reportProgress(estimate)
+			}
+		}
+
+		closer.join()
+		flushBatches()
+
+		Logger.i(
+			"DbRepository",
+			"- Sync result: $persistedAlbumCount albums, $persistedSongCount songs"
+		)
+
+		reportProgress(1f)
+		validAlbumIds to validSongIds
+	}
+
+	private suspend fun fetchPlaylistData(playlistId: String): PlaylistSyncData? {
+		val playlist = try {
+			server.getPlaylist(playlistId)
+		} catch (e: CancellationException) {
+			throw e
+		} catch (e: SerializationException) {
+			Logger.e(
+				"DbRepository",
+				"Could not deserialize playlist $playlistId; skipping it",
+				e
+			)
+			return null
+		}
+
+		return PlaylistSyncData(
+			playlistId = playlistId,
+			songs = playlist.songs.map { it.toEntity() }
+		)
+	}
+
+	private suspend fun persistPlaylist(data: PlaylistSyncData) {
+		data.songs.chunked(dbChunkSize).forEach { chunk ->
+			songDao.insertSongs(chunk)
+		}
+
+		val crossRefs = data.songs.mapIndexed { index, song ->
+			PlaylistSongCrossRef(
+				playlistId = data.playlistId,
+				songId = song.songId,
+				position = index
+			)
+		}
+
+		if (crossRefs.isEmpty()) {
+			playlistDao.deletePlaylistSongCrossRefs(data.playlistId)
+		} else {
+			playlistDao.replacePlaylistSongs(data.playlistId, crossRefs)
+		}
+	}
+
+	private suspend fun syncAllPlaylistSongs(
+		playlists: List<PlaylistEntity>,
+		onProgress: suspend (Float) -> Unit
+	): Set<String> = coroutineScope {
+		if (playlists.isEmpty()) {
+			onProgress(1f)
+			return@coroutineScope emptySet()
+		}
+
+		val input = Channel<PlaylistEntity>(capacity = syncWorkerCount)
+		val output = Channel<PlaylistSyncData>(capacity = 1)
+		val fetchedCount = AtomicInt(0)
+		val progressMutex = Mutex()
+		var reportedProgress = 0f
+
+		suspend fun reportProgress(progress: Float) {
+			progressMutex.withLock {
+				reportedProgress = maxOf(reportedProgress, progress.coerceIn(0f, 1f))
+				onProgress(reportedProgress)
+			}
+		}
+
+		val producer = launch {
+			try {
+				playlists.forEach { input.send(it) }
+			} finally {
+				input.close()
+			}
+		}
+
+		val workers = List(minOf(syncWorkerCount, playlists.size)) {
+			launch {
+				for ((playlistId) in input) {
+					val data = fetchPlaylistData(playlistId)
+					val done = fetchedCount.incrementAndGet()
+					reportProgress(0.5f * done.toFloat() / playlists.size)
+
+					if (data != null) {
+						output.send(data)
+					}
+				}
+			}
+		}
+
+		val closer = launch {
+			try {
+				producer.join()
+				workers.joinAll()
+			} finally {
+				output.close()
+			}
+		}
+
+		val validSongIds = mutableSetOf<String>()
+		var persistedCount = 0
+
+		for (data in output) {
+			persistPlaylist(data)
+			data.songs.forEach { validSongIds.add(it.songId) }
+			persistedCount++
+			reportProgress(
+				0.5f + 0.5f * persistedCount.toFloat() / playlists.size
+			)
+		}
+
+		closer.join()
+		reportProgress(1f)
+		validSongIds
+	}
 
 	suspend fun removeEverything(): Result<Unit> = runDbOp {
 		albumDao.clearAllAlbums()
@@ -88,233 +454,127 @@ class DbRepository(
 		onProgress: suspend (Float, Int) -> Unit = { _, _ -> }
 	): Result<Unit> = runDbOp {
 		coroutineScope {
-			val progressCallback = suspend { progress: Float, message: Int ->
-				Logger.i("DbRepository", "$progress message=$message")
-				onProgress(progress, message)
+			val callbackMutex = Mutex()
+			var lastReportedProgress = 0f
+
+			val progressCallback: suspend (Float, Int) -> Unit = { progress, message ->
+				callbackMutex.withLock {
+					lastReportedProgress = maxOf(
+						lastReportedProgress,
+						progress.coerceIn(0f, 1f)
+					)
+					Logger.i(
+						"DbRepository",
+						"$lastReportedProgress message=$message"
+					)
+					onProgress(lastReportedProgress, message)
+				}
 			}
 
-			progressCallback(0.0f, R.string.info_syncing)
+			progressCallback(0f, R.string.info_syncing)
 
 			progressCallback(0.01f, R.string.info_syncing_genres)
-			syncGenres().getOrThrow()
-
 			progressCallback(0.02f, R.string.info_syncing_radios)
-			try {
-				syncRadios().getOrThrow()
-			} catch (ex: ServerException) {
-				Logger.e(
-					tag = "DbRepository",
-					msg = "could not sync radio stations, maybe this server doesn't support it",
-					tr = ex
-				)
-			}
-
 			progressCallback(0.04f, R.string.info_syncing_artists)
-			syncArtists().getOrThrow()
-
 			progressCallback(0.07f, R.string.info_syncing_playlists)
-			val playlists = syncPlaylists().getOrThrow()
 
-			val validAlbumIds = mutableSetOf<String>()
-			val validSongIds = mutableSetOf<String>()
+			val playlists = coroutineScope {
+				val genresDeferred = async { syncGenres().getOrThrow() }
 
-			val libraryResult = syncLibrarySongs { localProgress, message ->
-				val globalProgress = 0.10f + (localProgress * 0.65f)
-				progressCallback(globalProgress, message)
-			}.getOrThrow()
-
-			validAlbumIds.addAll(libraryResult.first)
-			validSongIds.addAll(libraryResult.second)
-
-			val totalPlaylists = playlists.size
-			if (totalPlaylists > 0) {
-				val completedPlaylists = AtomicInt(0)
-
-				playlists.map { playlist ->
-					async {
-						concurrentRequestLimit.withPermit {
-							val playlistSongIds =
-								syncPlaylistSongs(playlist.playlistId).getOrThrow()
-							validSongIds.addAll(playlistSongIds)
-
-							val done = completedPlaylists.incrementAndGet()
-							val globalProgress = 0.75f + (0.25f * (done.toFloat() / totalPlaylists))
-							progressCallback(globalProgress, R.string.info_syncing_playlists)
-						}
+				val radiosDeferred = async {
+					try {
+						syncRadios().getOrThrow()
+					} catch (e: ServerException) {
+						Logger.e(
+							tag = "DbRepository",
+							msg = "Could not sync radio stations; this server may not support radios",
+							tr = e
+						)
 					}
-				}.awaitAll()
+				}
+
+				val artistsDeferred = async { syncArtists().getOrThrow() }
+				val playlistsDeferred = async { syncPlaylists().getOrThrow() }
+
+				genresDeferred.await()
+				radiosDeferred.await()
+				artistsDeferred.await()
+				playlistsDeferred.await()
 			}
+
+			progressCallback(0.10f, R.string.info_syncing_albums)
+
+			val contentProgressMutex = Mutex()
+			var libraryProgress = 0f
+			var playlistProgress = 0f
+
+			suspend fun reportContentProgress(
+				isLibrary: Boolean,
+				progress: Float,
+				message: Int
+			) {
+				contentProgressMutex.withLock {
+					if (isLibrary) {
+						libraryProgress = maxOf(libraryProgress, progress)
+					} else {
+						playlistProgress = maxOf(playlistProgress, progress)
+					}
+
+					val combinedProgress =
+						(libraryProgress * 0.65f) + (playlistProgress * 0.35f)
+
+					progressCallback(
+						0.10f + combinedProgress * 0.90f,
+						message
+					)
+				}
+			}
+
+			val (libraryResult, playlistSongIds) = coroutineScope {
+				val libraryDeferred = async {
+					syncLibrarySongs { progress, message ->
+						reportContentProgress(
+							isLibrary = true,
+							progress = progress,
+							message = message
+						)
+					}.getOrThrow()
+				}
+
+				val playlistSongsDeferred = async {
+					syncAllPlaylistSongs(playlists) { progress ->
+						reportContentProgress(
+							isLibrary = false,
+							progress = progress,
+							message = R.string.info_syncing_playlists
+						)
+					}
+				}
+
+				libraryDeferred.await() to playlistSongsDeferred.await()
+			}
+
+			val validAlbumIds = libraryResult.first
+			val validSongIds = libraryResult.second + playlistSongIds
 
 			albumDao.deleteObsoleteAlbums(validAlbumIds)
 			songDao.deleteObsoleteSongs(validSongIds)
 
-			progressCallback(1.0f, R.string.info_syncing_finished)
+			progressCallback(1f, R.string.info_syncing_finished)
 		}
 	}
 
 	suspend fun syncLibrarySongs(
 		onProgress: suspend (Float, Int) -> Unit = { _, _ -> }
 	): Result<Pair<Set<String>, Set<String>>> = runDbOp {
-		val pageSize = 500
-		var offset = 0
-		val allAlbumSummaries = mutableListOf<DomainAlbum>()
+		onProgress(0f, R.string.info_syncing_albums)
 
-		onProgress(0.0f, R.string.info_syncing_albums)
-		while (true) {
-			val batch =
-				server.getAlbums(
-					DomainAlbumListType.AlphabeticalByName,
-					pageSize,
-					offset
-				)
-			if (batch.isEmpty()) break
-			allAlbumSummaries.addAll(batch)
-			if (batch.size < pageSize) break
-			offset += pageSize
+		val (validAlbumIds, validSongIds) = syncLibraryStream { progress ->
+			onProgress(progress, R.string.info_syncing_albums)
 		}
 
-		if (allAlbumSummaries.isEmpty()) return@runDbOp emptySet<String>() to emptySet()
-
-		val totalAlbums = allAlbumSummaries.size
-		val completedAlbums = AtomicInt(0)
-		var finalSongsSynced = 0
-
-		val allValidAlbumIds = mutableSetOf<String>()
-		val allValidSongIds = mutableSetOf<String>()
-
-		onProgress(0.1f, R.string.info_syncing_albums)
-
-		val albumChannel = Channel<DomainAlbum>(capacity = 100)
-
-		coroutineScope {
-			launch(Dispatchers.IO) {
-				allAlbumSummaries.map { summary ->
-					launch {
-						concurrentRequestLimit.withPermit {
-							try {
-								val album = server.getAlbum(summary.id)
-
-								val done = completedAlbums.incrementAndGet()
-								val fetchProgress = 0.1f + (0.8f * (done.toFloat() / totalAlbums))
-								onProgress(fetchProgress, R.string.info_syncing_albums)
-
-								albumChannel.send(album)
-							} catch (e: Exception) {
-								if (e is SerializationException) {
-									Logger.e(
-										"DbRepository",
-										"could not deserialize album ${summary.id} (${summary.name}); skipping it",
-										e
-									)
-								} else if (e.message != null && e.message!!.contains("DATA_NOT_FOUND")) {
-									Logger.e(
-										"DbRepository",
-										"album with id ${summary.id} (${summary.name}) not found; skipping it",
-										e
-									)
-								} else {
-									throw e
-								}
-							}
-						}
-					}
-				}.joinAll()
-				albumChannel.close()
-			}
-
-			launch(Dispatchers.IO) {
-				val albumBatch = mutableListOf<AlbumEntity>()
-				val songBatch = mutableListOf<SongEntity>()
-				val artistBatch = mutableMapOf<String, ArtistEntity>()
-				val summariesMap = allAlbumSummaries.associateBy { it.id }
-
-				for (album in albumChannel) {
-					val summary = summariesMap[album.id]
-					val albumEntity = album.toEntity(
-						artistIdOverride = summary?.artistId,
-						artistNameOverride = summary?.artistName
-					)
-					albumBatch.add(albumEntity)
-					allValidAlbumIds.add(albumEntity.albumId)
-
-					if (albumEntity.artistId.isNotBlank()) {
-						artistBatch[albumEntity.artistId] = ArtistEntity(
-							artistId = albumEntity.artistId,
-							name = albumEntity.artistName ?: albumEntity.artistId,
-							coverArtId = albumEntity.coverArtId
-						)
-					}
-
-					album.songs.forEach { song ->
-						val songEntity = song.toEntity(
-							artistIdOverride = albumEntity.artistId.takeIf { song.artistId.isBlank() },
-							artistNameOverride = albumEntity.artistName.takeIf { song.artistName.isNullOrBlank() }
-						)
-						songBatch.add(songEntity)
-						allValidSongIds.add(songEntity.songId)
-
-						if (songEntity.artistId.isNotBlank()) {
-							artistBatch[songEntity.artistId] = ArtistEntity(
-								artistId = songEntity.artistId,
-								name = songEntity.artistName ?: songEntity.artistId,
-								albumCount = 0,
-								coverArtId = songEntity.coverArtId
-							)
-						}
-						songEntity.artists.forEach { artist ->
-							if (artist.id.isNotBlank()) {
-								artistBatch[artist.id] = ArtistEntity(
-									artistId = artist.id,
-									name = artist.name,
-									albumCount = 0,
-									coverArtId = songEntity.coverArtId
-								)
-							}
-						}
-						songEntity.albumArtists.forEach { artist ->
-							if (artist.id.isNotBlank()) {
-								artistBatch[artist.id] = ArtistEntity(
-									artistId = artist.id,
-									name = artist.name,
-									albumCount = 0,
-									coverArtId = songEntity.coverArtId
-								)
-							}
-						}
-					}
-
-					if (albumBatch.size >= dbChunkSize || songBatch.size >= 1500) {
-						albumDao.insertAlbums(albumBatch)
-						songDao.insertSongs(songBatch)
-						if (artistBatch.isNotEmpty()) {
-							artistDao.insertArtistsIgnoringConflicts(artistBatch.values.toList())
-							artistBatch.clear()
-						}
-
-						finalSongsSynced += songBatch.size
-						albumBatch.clear()
-						songBatch.clear()
-					}
-				}
-
-				if (albumBatch.isNotEmpty() || songBatch.isNotEmpty() || artistBatch.isNotEmpty()) {
-					if (albumBatch.isNotEmpty()) albumDao.insertAlbums(albumBatch)
-					if (songBatch.isNotEmpty()) songDao.insertSongs(songBatch)
-					if (artistBatch.isNotEmpty()) {
-						artistDao.insertArtistsIgnoringConflicts(artistBatch.values.toList())
-					}
-					finalSongsSynced += songBatch.size
-				}
-			}
-		}
-
-		Logger.i(
-			"DbRepository",
-			"- Sync result: $totalAlbums albums, $finalSongsSynced songs"
-		)
-
-		onProgress(1.0f, R.string.info_syncing_saved)
-		allValidAlbumIds to allValidSongIds
+		onProgress(1f, R.string.info_syncing_saved)
+		validAlbumIds to validSongIds
 	}
 
 	suspend fun syncPlaylists(): Result<List<PlaylistEntity>> = runDbOp {
@@ -325,48 +585,27 @@ class DbRepository(
 		playlistEntities.chunked(dbChunkSize).forEach { chunk ->
 			playlistDao.insertPlaylists(chunk)
 		}
-
 		playlistDao.deleteObsoletePlaylists(validPlaylistIds)
 
-		Logger.i("DbRepository", "- Playlist sync result: ${playlistEntities.size} playlists found")
+		Logger.i(
+			"DbRepository",
+			"- Playlist sync result: ${playlistEntities.size} playlists found"
+		)
 
 		playlistEntities
 	}
 
 	suspend fun syncPlaylistSongs(playlistId: String): Result<Set<String>> = runDbOp {
-		val playlist = try {
-			server.getPlaylist(playlistId)
-		} catch (e: Exception) {
-			if (e is SerializationException) {
-				Logger.e(
-					"DbRepository",
-					"could not deserialize playlist $playlistId; skipping it",
-					e
-				)
-				return@runDbOp emptySet()
-			} else {
-				throw e
-			}
-		}
-		val songEntities = playlist.songs.map { it.toEntity() }
-		val songIds = songEntities.map { it.songId }.toSet()
+		val data = fetchPlaylistData(playlistId)
+			?: return@runDbOp emptySet()
+		persistPlaylist(data)
 
-		if (songEntities.isNotEmpty()) {
-			songEntities.chunked(dbChunkSize).forEach { chunk ->
-				songDao.insertSongs(chunk)
-			}
+		Logger.i(
+			"DbRepository",
+			"- Playlist [${data.playlistId}] synced: ${data.songs.size} songs"
+		)
 
-			val crossRefs = songEntities.mapIndexed { index, it ->
-				PlaylistSongCrossRef(playlistId = playlistId, songId = it.songId, position = index)
-			}
-
-			playlistDao.replacePlaylistSongs(playlistId, crossRefs)
-		} else {
-			playlistDao.deletePlaylistSongCrossRefs(playlistId)
-		}
-
-		Logger.i("DbRepository", "- Playlist [$playlistId] synced: ${songEntities.size} songs")
-		songIds
+		data.songs.mapTo(mutableSetOf()) { it.songId }
 	}
 
 	suspend fun syncGenres(): Result<Unit> = runDbOp {
@@ -377,48 +616,16 @@ class DbRepository(
 			genreDao.insertGenres(chunk)
 		}
 		genreDao.deleteObsoleteGenres(entities.map { it.genreName }.toSet())
-
 		Logger.i("DbRepository", "- Genres Synced: ${entities.size} genres found")
 	}
 
 	suspend fun syncArtists(): Result<Unit> = runDbOp {
-		//val pageSize = 500
-		//var offset = 0
-		val artists = mutableListOf<ArtistEntity>()
-
-		// reverting this for now
-		// see https://github.com/ssalggnikool/Navic/issues/521
-
-		//try {
-		//	while (true) {
-		//		val batch = server.searchID3(
-		//			query = "", artistCount = pageSize, artistOffset = offset
-		//		).artists.map { it.toEntity() }
-		//		if (batch.isEmpty()) break
-		//		artists.addAll(batch)
-		//		if (batch.size < pageSize) break
-		//		offset += pageSize
-		//	}
-		//	// because some servers like to not give an error...?
-		//	require(artists.isNotEmpty())
-		//} catch (ex: Exception) {
-		//	Logger.w(
-		//		"DbRepository",
-		//		"could not sync artists from search3 endpoint, trying getArtists",
-		//		ex
-		//	)
-		//	artists.clear()
-
-		val batch = server.getArtists()
-			.map { it.toEntity() }
-		artists.addAll(batch)
-		//}
+		val artists = server.getArtists().map { it.toEntity() }
 
 		artists.chunked(dbChunkSize).forEach { chunk ->
 			artistDao.insertArtists(chunk)
 		}
 		artistDao.deleteObsoleteArtists(artists.map { it.artistId }.toSet())
-
 		Logger.i("DbRepository", "- Artists Synced: ${artists.size} artists found")
 	}
 
@@ -431,7 +638,6 @@ class DbRepository(
 			radioDao.insertRadios(chunk)
 		}
 		radioDao.deleteObsoleteRadios(entities.map { it.radioId }.toSet())
-
 		Logger.i("DbRepository", "- Radios Synced: ${entities.size} stations found")
 	}
 
