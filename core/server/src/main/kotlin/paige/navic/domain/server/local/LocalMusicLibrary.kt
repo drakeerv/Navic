@@ -8,6 +8,7 @@ package paige.navic.domain.server.local
 
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.oxycblt.musikr.Config
@@ -24,6 +25,9 @@ import org.oxycblt.musikr.covers.stored.CoverStorage
 import org.oxycblt.musikr.covers.stored.MutableStoredCovers
 import org.oxycblt.musikr.covers.stored.NoTranscoding
 import org.oxycblt.musikr.fs.Location
+import org.oxycblt.musikr.fs.CombinedFileSystem
+import org.oxycblt.musikr.fs.DirectFileSystem
+import org.oxycblt.musikr.fs.FS
 import org.oxycblt.musikr.fs.saf.SAF
 import org.oxycblt.musikr.playlist.db.StoredPlaylists
 import org.oxycblt.musikr.tag.interpret.Naming
@@ -65,10 +69,31 @@ class LocalMusicLibrary(
 	}
 
 	private suspend fun buildConfig(): Config {
-		val locations = folderUris.mapNotNull { uri ->
-			Location.Unopened.from(context, uri.toUri()).open(context)
+		val directRoots = if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+			folderUris.mapNotNull { value ->
+				value.toUri().takeIf { it.scheme == "file" }?.path?.let(::File)
+			}
+		} else emptyList()
+		val locations = folderUris.mapNotNull { value ->
+			val uri = value.toUri()
+			if (uri.scheme == "file") null
+			else Location.Unopened.from(context, uri).open(context)
 		}
-		check(locations.isNotEmpty()) { "No readable local music folders configured" }
+		val filesystems = buildList<FS> {
+			if (directRoots.isNotEmpty()) add(DirectFileSystem.from(directRoots))
+			if (locations.isNotEmpty()) {
+				add(SAF.from(
+					context,
+					SAF.Query(
+						source = locations,
+						exclude = emptyList(),
+						withHidden = false,
+						multithread = true
+					)
+				))
+			}
+		}
+		check(filesystems.isNotEmpty()) { "No readable local music folders configured" }
 
 		withContext(Dispatchers.IO) {
 			coverDir.mkdirs()
@@ -82,15 +107,7 @@ class LocalMusicLibrary(
 			transcoding = NoTranscoding
 		)
 		return Config(
-			fs = SAF.from(
-				context,
-				SAF.Query(
-					source = locations,
-					exclude = emptyList(),
-					withHidden = false,
-					multithread = true
-				)
-			),
+			fs = if (filesystems.size == 1) filesystems.single() else CombinedFileSystem(filesystems),
 			storage = Storage(
 				cache = mutableCache,
 				covers = covers,

@@ -586,6 +586,7 @@
 	<string name="title_music_folders">Music folders</string>
 	<string name="subtitle_music_folders">Folders indexed for your local library</string>
 	<string name="action_choose_music_folders">Choose music folders</string>
+	<string name="action_select_this_folder">Select this folder</string>
 	<string name="action_add_music_folder">Add music folder</string>
 	<string name="action_remove_folder">Remove folder</string>
 	<string name="action_create_local_library">Create local library</string>
