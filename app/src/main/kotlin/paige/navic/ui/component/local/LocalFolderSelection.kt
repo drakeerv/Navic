@@ -51,6 +51,7 @@ import paige.navic.icons.outlined.Folder
 import paige.navic.icons.outlined.SdCard
 import paige.navic.ui.component.common.SegmentedListItem
 import paige.navic.ui.component.common.SegmentedListItemDefaults
+import paige.navic.util.PlatformSupport
 import java.io.File
 
 @Composable
@@ -115,7 +116,7 @@ fun LocalFolderSelection(
 			Button(
 				modifier = Modifier.fillMaxWidth(),
 				onClick = {
-					if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.P) {
+					if (PlatformSupport.DIRECT_FILE_ACCESS_PREFERRED) {
 						if (ContextCompat.checkSelfPermission(
 								context,
 								Manifest.permission.READ_EXTERNAL_STORAGE
