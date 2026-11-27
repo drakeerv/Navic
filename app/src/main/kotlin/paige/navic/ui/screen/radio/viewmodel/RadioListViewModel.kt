@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.cachedIn
 import kotlinx.coroutines.launch
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.model.DomainRadio
 import paige.navic.domain.repository.RadioRepository
@@ -18,8 +19,9 @@ import paige.navic.ui.viewmodel.SelectableViewModel
 
 class RadioListViewModel(
 	private val repository: RadioRepository,
-	private val sessionManager: SessionManager
-) : SelectableViewModel<DomainRadio>() {
+	private val sessionManager: SessionManager,
+	snackBarManager: SnackBarManager
+) : SelectableViewModel<DomainRadio>(snackBarManager) {
 	val gridState = LazyGridState()
 
 	init {

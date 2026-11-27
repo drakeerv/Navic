@@ -9,8 +9,8 @@ package paige.navic
 import android.annotation.SuppressLint
 import android.content.Context
 import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.SharedTransitionLayout
@@ -39,6 +39,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.Companion.detailPane
 import androidx.compose.material3.adaptive.navigation3.ListDetailSceneStrategy.Companion.listPane
@@ -94,9 +96,12 @@ import paige.navic.domain.manager.ui.BottomBarScrollManager
 import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.model.settings.BottomBarVisibilityMode
 import paige.navic.domain.model.settings.ExplicitContentPlayback
+import paige.navic.domain.model.snackbars.SnackBarEvent
 import paige.navic.domain.server.ServerCommand
 import paige.navic.playback.PlayerRepository
 import paige.navic.preferences.PreferenceManager
+import paige.navic.ui.component.common.ErrorCodeBlock
+import paige.navic.ui.component.dialog.AlertDialog
 import paige.navic.ui.component.layout.RootBottomBar
 import paige.navic.ui.component.layout.SideBar
 import paige.navic.ui.component.snackbar.NavicSnackBar
@@ -204,23 +209,38 @@ fun App() {
 
 	val snackBarState = remember { SnackbarHostState() }
 	val snackBarManager = koinInject<SnackBarManager>()
+	var errorToShow by remember { mutableStateOf<Exception?>(null) }
 
 	LaunchedEffect(Unit) {
 		snackBarManager.events.collectLatest { event ->
-			val actionLabelRes = event.actionLabelRes
-			val actionLabel = actionLabelRes?.let { resources.getString(it) }
-			val duration = if (actionLabelRes != null) {
-				SnackbarDuration.Long
+			if (event is SnackBarEvent.Actionable) {
+				val actionLabelRes = event.actionLabelRes
+				val actionLabel = actionLabelRes?.let { resources.getString(it) }
+				val duration = if (actionLabelRes != null) {
+					SnackbarDuration.Long
+				} else {
+					SnackbarDuration.Short
+				}
+
+				val result = snackBarState.showSnackbar(
+					message = resources.getString(event.resource, *event.args.toTypedArray()),
+					actionLabel = actionLabel,
+					duration = duration
+				)
+				if (result == SnackbarResult.ActionPerformed) {
+					event.onAction?.invoke(context)
+				}
 			} else {
-				SnackbarDuration.Short
-			}
-			val result = snackBarState.showSnackbar(
-				message = resources.getString(event.resource, *event.args.toTypedArray()),
-				actionLabel = actionLabel,
-				duration = duration
-			)
-			if (result == SnackbarResult.ActionPerformed) {
-				event.onAction?.invoke(context)
+				if (event !is SnackBarEvent.Error) return@collectLatest
+
+				val result = snackBarState.showSnackbar(
+					message = resources.getString(R.string.info_error),
+					actionLabel = resources.getString(R.string.info_error_show),
+					duration = SnackbarDuration.Long
+				)
+				if (result == SnackbarResult.ActionPerformed) {
+					errorToShow = event.exception
+				}
 			}
 		}
 	}
@@ -284,6 +304,18 @@ fun App() {
 			LocalSizeClass provides sizeClass
 		) {
 			NavicTheme {
+				errorToShow?.let { error ->
+					AlertDialog(
+						onDismissRequest = { errorToShow = null },
+						title = { Text(resources.getString(R.string.info_error)) },
+						text = { ErrorCodeBlock(error) },
+						confirmButton = {
+							TextButton(onClick = { errorToShow = null }) {
+								Text(resources.getString(R.string.action_ok))
+							}
+						}
+					)
+				}
 				Row(modifier = Modifier.fillMaxSize()) rowScope@ {
 					if (sizeClass.widthSizeClass >= WindowWidthSizeClass.Medium
 						&& !backStack.any { it is Screen.Login }

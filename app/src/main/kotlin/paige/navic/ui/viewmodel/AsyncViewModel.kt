@@ -14,11 +14,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.ui.core.UiState
 
 abstract class AsyncViewModel<T>(
 	initialState: UiState<T> = UiState.Loading(),
-	initialValue: T? = null
+	initialValue: T? = null,
+	private val snackBarManager: SnackBarManager
 ) : ViewModel() {
 	private val _uiState = MutableStateFlow<UiState<T>>(initialState)
 	val uiState: StateFlow<UiState<T>> = _uiState.asStateFlow()
@@ -40,7 +42,7 @@ abstract class AsyncViewModel<T>(
 			}.onSuccess { result ->
 				_uiState.value = UiState.Success(result)
 			}.onFailure { error ->
-				updateState { UiState.Error(error as Exception, it.data) }
+				handleError(error)
 			}
 		}
 	}
@@ -50,9 +52,15 @@ abstract class AsyncViewModel<T>(
 			runCatching {
 				block()
 			}.onFailure { error ->
-				updateState { UiState.Error(error as Exception, it.data) }
+				handleError(error)
 			}
 		}
+	}
+
+	private fun handleError(error: Throwable) {
+		val exception = error as? Exception ?: Exception(error)
+		snackBarManager.notifyError(exception)
+		updateState { UiState.Error(exception, it.data) }
 	}
 
 	protected fun updateState(transform: (UiState<T>) -> UiState<T>) {
@@ -70,16 +78,6 @@ abstract class AsyncViewModel<T>(
 	protected fun updateData(transform: (T) -> T) {
 		updateState { state ->
 			state.data?.let { UiState.Success(transform(it)) } ?: state
-		}
-	}
-
-	fun clearError() {
-		updateState { state ->
-			if (state is UiState.Error) {
-				state.data?.let { UiState.Success(it) } ?: UiState.Loading()
-			} else {
-				state
-			}
 		}
 	}
 }

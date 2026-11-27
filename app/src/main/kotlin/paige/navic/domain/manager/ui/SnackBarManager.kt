@@ -16,20 +16,21 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import paige.navic.R
-import paige.navic.domain.model.snackbars.PlayerEvent
+import paige.navic.domain.model.snackbars.SnackBarEvent
 import paige.navic.util.AppRestarter
+import kotlin.coroutines.cancellation.CancellationException
 
 class SnackBarManager(
 	val appRestarter: AppRestarter
 ) {
-	private val _events = MutableSharedFlow<PlayerEvent>()
-	val events: SharedFlow<PlayerEvent> = _events.asSharedFlow()
+	private val _events = MutableSharedFlow<SnackBarEvent>()
+	val events: SharedFlow<SnackBarEvent> = _events.asSharedFlow()
 
 	private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
 	fun notify(@StringRes resource: Int, vararg args: Any) {
 		scope.launch {
-			_events.emit(PlayerEvent(resource, args.toList()))
+			_events.emit(SnackBarEvent.Actionable(resource, args.toList()))
 		}
 	}
 
@@ -44,7 +45,7 @@ class SnackBarManager(
 	) {
 		scope.launch {
 			_events.emit(
-				PlayerEvent(
+				SnackBarEvent.Actionable(
 					resource = resource,
 					args = args.toList(),
 					actionLabelRes = actionLabelRes,
@@ -55,9 +56,17 @@ class SnackBarManager(
 	}
 
 	fun notifyError(
-
+		error: Exception
 	) {
+		if (error is CancellationException) return // doesn't really matter
 
+		scope.launch {
+			_events.emit(
+				SnackBarEvent.Error (
+					error
+				)
+			)
+		}
 	}
 
 	fun notifyRestartRequired() {

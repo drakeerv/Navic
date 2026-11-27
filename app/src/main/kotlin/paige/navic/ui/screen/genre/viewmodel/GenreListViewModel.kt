@@ -13,6 +13,7 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.model.DomainGenre
 import paige.navic.domain.repository.GenreRepository
@@ -20,8 +21,9 @@ import paige.navic.ui.viewmodel.AsyncViewModel
 
 class GenreListViewModel(
 	private val repository: GenreRepository,
-	private val sessionManager: SessionManager
-) : AsyncViewModel<Flow<PagingData<DomainGenre>>>() {
+	private val sessionManager: SessionManager,
+	snackBarManager: SnackBarManager
+) : AsyncViewModel<Flow<PagingData<DomainGenre>>>(snackBarManager = snackBarManager) {
 
 	val gridState = LazyGridState()
 

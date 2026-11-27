@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import paige.navic.database.dao.LetterCount
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.model.DomainAlbum
 import paige.navic.domain.model.DomainAlbumListType
@@ -30,8 +31,9 @@ class AlbumListViewModel(
 	initialFilters: Set<DomainFilter>? = null,
 	private val repository: AlbumRepository,
 	private val sessionManager: SessionManager,
-	private val preferenceManager: PreferenceManager
-) : SelectableViewModel<DomainAlbum>() {
+	private val preferenceManager: PreferenceManager,
+	snackBarManager: SnackBarManager
+) : SelectableViewModel<DomainAlbum>(snackBarManager) {
 	val listType: StateFlow<DomainAlbumListType>
 		field = MutableStateFlow(initialListType ?: preferenceManager.albumSortType)
 

@@ -108,7 +108,8 @@ val viewModelModule = module {
 			initialFilters = params.getOrNull<Set<DomainFilter>>(),
 			repository = get(),
 			sessionManager = get(),
-			preferenceManager = get()
+			preferenceManager = get(),
+			snackBarManager = get()
 		)
 	}
 	viewModel { params ->
@@ -118,7 +119,8 @@ val viewModelModule = module {
 			repository = get(),
 			sessionManager = get(),
 			preferenceManager = get(),
-			reachability = get()
+			reachability = get(),
+			snackBarManager = get()
 		)
 	}
 	viewModel { params ->
@@ -128,7 +130,8 @@ val viewModelModule = module {
 			repository = get(),
 			albumDao = get(),
 			sessionManager = get(),
-			preferenceManager = get()
+			preferenceManager = get(),
+			snackBarManager = get()
 		)
 	}
 	viewModelOf(::SearchViewModel)
@@ -138,7 +141,8 @@ val viewModelModule = module {
 	viewModel { params ->
 		RadioUpdateDialogViewModel(
 			initialRadio = params.get(),
-			sessionManager = get()
+			sessionManager = get(),
+			snackBarManager = get()
 		)
 	}
 	viewModelOf(::PlaylistListViewModel)

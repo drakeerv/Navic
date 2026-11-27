@@ -35,7 +35,7 @@ class PlaylistListViewModel(
 	private val preferenceManager: PreferenceManager,
 	private val m3uPlaylistPersistence: NavicM3uPlaylistPersistence,
 	private val snackBarManager: SnackBarManager
-) : SelectableViewModel<DomainPlaylist>() {
+) : SelectableViewModel<DomainPlaylist>(snackBarManager) {
 
 	val selectedSorting: StateFlow<DomainPlaylistListType>
 		field = MutableStateFlow(preferenceManager.playlistSortType)

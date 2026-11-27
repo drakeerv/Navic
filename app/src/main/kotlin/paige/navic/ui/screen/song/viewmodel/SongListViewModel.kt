@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.connectivity.ReachabilityFlow
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.model.DomainFilter
 import paige.navic.domain.model.DomainSong
@@ -28,8 +29,9 @@ class SongListViewModel(
 	private val repository: SongRepository,
 	private val sessionManager: SessionManager,
 	private val preferenceManager: PreferenceManager,
-	reachability: ReachabilityFlow
-) : SelectableViewModel<DomainSong>() {
+	reachability: ReachabilityFlow,
+	snackBarManager: SnackBarManager
+) : SelectableViewModel<DomainSong>(snackBarManager) {
 
 	val selectedSorting = MutableStateFlow(initialListType ?: preferenceManager.songSortType)
 

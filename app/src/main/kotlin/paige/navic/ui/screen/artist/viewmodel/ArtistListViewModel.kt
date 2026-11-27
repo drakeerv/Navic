@@ -19,6 +19,7 @@ import paige.navic.database.dao.LetterCount
 import paige.navic.database.mapper.toDomainModel
 import paige.navic.preferences.PreferenceManager
 import paige.navic.domain.manager.session.SessionManager
+import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.manager.session.SessionState
 import paige.navic.domain.model.DomainArtist
 import paige.navic.domain.model.DomainArtistListType
@@ -36,8 +37,9 @@ class ArtistListViewModel(
 	private val repository: ArtistRepository,
 	private val albumDao: AlbumDao,
 	private val sessionManager: SessionManager,
-	private val preferenceManager: PreferenceManager
-) : SelectableViewModel<DomainArtist>() {
+	private val preferenceManager: PreferenceManager,
+	snackBarManager: SnackBarManager
+) : SelectableViewModel<DomainArtist>(snackBarManager) {
 
 	val listType: StateFlow<DomainArtistListType>
 		field = MutableStateFlow(initialListType ?: preferenceManager.artistSortType)

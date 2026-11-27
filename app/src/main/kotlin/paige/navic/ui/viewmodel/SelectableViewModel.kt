@@ -8,6 +8,7 @@ package paige.navic.ui.viewmodel
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import paige.navic.domain.manager.ui.SnackBarManager
 
 
 data class Selectable<T : Any>(
@@ -20,7 +21,9 @@ data class SelectableList<T>(
 	val selected: T?
 )
 
-abstract class SelectableViewModel<T : Any> : AsyncViewModel<Selectable<T>>() {
+abstract class SelectableViewModel<T : Any>(
+	snackBarManager: SnackBarManager
+) : AsyncViewModel<Selectable<T>>(snackBarManager = snackBarManager) {
 	var items
 		get() = data?.items
 		set(value) {
@@ -48,7 +51,9 @@ abstract class SelectableViewModel<T : Any> : AsyncViewModel<Selectable<T>>() {
 	}
 }
 
-abstract class SelectableListViewModel<T : Any> : AsyncViewModel<SelectableList<T>>() {
+abstract class SelectableListViewModel<T : Any>(
+	snackBarManager: SnackBarManager
+) : AsyncViewModel<SelectableList<T>>(snackBarManager = snackBarManager) {
 	var items
 		get() = data?.items
 		set(value) {

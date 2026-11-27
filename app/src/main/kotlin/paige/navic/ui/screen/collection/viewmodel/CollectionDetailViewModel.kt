@@ -55,7 +55,7 @@ class CollectionDetailViewModel(
 	private val sessionManager: SessionManager,
 	private val snackBarManager: SnackBarManager,
 	reachability: ReachabilityFlow
-) : AsyncViewModel<CollectionViewState>() {
+) : AsyncViewModel<CollectionViewState>(snackBarManager = snackBarManager) {
 
 	init {
 		execute {

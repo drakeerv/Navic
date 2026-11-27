@@ -29,7 +29,10 @@ class PlaylistUpdateDialogViewModel(
 	private val playlistDao: PlaylistDao,
 	private val sessionManager: SessionManager,
 	private val snackBarManager: SnackBarManager
-) : AsyncViewModel<PlaylistUpdateViewState>(UiState.Loading(PlaylistUpdateViewState())) {
+) : AsyncViewModel<PlaylistUpdateViewState>(
+	initialState = UiState.Loading(PlaylistUpdateViewState()),
+	snackBarManager = snackBarManager
+) {
 	private val _events = Channel<Event>()
 	val events = _events.receiveAsFlow()
 

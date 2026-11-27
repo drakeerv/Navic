@@ -79,6 +79,7 @@ import paige.navic.di.LocalSetSheetGesturesEnabled
 import paige.navic.di.LocalSheetState
 import paige.navic.domain.manager.ui.SnackBarManager
 import paige.navic.domain.model.settings.QueueInfoType
+import paige.navic.domain.model.snackbars.SnackBarEvent
 import paige.navic.icons.Icons
 import paige.navic.icons.outlined.PlaylistAdd
 import paige.navic.playback.PlayerRepository
@@ -124,6 +125,8 @@ fun QueueScreen() {
 
 	LaunchedEffect(Unit) {
 		snackBarManager.events.collectLatest { event ->
+			if (event !is SnackBarEvent.Actionable) return@collectLatest
+
 			val actionLabelRes = event.actionLabelRes
 			val actionLabel = actionLabelRes?.let { context.getString(it) }
 			val duration = if (actionLabelRes != null) {

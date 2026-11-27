@@ -18,7 +18,10 @@ import paige.navic.ui.viewmodel.AsyncViewModel
 class RadioCreateDialogViewModel(
 	private val sessionManager: SessionManager,
 	private val snackBarManager: SnackBarManager
-) : AsyncViewModel<Nothing?>(UiState.Success(null)) {
+) : AsyncViewModel<Nothing?>(
+	initialState = UiState.Success(null),
+	snackBarManager = snackBarManager
+) {
 	private val _events = Channel<Event>()
 	val events = _events.receiveAsFlow()
 
